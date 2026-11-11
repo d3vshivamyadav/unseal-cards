@@ -1,9 +1,9 @@
 /* ==========================================================================
-   UNSEAL v8 — Flagship Full-Screen App Engine
+   UNSEAL v9 — Clean Atelier Luxury Engine
    - Zero-Server Client Encryption (U4 Compact + U3/U2/U1/?seal=/?s= Legacy)
-   - 12 Indian & Worldwide Auto/Manual Festival Themes
-   - 100 Unique Random Collector Mystery Gift Cards (20 Palettes × 5 Motifs)
-   - 5-Share WhatsApp Unlock + 1080×1920 High-Res PNG Export
+   - Silent Date-Based Background Seasonal Themes (No UI Clutter)
+   - 100 Unique Mystery Artwork Combinations Rolled Silently Behind the Scenes
+   - 5-Share WhatsApp Unlock + High-Res 1080×1920 Story PNG Export
    - Auto Browser PWA Install Prompt + Orbital Install Animation
    - Web Audio API ASMR Scratch & Chime + Haptic Feedback
    ========================================================================== */
@@ -53,140 +53,21 @@
     } catch (_) { /* no-op */ }
   }
 
-  // ==================== 12 INDIAN & WORLDWIDE FESTIVAL THEMES ====================
+  // ==================== SILENT BACKGROUND DATE THEMES ====================
+  // Automatically adapts ambience, sparkles, and confetti behind the scenes
   const FESTIVAL_THEMES = [
-    {
-      id: 'diwali',
-      name: 'Diwali',
-      region: 'India · Festival of Lights',
-      emoji: '🪔',
-      ribbon: '🪔 Happy Diwali Edition · Festival of Lights · Tap to switch',
-      glyphs: ['🪔', '✨', '🎆', '✦', '💛'],
-      swatch: '#D18E1F',
-      confetti: ['#E88A1C', '#D9383A', '#F5D06B', '#B8294B'],
-      greeting: 'Shubh Deepavali 🪔'
-    },
-    {
-      id: 'holi',
-      name: 'Holi',
-      region: 'India · Festival of Colors',
-      emoji: '🎨',
-      ribbon: '🎨 Happy Holi Edition · Colors of Joy · Tap to switch',
-      glyphs: ['🎨', '🌸', '💜', '✨', '🌈'],
-      swatch: '#D6247A',
-      confetti: ['#D6247A', '#22B8CF', '#F59F00', '#7950F2'],
-      greeting: 'Happy Holi 🎨'
-    },
-    {
-      id: 'eid',
-      name: 'Eid Mubarak',
-      region: 'India & Global · Crescent Moon',
-      emoji: '🌙',
-      ribbon: '🌙 Eid Mubarak Edition · Crescent Glow · Tap to switch',
-      glyphs: ['🌙', '✨', '🕌', '✦', '💚'],
-      swatch: '#0E7A56',
-      confetti: ['#0E7A56', '#D4A853', '#FFFDF8', '#22C55E'],
-      greeting: 'Eid Mubarak 🌙'
-    },
-    {
-      id: 'navratri',
-      name: 'Navratri & Puja',
-      region: 'India · Garba & Festive Nights',
-      emoji: '💃',
-      ribbon: '🪔 Shubh Navratri & Durga Puja Edition · Tap to switch',
-      glyphs: ['🪔', '🌺', '✨', '🪘', '❤️'],
-      swatch: '#D9480F',
-      confetti: ['#D9480F', '#E6B800', '#C2185B', '#FFFDF8'],
-      greeting: 'Happy Navratri 🌺'
-    },
-    {
-      id: 'rakhi',
-      name: 'Raksha Bandhan',
-      region: 'India · Thread of Love',
-      emoji: '🧵',
-      ribbon: '🧵 Raksha Bandhan Edition · Bond Forever · Tap to switch',
-      glyphs: ['🧵', '✨', '💛', '🌺', '🎁'],
-      swatch: '#C2255C',
-      confetti: ['#C2255C', '#D4A853', '#F472B6', '#FFFDF8'],
-      greeting: 'Happy Rakhi 🧵'
-    },
-    {
-      id: 'pongal',
-      name: 'Pongal / Sankranti',
-      region: 'India · Harvest & Kites',
-      emoji: '🪁',
-      ribbon: '🪁 Happy Pongal & Makar Sankranti · Tap to switch',
-      glyphs: ['🪁', '☀️', '🌾', '✨', '💛'],
-      swatch: '#C2590B',
-      confetti: ['#C2590B', '#16A34A', '#EAB308', '#FFFDF8'],
-      greeting: 'Happy Sankranti 🪁'
-    },
-    {
-      id: 'newyear',
-      name: 'New Year',
-      region: 'Worldwide · Midnight Spark',
-      emoji: '🥂',
-      ribbon: '🥂 Happy New Year Edition · Fresh Wishes · Tap to switch',
-      glyphs: ['🥂', '🎆', '✨', '⭐', '🎊'],
-      swatch: '#5234C8',
-      confetti: ['#5234C8', '#D4A853', '#38BDF8', '#FFFDF8'],
-      greeting: 'Happy New Year 🥂'
-    },
-    {
-      id: 'valentine',
-      name: 'Valentine’s Week',
-      region: 'Worldwide · Love & Crushes',
-      emoji: '💘',
-      ribbon: '💘 Valentine Week Edition · Secret Confessions · Tap to switch',
-      glyphs: ['💘', '🌹', '♥', '✨', '💌'],
-      swatch: '#D01B46',
-      confetti: ['#D01B46', '#FB7185', '#D4A853', '#FFFDF8'],
-      greeting: 'With Love 💘'
-    },
-    {
-      id: 'cherry',
-      name: 'Spring Blossom',
-      region: 'Worldwide · Sakura Glow',
-      emoji: '🌸',
-      ribbon: '🌸 Spring Sakura Edition · Soft Petals · Tap to switch',
-      glyphs: ['🌸', '🌷', '✨', '🦋', '💗'],
-      swatch: '#C0386B',
-      confetti: ['#F472B6', '#FBCFE8', '#D4A853', '#FFFDF8'],
-      greeting: 'Spring Glow 🌸'
-    },
-    {
-      id: 'halloween',
-      name: 'Halloween',
-      region: 'Worldwide · Midnight Mystery',
-      emoji: '🎃',
-      ribbon: '🎃 Spooky Secret Edition · Trick or Unseal · Tap to switch',
-      glyphs: ['🎃', '🦇', '✨', '🕯️', '🌙'],
-      swatch: '#C2410C',
-      confetti: ['#EA580C', '#7E22CE', '#1F2937', '#FACC15'],
-      greeting: 'Spooky Secret 🎃'
-    },
-    {
-      id: 'christmas',
-      name: 'Christmas',
-      region: 'Worldwide · Winter Velvet',
-      emoji: '🎄',
-      ribbon: '🎄 Merry Christmas Edition · Winter Velvet · Tap to switch',
-      glyphs: ['🎄', '❄️', '✨', '🔔', '❤️'],
-      swatch: '#B81F28',
-      confetti: ['#B81F28', '#168048', '#D4A853', '#FFFDF8'],
-      greeting: 'Merry Christmas 🎄'
-    },
-    {
-      id: 'classic',
-      name: 'Classic Linen',
-      region: 'Timeless Signature Stationery',
-      emoji: '✉️',
-      ribbon: '✉️ Classic Signature Stationery · Tap to explore 12 Themes',
-      glyphs: ['✨', '✦', '♥', '✧', '💌'],
-      swatch: '#C8282B',
-      confetti: ['#C8282B', '#D4A853', '#1E1B18', '#F4E5B8'],
-      greeting: 'Sealed with Ink ✉️'
-    }
+    { id: 'diwali', glyphs: ['✨', '🪔', '✦', '💛', '✧'], confetti: ['#E88A1C', '#D9383A', '#F5D06B', '#B8294B'] },
+    { id: 'holi', glyphs: ['✨', '🌸', '✦', '💜', '🌈'], confetti: ['#D6247A', '#22B8CF', '#F59F00', '#7950F2'] },
+    { id: 'eid', glyphs: ['🌙', '✨', '✦', '💚', '✧'], confetti: ['#0E7A56', '#D4A853', '#FFFDF8', '#22C55E'] },
+    { id: 'navratri', glyphs: ['✨', '🌺', '✦', '💛', '✧'], confetti: ['#D9480F', '#E6B800', '#C2185B', '#FFFDF8'] },
+    { id: 'rakhi', glyphs: ['✨', '🌺', '💛', '✦', '♥'], confetti: ['#C2255C', '#D4A853', '#F472B6', '#FFFDF8'] },
+    { id: 'pongal', glyphs: ['☀️', '✨', '🌾', '✦', '💛'], confetti: ['#C2590B', '#16A34A', '#EAB308', '#FFFDF8'] },
+    { id: 'newyear', glyphs: ['✨', '⭐', '✦', '🥂', '✧'], confetti: ['#5234C8', '#D4A853', '#38BDF8', '#FFFDF8'] },
+    { id: 'valentine', glyphs: ['♥', '🌹', '✨', '✦', '💌'], confetti: ['#D01B46', '#FB7185', '#D4A853', '#FFFDF8'] },
+    { id: 'cherry', glyphs: ['🌸', '✨', '🌷', '✦', '💗'], confetti: ['#F472B6', '#FBCFE8', '#D4A853', '#FFFDF8'] },
+    { id: 'halloween', glyphs: ['✨', '🌙', '🕯️', '✦', '✧'], confetti: ['#EA580C', '#7E22CE', '#1F2937', '#FACC15'] },
+    { id: 'christmas', glyphs: ['❄️', '✨', '✦', '🔔', '♥'], confetti: ['#B81F28', '#168048', '#D4A853', '#FFFDF8'] },
+    { id: 'classic', glyphs: ['✨', '✦', '♥', '✧', '💌'], confetti: ['#C8282B', '#D4A853', '#1E1B18', '#F4E5B8'] }
   ];
 
   function detectFestivalByDate(now) {
@@ -199,8 +80,6 @@
     if (md >= 101 && md <= 107) return 'newyear';
     if (md >= 112 && md <= 117) return 'pongal';
     if (md >= 207 && md <= 216) return 'valentine';
-
-    // Exact 2026-2028 lunar approximations for Holi & Eid + spring cherry
     if ((yr === 2026 && md >= 301 && md <= 306) || (yr === 2027 && md >= 320 && md <= 325) || (mm === 3 && dd <= 6)) return 'holi';
     if ((yr === 2026 && ((md >= 318 && md <= 322) || (md >= 525 && md <= 529))) || (yr === 2027 && md >= 308 && md <= 312)) return 'eid';
     if (md >= 325 && md <= 420) return 'cherry';
@@ -213,41 +92,55 @@
     return 'classic';
   }
 
-  function getThemeById(id) {
-    return FESTIVAL_THEMES.find((t) => t.id === id) || FESTIVAL_THEMES[FESTIVAL_THEMES.length - 1];
+  function applySilentDateTheme() {
+    const id = detectFestivalByDate();
+    const theme = FESTIVAL_THEMES.find((t) => t.id === id) || FESTIVAL_THEMES[FESTIVAL_THEMES.length - 1];
+    state.theme = theme;
+
+    if (document.documentElement && typeof document.documentElement.setAttribute === 'function') {
+      document.documentElement.setAttribute('data-festival', theme.id);
+    }
+
+    const sparkNodes = document.querySelectorAll ? document.querySelectorAll('#ambientSparkles .spark-dot') : [];
+    for (let i = 0; i < sparkNodes.length; i++) {
+      if (typeof sparkNodes[i].setAttribute === 'function') {
+        sparkNodes[i].setAttribute('data-glyph', theme.glyphs[i % theme.glyphs.length]);
+      }
+    }
   }
 
-  // ==================== 100 UNIQUE PRE-DESIGNED COLLECTOR GIFT CARDS ====================
-  // 20 Luxury Palettes × 5 Procedural Geometric Artwork Engines = 100 Unique Cards (#001..#100)
+  // ==================== SILENT 100 UNIQUE BESPOKE KEEPSAKE ENGINE ====================
+  // 20 Luxury Palettes × 5 Procedural Artwork Engines = 100 Unique Combinations
+  // Zero numbers, indexes, or pickers are ever shown in UI or PNG.
   const GIFT_PALETTES = [
-    { name: 'Royal Crimson Foil',     bg1: '#2C0B13', bg2: '#5B1628', gold: '#F4CE74', soft: 'rgba(244,206,116,0.22)', ink: '#FFF9ED' },
-    { name: 'Emerald Crescent Silk',  bg1: '#072419', bg2: '#0E4E37', gold: '#E8C568', soft: 'rgba(232,197,104,0.22)', ink: '#F3FFF9' },
-    { name: 'Midnight Sapphire',      bg1: '#0A1633', bg2: '#1C3670', gold: '#93C5FD', soft: 'rgba(147,197,253,0.22)', ink: '#F0F6FF' },
-    { name: 'Saffron Diya Velvet',    bg1: '#331405', bg2: '#7A300B', gold: '#FBBF24', soft: 'rgba(251,191,36,0.22)',  ink: '#FFF9EC' },
-    { name: 'Rose Quartz Satin',      bg1: '#3B1124', bg2: '#7D234A', gold: '#FBCFE8', soft: 'rgba(251,207,232,0.22)', ink: '#FFF4F9' },
-    { name: 'Obsidian Champagne',     bg1: '#141210', bg2: '#2D2721', gold: '#EED39B', soft: 'rgba(238,211,155,0.22)', ink: '#FFFDF7' },
-    { name: 'Amethyst Twilight',      bg1: '#1E0C38', bg2: '#4A1F82', gold: '#DDD6FE', soft: 'rgba(221,214,254,0.22)', ink: '#FAF5FF' },
-    { name: 'Peacock Teal Silk',      bg1: '#062329', bg2: '#0F5261', gold: '#5EEAD4', soft: 'rgba(94,234,212,0.22)',  ink: '#F0FDFA' },
-    { name: 'Garnet Imperial',        bg1: '#2E0909', bg2: '#6F1414', gold: '#FDE08D', soft: 'rgba(253,224,141,0.22)', ink: '#FFF5F5' },
-    { name: 'Antique Bronze Folio',   bg1: '#291B0E', bg2: '#5E3E1F', gold: '#FDE68A', soft: 'rgba(253,230,138,0.22)', ink: '#FFFDF5' },
-    { name: 'Gulal Magenta Glow',     bg1: '#3B072D', bg2: '#831862', gold: '#F9A8D4', soft: 'rgba(249,168,212,0.22)', ink: '#FFF5FC' },
-    { name: 'Cobalt Gold Leaf',       bg1: '#0D1B44', bg2: '#1E3A8A', gold: '#FACC15', soft: 'rgba(250,204,21,0.22)',  ink: '#F8FAFF' },
-    { name: 'Imperial Jade Brocade',  bg1: '#09261E', bg2: '#14543E', gold: '#A7F3D0', soft: 'rgba(167,243,208,0.22)', ink: '#F0FFF8' },
-    { name: 'Plum Nocturne Foil',     bg1: '#260E29', bg2: '#58215E', gold: '#F0ABFC', soft: 'rgba(240,171,252,0.22)', ink: '#FEF5FF' },
-    { name: 'Copper Sunset Ink',      bg1: '#36140A', bg2: '#7C2D12', gold: '#FDBA74', soft: 'rgba(253,186,116,0.22)', ink: '#FFF7ED' },
-    { name: 'Indigo Constellation',   bg1: '#0F172A', bg2: '#312E81', gold: '#C7D2FE', soft: 'rgba(199,210,254,0.22)', ink: '#F5F7FF' },
-    { name: 'Burgundy Wax Reserve',   bg1: '#290A18', bg2: '#641738', gold: '#F7D08A', soft: 'rgba(247,208,138,0.22)', ink: '#FFF6FA' },
-    { name: 'Marigold Toran Gold',    bg1: '#361E04', bg2: '#784208', gold: '#FDE047', soft: 'rgba(253,224,71,0.22)',  ink: '#FFFBEB' },
-    { name: 'Arctic Platinum Mist',   bg1: '#111827', bg2: '#334155', gold: '#E2E8F0', soft: 'rgba(226,232,240,0.22)', ink: '#F8FAFC' },
-    { name: 'Lotus Coral Reserve',    bg1: '#38121B', bg2: '#88273B', gold: '#FED7AA', soft: 'rgba(254,215,170,0.22)', ink: '#FFF5F6' }
+    { name: 'Royal Crimson', bg1: '#2C0B13', bg2: '#5B1628', gold: '#F4CE74', soft: 'rgba(244,206,116,0.22)', ink: '#FFF9ED' },
+    { name: 'Emerald Crescent', bg1: '#072419', bg2: '#0E4E37', gold: '#E8C568', soft: 'rgba(232,197,104,0.22)', ink: '#F3FFF9' },
+    { name: 'Midnight Sapphire', bg1: '#0A1633', bg2: '#1C3670', gold: '#93C5FD', soft: 'rgba(147,197,253,0.22)', ink: '#F0F6FF' },
+    { name: 'Saffron Velvet', bg1: '#331405', bg2: '#7A300B', gold: '#FBBF24', soft: 'rgba(251,191,36,0.22)', ink: '#FFF9EC' },
+    { name: 'Rose Quartz', bg1: '#3B1124', bg2: '#7D234A', gold: '#FBCFE8', soft: 'rgba(251,207,232,0.22)', ink: '#FFF4F9' },
+    { name: 'Obsidian Gold', bg1: '#141210', bg2: '#2D2721', gold: '#EED39B', soft: 'rgba(238,211,155,0.22)', ink: '#FFFDF7' },
+    { name: 'Amethyst Dusk', bg1: '#1E0C38', bg2: '#4A1F82', gold: '#DDD6FE', soft: 'rgba(221,214,254,0.22)', ink: '#FAF5FF' },
+    { name: 'Peacock Silk', bg1: '#062329', bg2: '#0F5261', gold: '#5EEAD4', soft: 'rgba(94,234,212,0.22)', ink: '#F0FDFA' },
+    { name: 'Garnet Reserve', bg1: '#2E0909', bg2: '#6F1414', gold: '#FDE08D', soft: 'rgba(253,224,141,0.22)', ink: '#FFF5F5' },
+    { name: 'Antique Bronze', bg1: '#291B0E', bg2: '#5E3E1F', gold: '#FDE68A', soft: 'rgba(253,230,138,0.22)', ink: '#FFFDF5' },
+    { name: 'Magenta Silk', bg1: '#3B072D', bg2: '#831862', gold: '#F9A8D4', soft: 'rgba(249,168,212,0.22)', ink: '#FFF5FC' },
+    { name: 'Cobalt Leaf', bg1: '#0D1B44', bg2: '#1E3A8A', gold: '#FACC15', soft: 'rgba(250,204,21,0.22)', ink: '#F8FAFF' },
+    { name: 'Imperial Jade', bg1: '#09261E', bg2: '#14543E', gold: '#A7F3D0', soft: 'rgba(167,243,208,0.22)', ink: '#F0FFF8' },
+    { name: 'Plum Nocturne', bg1: '#260E29', bg2: '#58215E', gold: '#F0ABFC', soft: 'rgba(240,171,252,0.22)', ink: '#FEF5FF' },
+    { name: 'Copper Sunset', bg1: '#36140A', bg2: '#7C2D12', gold: '#FDBA74', soft: 'rgba(253,186,116,0.22)', ink: '#FFF7ED' },
+    { name: 'Indigo Starlight', bg1: '#0F172A', bg2: '#312E81', gold: '#C7D2FE', soft: 'rgba(199,210,254,0.22)', ink: '#F5F7FF' },
+    { name: 'Burgundy Velvet', bg1: '#290A18', bg2: '#641738', gold: '#F7D08A', soft: 'rgba(247,208,138,0.22)', ink: '#FFF6FA' },
+    { name: 'Marigold Gold', bg1: '#361E04', bg2: '#784208', gold: '#FDE047', soft: 'rgba(253,224,71,0.22)', ink: '#FFFBEB' },
+    { name: 'Arctic Silver', bg1: '#111827', bg2: '#334155', gold: '#E2E8F0', soft: 'rgba(226,232,240,0.22)', ink: '#F8FAFC' },
+    { name: 'Coral Lotus', bg1: '#38121B', bg2: '#88273B', gold: '#FED7AA', soft: 'rgba(254,215,170,0.22)', ink: '#FFF5F6' }
   ];
 
   const GIFT_MOTIFS = [
-    { key: 'mandala',       title: 'Mandala Crown',       crest: '🪷' },
-    { key: 'sunburst',      title: 'Art Deco Sunburst',   crest: '☀️' },
-    { key: 'aurora',        title: 'Aurora Silk Wave',    crest: '🌊' },
-    { key: 'constellation', title: 'Celestial Star Map',  crest: '✨' },
-    { key: 'heritage',      title: 'Royal Heritage Arch', crest: '👑' }
+    { key: 'mandala', title: 'Mandala Crown', crest: '🪷' },
+    { key: 'sunburst', title: 'Sunburst Filigree', crest: '☀️' },
+    { key: 'aurora', title: 'Aurora Silk Wave', crest: '🌊' },
+    { key: 'constellation', title: 'Celestial Star Map', crest: '✨' },
+    { key: 'heritage', title: 'Royal Heritage Arch', crest: '👑' }
   ];
 
   const GIFT_FORTUNES = [
@@ -267,23 +160,12 @@
     const safeIdx = ((Math.floor(index) % 100) + 100) % 100;
     const palette = GIFT_PALETTES[Math.floor(safeIdx / 5)];
     const motif = GIFT_MOTIFS[safeIdx % 5];
-    const editionNum = safeIdx + 1;
-    const editionStr = String(editionNum).padStart(3, '0');
-    const aura = 89 + ((safeIdx * 7) % 11); // 89..99%
-    const rarity = safeIdx % 17 === 0 ? 'MYTHIC 1/1'
-      : safeIdx % 7 === 0 ? 'ULTRA RARE'
-      : safeIdx % 3 === 0 ? 'ROYAL FOIL'
-      : 'LIMITED EDITION';
+    const aura = 89 + ((safeIdx * 7) % 11);
     const fortune = GIFT_FORTUNES[(safeIdx * 3) % GIFT_FORTUNES.length];
 
     return {
-      index: safeIdx,
-      editionNum,
-      editionStr,
-      badge: `#${editionStr}/100`,
       palette,
       motif,
-      rarity,
       aura,
       title: `${motif.title} · ${palette.name}`,
       fortune
@@ -359,7 +241,6 @@
       `;
     }
 
-    // heritage arch
     return `
       <path d="M36,${h - 14} L36,88 Q36,24 ${cx},22 Q${w - 36},24 ${w - 36},88 L${w - 36},${h - 14}" fill="none" stroke="${col}" stroke-opacity="0.34" stroke-width="1.6"/>
       <path d="M52,${h - 14} L52,92 Q52,40 ${cx},38 Q${w - 52},40 ${w - 52},92 L${w - 52},${h - 14}" fill="none" stroke="${col}" stroke-opacity="0.2" stroke-width="1"/>
@@ -444,9 +325,6 @@
   }
 
   // ==================== ULTRA-SHORT URL & TEXT CODEC ====================
-  // Preserves exact character fidelity (English, Hindi/Devanagari, Emojis, Newlines)
-  const MOOD_LIST = ['Auto', '💌 Crush', '🪔 Festive', '🌙 2 AM', '🎲 Dare', '🫶 Praise'];
-
   function bytesToB64Url(bytes) {
     let bin = '';
     for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
@@ -462,8 +340,6 @@
     return out;
   }
 
-  // 1-Byte Devanagari + UTF-8 Hybrid Byte Stream
-  // 0x00..0x7F -> ASCII; 0x80 -> next byte + 0x0900 (Devanagari); 0x81 + len + raw UTF-8 chunk
   function packCompactText(str) {
     const out = [];
     const utf8 = new TextEncoder();
@@ -503,19 +379,14 @@
     return res;
   }
 
-  // 6-Bit Dictionary for Common English + Hinglish Characters (Fallback raw on 63)
   const DICT6 = ' etaoinsrhldcumfpgwybvkxjqz.,!?\'-\n0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const DICT6_IDX = new Map();
   for (let i = 0; i < 63; i++) DICT6_IDX.set(DICT6.charCodeAt(i), i);
 
   function packSixBitStream(compactBytes) {
     const bits = [];
-    const push6 = (v) => {
-      for (let b = 5; b >= 0; b--) bits.push((v >> b) & 1);
-    };
-    const push8 = (v) => {
-      for (let b = 7; b >= 0; b--) bits.push((v >> b) & 1);
-    };
+    const push6 = (v) => { for (let b = 5; b >= 0; b--) bits.push((v >> b) & 1); };
+    const push8 = (v) => { for (let b = 7; b >= 0; b--) bits.push((v >> b) & 1); };
 
     for (let i = 0; i < compactBytes.length; i++) {
       const byte = compactBytes[i];
@@ -527,7 +398,6 @@
         push8(byte);
       }
     }
-    // End marker: code 63 followed by 0xFF (not emitted naturally for compact text unless explicit; handle via byte length!)
     const padded = new Uint8Array(Math.ceil(bits.length / 8));
     for (let i = 0; i < bits.length; i++) {
       if (bits[i]) padded[i >> 3] |= (1 << (7 - (i & 7)));
@@ -590,7 +460,6 @@
     return /^[A-Za-z]{8}$/.test(String(id || ''));
   }
 
-  // Encode v8 ultra-short fragment: "4" + b64url([flags, rLen, lenHi, lenLo, recBytes..., body...])
   function encodePayloadV4(payload) {
     const cleanRec = Array.from(String(payload.r || 'You')).slice(0, 32).join('');
     const rCompact = packCompactText(cleanRec);
@@ -598,18 +467,17 @@
     const cCompact = packCompactText(payload.c || '');
     const joined = new Uint8Array(sCompact.length + 1 + cCompact.length);
     joined.set(sCompact, 0);
-    joined[sCompact.length] = 0xFF; // UTF-8 & packCompactText never emit 0xFF
+    joined[sCompact.length] = 0xFF;
     joined.set(cCompact, sCompact.length + 1);
 
     const six = packSixBitStream(joined);
     const useSix = six.bytes.length < joined.length;
     const body = useSix ? six.bytes : joined;
 
-    const moodIdx = Math.max(0, Math.min(5, MOOD_LIST.indexOf(payload.m || 'Auto')));
     const rLen = Math.min(255, rCompact.length);
     const lenHi = (joined.length >> 8) & 0xFF;
     const lenLo = joined.length & 0xFF;
-    const flags = (useSix ? 0x01 : 0x00) | ((moodIdx & 0x07) << 1);
+    const flags = useSix ? 0x01 : 0x00;
 
     const frame = new Uint8Array(4 + rLen + body.length);
     frame[0] = flags;
@@ -628,7 +496,6 @@
 
     const flags = frame[0];
     const useSix = (flags & 0x01) === 1;
-    const moodIdx = (flags >> 1) & 0x07;
     const rLen = frame[1];
     const joinedLen = (frame[2] << 8) | frame[3];
 
@@ -649,7 +516,6 @@
       r: rec,
       s: sec,
       c: clue,
-      m: MOOD_LIST[moodIdx] || 'Auto',
       id: isValidCardId(slugId) ? slugId : safeRandAlphaId(ALPHA_ID_LEN)
     };
   }
@@ -666,7 +532,6 @@
         r: obj.r || 'You',
         s: String(obj.s),
         c: obj.c || '',
-        m: obj.m || 'Auto',
         id: isValidCardId(obj.id) ? obj.id : (fallbackId || safeRandAlphaId(ALPHA_ID_LEN))
       };
     } catch (_) {
@@ -696,7 +561,6 @@
     const search = (window.location && window.location.search) || '';
     const hash = ((window.location && window.location.hash) || '').replace(/^#/, '');
 
-    // Check legacy ?seal= or ?s=
     if (search) {
       const sp = new URLSearchParams(search);
       const seal = sp.get('seal') || sp.get('s');
@@ -706,7 +570,6 @@
       }
     }
 
-    // Parse ?Name-8LetterId
     let slugRec = 'You';
     let slugId = '';
     const qMatch = search.match(/^\?([A-Za-z0-9]+)-([A-Za-z]{8})(?:&|$)/);
@@ -741,7 +604,7 @@
         if (AC) this.ctx = new AC();
       }
       if (this.ctx && this.ctx.state === 'suspended') {
-        this.ctx.resume().catch(() => {});
+        this.ctx.resume().catch(() => { });
       }
       return this.ctx;
     },
@@ -819,22 +682,19 @@
     } catch (_) { /* ignored */ }
   }
 
-  // ==================== APP STATE & DOM CACHE ====================
+  // ==================== APP STATE & STORAGE ====================
   function $(id) { return document.getElementById(id); }
 
   const state = {
-    mode: 'write', // 'write' | 'ready' | 'preview' | 'receiver'
-    mood: 'Auto',
-    festival: getThemeById(detectFestivalByDate()),
+    mode: 'write',
+    theme: FESTIVAL_THEMES[FESTIVAL_THEMES.length - 1],
     activePayload: null,
     currentUrl: '',
     revealed: false,
     deferredPrompt: null,
-    lastHapticMs: 0,
-    moveTick: 0
+    lastHapticMs: 0
   };
 
-  // Safe localStorage helpers
   function lsGet(k) {
     try { return window.localStorage ? window.localStorage.getItem(k) : null; } catch (_) { return null; }
   }
@@ -843,23 +703,18 @@
     try { if (window.localStorage) window.localStorage.setItem(k, String(v)); } catch (_) { /* no-op */ }
   }
 
-  function lsRemove(k) {
-    try { if (window.localStorage && typeof window.localStorage.removeItem === 'function') window.localStorage.removeItem(k); } catch (_) { /* no-op */ }
-  }
-
   function getRolledDesignIndex(cardId, role) {
-    const key = `unseal_v8_design_${role}_${cardId}`;
+    const key = `unseal_v9_design_${role}_${cardId}`;
     const saved = lsGet(key);
     if (saved !== null && /^\d+$/.test(saved)) {
       return Number(saved) % 100;
     }
 
     let picked = Math.floor(Math.random() * 100);
-    // Avoid giving receiver identical edition number if previewed on same device as sender
     if (role === 'receiver') {
-      const senderSaved = lsGet(`unseal_v8_design_sender_${cardId}`);
+      const senderSaved = lsGet(`unseal_v9_design_sender_${cardId}`);
       if (senderSaved !== null && Number(senderSaved) === picked) {
-        picked = (picked + 13) % 100;
+        picked = (picked + 17) % 100;
       }
     }
     lsSet(key, String(picked));
@@ -867,7 +722,7 @@
   }
 
   function getShareCount(cardId, role) {
-    const key = `unseal_v8_shares_${role}_${cardId}`;
+    const key = `unseal_v9_shares_${role}_${cardId}`;
     const raw = lsGet(key);
     return Math.max(0, Math.min(REQUIRED_SHARES, parseInt(raw || '0', 10) || 0));
   }
@@ -875,64 +730,14 @@
   function incrementShareCount(cardId, role) {
     const cur = getShareCount(cardId, role);
     const next = Math.min(REQUIRED_SHARES, cur + 1);
-    lsSet(`unseal_v8_shares_${role}_${cardId}`, String(next));
+    lsSet(`unseal_v9_shares_${role}_${cardId}`, String(next));
     return next;
   }
 
-  // ==================== FESTIVAL THEME MANAGEMENT ====================
-  function applyFestivalTheme(themeId, isManual) {
-    const theme = getThemeById(themeId);
-    state.festival = theme;
-
-    if (document.documentElement && typeof document.documentElement.setAttribute === 'function') {
-      document.documentElement.setAttribute('data-festival', theme.id);
-    }
-
-    if (isManual) lsSet('unseal_v8_festival_override', theme.id);
-
-    const festEmoji = $('festivalEmoji');
-    const festShort = $('festivalShortLabel');
-    const ribbonText = $('festivalRibbonText');
-    if (festEmoji) festEmoji.textContent = theme.emoji;
-    if (festShort) festShort.textContent = theme.name.split(' ')[0];
-    if (ribbonText) ribbonText.textContent = theme.ribbon;
-
-    const sparkNodes = document.querySelectorAll ? document.querySelectorAll('#ambientSparkles .spark-dot') : [];
-    for (let i = 0; i < sparkNodes.length; i++) {
-      const g = theme.glyphs[i % theme.glyphs.length];
-      if (typeof sparkNodes[i].setAttribute === 'function') {
-        sparkNodes[i].setAttribute('data-glyph', g);
-      }
-    }
-
-    renderFestivalModalGrid();
-  }
-
-  function renderFestivalModalGrid() {
-    const grid = $('festivalThemeGrid');
-    const autoNameEl = $('autoFestivalDetectedName');
-    const autoTheme = getThemeById(detectFestivalByDate());
-    if (autoNameEl) autoNameEl.textContent = `${autoTheme.emoji} ${autoTheme.name}`;
-    if (!grid) return;
-
-    const parts = FESTIVAL_THEMES.map((t) => {
-      const activeCls = state.festival && state.festival.id === t.id ? ' active' : '';
-      return `<button type="button" class="festival-option-btn${activeCls}" data-fest-id="${t.id}">
-        <div class="fest-opt-top">
-          <span>${t.emoji}</span>
-          <span class="fest-opt-swatch" style="background:${t.swatch};"></span>
-        </div>
-        <span class="fest-opt-name">${t.name}</span>
-        <span class="fest-opt-region">${t.region}</span>
-      </button>`;
-    });
-    grid.innerHTML = parts.join('');
-  }
-
-  // ==================== CONFETTI ENGINE (FESTIVAL-AWARE) ====================
+  // ==================== SILENT-THEME CONFETTI ENGINE ====================
   function burstConfetti(count) {
     if (typeof document === 'undefined' || !document.body) return;
-    const colors = (state.festival && state.festival.confetti) || ['#C8282B', '#D4A853', '#1E1B18', '#FFFFFF'];
+    const colors = (state.theme && state.theme.confetti) || ['#C8282B', '#D4A853', '#1E1B18', '#FFFFFF'];
     const canvas = document.createElement('canvas');
     canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:200;';
     document.body.appendChild(canvas);
@@ -944,7 +749,7 @@
     canvas.height = window.innerHeight || 700;
 
     const pieces = [];
-    const total = count || 58;
+    const total = count || 56;
     for (let i = 0; i < total; i++) {
       pieces.push({
         x: canvas.width * (0.2 + Math.random() * 0.6),
@@ -983,7 +788,8 @@
     window.requestAnimationFrame(tick);
   }
 
-  // ==================== 100-DESIGN COLLECTOR VAULT RENDERING ====================
+  // ==================== BESPOKE SURPRISE GIFT VAULT RENDERING ====================
+  // Renders silent custom artwork without exposing numbers, indexes, or pickers
   function renderVaultForRole(role) {
     const p = state.activePayload;
     if (!p) return;
@@ -1003,12 +809,9 @@
     const trackEl = $(`${prefix}WaxTrack`);
     const miniCardEl = $(`${prefix}GiftMiniCard`);
     const svgEl = $(`${prefix}GiftSvgPattern`);
-    const tierEl = $(`${prefix}GiftTierLabel`);
-    const passIdEl = $(`${prefix}GiftPassId`);
     const crestEl = $(`${prefix}GiftCrest`);
     const mainTextEl = $(`${prefix}GiftMainText`);
     const subTextEl = $(`${prefix}GiftSubText`);
-    const rarityEl = $(`${prefix}GiftRarityChip`);
     const veilEl = $(`${prefix}VaultVeil`);
     const veilTitleEl = $(`${prefix}VaultVeilTitle`);
     const veilSubEl = $(`${prefix}VaultVeilSub`);
@@ -1017,7 +820,7 @@
     const unlockedRowEl = $(`${prefix}GiftUnlockedBtns`);
 
     const pct = Math.round((shares / REQUIRED_SHARES) * 100);
-    if (pillEl) pillEl.textContent = unlocked ? `Unlocked 5/5 ✨` : `${shares} / ${REQUIRED_SHARES} Shared`;
+    if (pillEl) pillEl.textContent = unlocked ? 'Unlocked ✨' : `${shares} / ${REQUIRED_SHARES} Shared`;
     if (progressEl && progressEl.style) progressEl.style.width = `${pct}%`;
 
     if (trackEl && typeof trackEl.querySelectorAll === 'function') {
@@ -1039,39 +842,32 @@
     }
 
     if (titleEl) {
-      titleEl.textContent = unlocked
-        ? `🎁 UNLOCKED: EDITION ${design.badge}`
-        : `🎁 YOUR RANDOM MYSTERY GIFT (${design.badge})`;
+      titleEl.textContent = unlocked ? '🎁 YOUR BESPOKE GIFT UNLOCKED' : '🎁 YOUR SURPRISE STORY GIFT';
     }
-    if (tierEl) tierEl.textContent = `${design.rarity} · ${state.festival.name.toUpperCase()}`;
-    if (passIdEl) passIdEl.textContent = `#${cardId}`;
-    if (crestEl) crestEl.textContent = design.motif.crest;
+    if (crestEl) crestEl.textContent = unlocked ? design.motif.crest : '🎁';
 
-    const ownerName = isSender ? (p.from || 'Sender') : (p.r || 'Special One');
+    const ownerName = isSender ? (p.from || 'Mystery Sender') : (p.r || 'Special One');
     if (mainTextEl) {
-      mainTextEl.textContent = unlocked
-        ? `${ownerName} · ${design.motif.title}`
-        : `Edition ${design.badge} Sealed`;
+      mainTextEl.textContent = unlocked ? `${ownerName} · ${design.motif.title}` : 'Your Surprise Gift Awaits';
     }
     if (subTextEl) {
       subTextEl.textContent = unlocked
-        ? `Aura ${design.aura}% · ${design.fortune}`
-        : `${design.palette.name} + Fortune inside`;
+        ? `Aura Glow ${design.aura}% · ${design.fortune}`
+        : 'Custom Aura Score & Fortune sealed inside';
     }
-    if (rarityEl) rarityEl.textContent = `${design.badge} Collector`;
 
     if (veilEl) veilEl.classList.toggle('hidden', unlocked);
     if (!unlocked && veilTitleEl) {
       const left = REQUIRED_SHARES - shares;
-      veilTitleEl.textContent = `${left} More WhatsApp Share${left === 1 ? '' : 's'} to Crack Open`;
+      veilTitleEl.textContent = `${left} More WhatsApp Share${left === 1 ? '' : 's'} to Unseal`;
     }
     if (!unlocked && veilSubEl) {
-      veilSubEl.textContent = `You rolled Edition ${design.badge} (${design.palette.name}) — unlock for 9:16 Story PNG!`;
+      veilSubEl.textContent = 'Invite 5 friends to reveal your custom Story Gift Card inside!';
     }
 
     if (waBtnEl) waBtnEl.classList.toggle('hidden', unlocked);
     if (waBtnTextEl && !unlocked) {
-      waBtnTextEl.textContent = `💚 Share on WhatsApp to Crack Seal ${shares + 1}/5 →`;
+      waBtnTextEl.textContent = `💚 Share on WhatsApp (${shares}/5) →`;
     }
     if (unlockedRowEl) unlockedRowEl.classList.toggle('hidden', !unlocked);
 
@@ -1097,12 +893,12 @@
     if (iconEl) iconEl.textContent = unlocked ? design.motif.crest : '🎁';
     if (nameLineEl) {
       nameLineEl.textContent = unlocked
-        ? `Unlocked: ${design.badge} ${design.title}`
-        : `Edition ${design.badge} Ready Inside Vault`;
+        ? `Unlocked: ${design.title}`
+        : 'Surprise Story Gift Card Locked';
     }
     if (copyEl) {
       copyEl.textContent = unlocked
-        ? `5 / 5 shares completed! Aura ${design.aura}% Story Card ready.`
+        ? `All 5 shares complete! Aura Glow ${design.aura}% Story Card ready.`
         : `Progress: ${shares} / ${REQUIRED_SHARES} WhatsApp shares completed`;
     }
     if (modalTrack && typeof modalTrack.querySelectorAll === 'function') {
@@ -1114,7 +910,7 @@
     }
     if (waTextEl) {
       waTextEl.textContent = unlocked
-        ? `💚 Share Again on WhatsApp (Unlocked!)`
+        ? '💚 Share Again on WhatsApp (Unlocked!)'
         : `💚 Share on WhatsApp to Unlock (${shares}/5)`;
     }
     if (claimTextEl) {
@@ -1122,7 +918,7 @@
     }
   }
 
-  // ==================== 1080×1920 STORY PNG EXPORTS ====================
+  // ==================== HIGH-RES 1080×1920 STORY PNG EXPORTS ====================
   function wrapCanvasText(ctx, text, x, y, maxW, lineHeight) {
     const words = String(text || '').split(/\s+/);
     let line = '';
@@ -1159,17 +955,14 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Rich Background Gradient
     const grad = ctx.createLinearGradient(0, 0, 1080, 1920);
     grad.addColorStop(0, design.palette.bg1);
     grad.addColorStop(1, design.palette.bg2);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 1080, 1920);
 
-    // Draw Collector Procedural Geometric Motif
     drawCanvasCollectorMotif(ctx, 1080, 1920, design);
 
-    // Double Metallic Border
     ctx.strokeStyle = design.palette.gold;
     ctx.lineWidth = 4;
     ctx.strokeRect(48, 48, 1080 - 96, 1920 - 96);
@@ -1180,12 +973,8 @@
 
     ctx.textAlign = 'center';
     ctx.fillStyle = design.palette.gold;
-    ctx.font = '700 34px "DM Sans", sans-serif';
-    ctx.fillText(`UNSEAL COLLECTOR EDITION · ${design.badge}`, 540, 190);
-
-    ctx.font = '700 28px "DM Sans", sans-serif';
-    ctx.fillStyle = design.palette.ink;
-    ctx.fillText(`${state.festival.emoji} ${state.festival.name.toUpperCase()} EDITION · ${design.rarity}`, 540, 250);
+    ctx.font = '700 32px "DM Sans", sans-serif';
+    ctx.fillText('UNSEAL  •  BESPOKE STORY KEEPSAKE', 540, 200);
 
     // Crest Emblem Circle
     ctx.beginPath();
@@ -1205,7 +994,7 @@
     ctx.fillStyle = design.palette.ink;
     wrapCanvasText(ctx, owner, 540, 820, 860, 98);
 
-    // Palette & Motif Title
+    // Poetic Card Title (no numbers)
     ctx.font = '700 38px "DM Sans", sans-serif';
     ctx.fillStyle = design.palette.gold;
     ctx.fillText(design.title, 540, 990);
@@ -1220,23 +1009,23 @@
     ctx.stroke();
     ctx.fillStyle = design.palette.ink;
     ctx.font = '700 36px "DM Sans", sans-serif';
-    ctx.fillText(`✨ Vibe Aura Score: ${design.aura}%`, 540, 1112);
+    ctx.fillText(`✨ Vibe Aura Glow: ${design.aura}%`, 540, 1112);
 
     // Fortune Prophecy
     ctx.font = 'italic 54px "Caveat", cursive, sans-serif';
     ctx.fillStyle = design.palette.ink;
     wrapCanvasText(ctx, `"${design.fortune}"`, 540, 1280, 840, 74);
 
-    // Footer Watermark (no spoilers!)
-    ctx.font = '700 32px "DM Sans", sans-serif';
+    // Clean Footer (no IDs, no numbers)
+    ctx.font = '700 30px "DM Sans", sans-serif';
     ctx.fillStyle = design.palette.gold;
-    ctx.fillText(`Card Pass #${cardId} · Scratch yours free at`, 540, 1690);
-    ctx.font = '700 40px "Playfair Display", Georgia, serif';
+    ctx.fillText('Seal & reveal secret notes free at', 540, 1690);
+    ctx.font = '700 42px "Playfair Display", Georgia, serif';
     ctx.fillStyle = design.palette.ink;
-    ctx.fillText('unseal-cards.vercel.app', 540, 1755);
+    ctx.fillText('unseal-cards.vercel.app', 540, 1756);
 
-    exportCanvasImage(canvas, `unseal-gift-${design.editionStr}-${cardId}.png`, shareNative,
-      `Unlocked Edition ${design.badge} (${design.title}) on unseal-cards.vercel.app!`);
+    exportCanvasImage(canvas, `unseal-story-gift-${role}.png`, shareNative,
+      `Unlocked my bespoke Story Gift Card (${design.title}) on unseal-cards.vercel.app!`);
   }
 
   function generateRevealedNotePng() {
@@ -1251,7 +1040,7 @@
     ctx.fillStyle = '#FAF6F0';
     ctx.fillRect(0, 0, 1080, 1920);
 
-    // Inner Smooth Velvet Parchment Card (Zero book lines)
+    // Smooth Velvet Parchment Card (Zero horizontal lines)
     ctx.fillStyle = '#FFFDF9';
     ctx.beginPath();
     ctx.roundRect(88, 280, 904, 1340, 44);
@@ -1277,7 +1066,7 @@
     ctx.font = 'italic 700 44px "Playfair Display", Georgia, serif';
     ctx.fillText('unseal-cards.vercel.app', 540, 1520);
 
-    exportCanvasImage(canvas, `unseal-note-${p.id || 'card'}.png`, false, '');
+    exportCanvasImage(canvas, 'unseal-secret-note.png', false, '');
   }
 
   function exportCanvasImage(canvas, filename, tryShare, shareText) {
@@ -1288,7 +1077,7 @@
           const file = new File([blob], filename, { type: 'image/png' });
           if (navigator.canShare({ files: [file] })) {
             try {
-              await navigator.share({ files: [file], title: 'Unseal Collector Card', text: shareText });
+              await navigator.share({ files: [file], title: 'Unseal Story Gift', text: shareText });
               return;
             } catch (_) { /* fall through to download */ }
           }
@@ -1311,8 +1100,8 @@
     const cardId = p.id || safeRandAlphaId(ALPHA_ID_LEN);
     const shareUrl = `${PRODUCTION_ORIGIN}/?Ref-${safeRandAlphaId(ALPHA_ID_LEN)}`;
     const message = role === 'sender' && state.currentUrl
-      ? `🤫 Psst ${p.r || ''}! Scratch off this gold foil to read my secret note (${state.festival.greeting}):\n${state.currentUrl}`
-      : `🎁 I just scratched a secret postcard on Unseal! Send your friends a scratch note & crack open 1 of 100 random Collector Cards free:\n${shareUrl}`;
+      ? `🤫 Psst ${p.r || ''}! Scratch off this gold foil to read my secret note:\n${state.currentUrl}`
+      : `🎁 I just scratched a secret postcard on Unseal! Send your friends a scratch note & unlock your bespoke Story Gift free:\n${shareUrl}`;
 
     const waHref = `https://wa.me/?text=${encodeURIComponent(message)}`;
     if (typeof window.open === 'function') {
@@ -1351,9 +1140,9 @@
       if (!ctx) return;
       this.ctx = ctx;
 
-      const rect = box.getBoundingClientRect ? box.getBoundingClientRect() : { width: 420, height: 220 };
+      const rect = box.getBoundingClientRect ? box.getBoundingClientRect() : { width: 420, height: 222 };
       const w = Math.max(260, Math.round(rect.width || 420));
-      const h = Math.max(210, Math.round(rect.height || 220));
+      const h = Math.max(210, Math.round(rect.height || 222));
       this.w = w;
       this.h = h;
       canvas.width = w;
@@ -1371,7 +1160,6 @@
         if (qBtn) qBtn.classList.remove('hidden');
       }
 
-      // Draw champagne brushed gold foil
       ctx.globalCompositeOperation = 'source-over';
       const g = ctx.createLinearGradient(0, 0, w, h);
       g.addColorStop(0, '#E8CA82');
@@ -1381,7 +1169,6 @@
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
 
-      // Brushed metal hairline textures
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
       ctx.lineWidth = 1;
       for (let y = 4; y < h; y += 7) {
@@ -1391,11 +1178,10 @@
         ctx.stroke();
       }
 
-      // Foil Stamp Prompt
-      ctx.fillStyle = 'rgba(84, 54, 12, 0.85)';
+      ctx.fillStyle = 'rgba(84, 54, 12, 0.86)';
       ctx.textAlign = 'center';
       ctx.font = '700 18px "DM Sans", sans-serif';
-      ctx.fillText('✨ SCRATCH METALLIC FOIL ✨', w / 2, h / 2 - 6);
+      ctx.fillText('✨ SCRATCH GOLD FOIL ✨', w / 2, h / 2 - 6);
       ctx.font = '500 13px "DM Sans", sans-serif';
       ctx.fillStyle = 'rgba(84, 54, 12, 0.72)';
       ctx.fillText('Rub here with your finger or cursor', w / 2, h / 2 + 18);
@@ -1469,9 +1255,8 @@
       AudioFX.playChime();
       safeVibrate([70, 35, 110]);
       burstConfetti(64);
-      trackEvent('note_unsealed', { mood: state.activePayload ? state.activePayload.m : 'Auto' });
+      trackEvent('note_unsealed');
 
-      // Gentle Viral Mystery Gift Modal Popup shortly after unseal (only in real receiver view)
       if (state.mode === 'receiver') {
         setTimeout(() => {
           const modal = $('revealShareModal');
@@ -1518,22 +1303,16 @@
     if (!p) return;
 
     const kicker = $('receiverMoodKicker');
-    const idEl = $('receiverCardId');
     const heading = $('postcardHeading');
     const secretEl = $('revealedSecretText');
     const clueEl = $('revealedClueText');
     const waxBadge = $('waxStampBadge');
 
-    if (kicker) {
-      kicker.textContent = p.m && p.m !== 'Auto'
-        ? `${p.m.toUpperCase()} · SECRET POSTCARD`
-        : `${state.festival.emoji} ${state.festival.name.toUpperCase()} · SECRET POSTCARD`;
-    }
-    if (idEl) idEl.textContent = `#${p.id || 'Unseal01'}`;
+    if (kicker) kicker.textContent = 'SECRET POSTCARD';
     if (heading) heading.textContent = `For ${p.r || 'You'}, someone sealed a secret note.`;
     if (secretEl) secretEl.textContent = p.s || '';
     if (clueEl) clueEl.textContent = p.c ? `"${p.c}"` : '"A quiet admirer"';
-    if (waxBadge) waxBadge.textContent = p.m && p.m !== 'Auto' ? Array.from(p.m)[0] : '♥';
+    if (waxBadge) waxBadge.textContent = '♥';
 
     renderVaultForRole('receiver');
   }
@@ -1543,17 +1322,15 @@
     if (!p) return;
 
     const hl = $('readyHeadline');
-    const idBadge = $('readyCardIdBadge');
     const urlText = $('previewUrlText');
     const waTitle = $('waPreviewTitle');
 
     if (hl) hl.textContent = `Sealed for ${p.r || 'Someone'} ✨`;
-    if (idBadge) idBadge.textContent = `#${p.id}`;
     if (urlText) urlText.textContent = state.currentUrl;
-    if (waTitle) waTitle.textContent = `💌 For ${p.r || 'You'} — Tap & Scratch to Unseal Your Secret Note`;
+    if (waTitle) waTitle.textContent = `💌 For ${p.r || 'You'} — Scratch to Unseal`;
   }
 
-  // ==================== PWA INSTALL PROMPT + UNIQUE ORBITAL OVERLAY ====================
+  // ==================== PWA INSTALL PROMPT + ORBITAL OVERLAY ====================
   function isStandalonePwa() {
     if (typeof window === 'undefined') return false;
     return Boolean(
@@ -1569,7 +1346,7 @@
     if (standalone && document.documentElement) {
       document.documentElement.classList.add('is-pwa');
     }
-    const dismissed = lsGet('unseal_v8_bib_dismissed') === '1';
+    const dismissed = lsGet('unseal_v9_bib_dismissed') === '1';
     if (standalone || dismissed) {
       banner.classList.add('hidden');
     } else {
@@ -1599,7 +1376,7 @@
         if (choice && choice.outcome === 'accepted') {
           if (bar && bar.style) bar.style.width = '100%';
           if (title) title.textContent = '🎉 Unseal App Installed!';
-          if (status) status.textContent = 'Welcome to offline fullscreen secret notes + 100 Gift Cards.';
+          if (status) status.textContent = 'Welcome to offline fullscreen secret notes & Story Gifts.';
           burstConfetti(50);
           AudioFX.playChime();
           const b = $('browserInstallBanner');
@@ -1636,14 +1413,12 @@
 
   // ==================== EVENT BINDING ====================
   function bindEvents() {
-    // 1. Composer Actions
     const sealBtn = $('sealCardBtn');
     const recInput = $('recipientInput');
     const senderInput = $('senderNameInput');
     const secretBox = $('secretTextarea');
     const clueInput = $('clueInput');
     const charCount = $('secretCharCount');
-    const clearBtn = $('clearComposerBtn');
 
     if (secretBox && charCount) {
       secretBox.addEventListener('input', () => {
@@ -1651,28 +1426,6 @@
       });
     }
 
-    if (clearBtn && secretBox) {
-      clearBtn.addEventListener('click', () => {
-        secretBox.value = '';
-        if (clueInput) clueInput.value = '';
-        if (charCount) charCount.textContent = '0 / 280';
-        secretBox.focus();
-      });
-    }
-
-    // Mood chips
-    const moodBtns = document.querySelectorAll ? document.querySelectorAll('#moodSelectorRow .mood-chip') : [];
-    for (let i = 0; i < moodBtns.length; i++) {
-      moodBtns[i].addEventListener('click', (e) => {
-        const target = e.currentTarget;
-        state.mood = target.dataset.mood || 'Auto';
-        for (let j = 0; j < moodBtns.length; j++) moodBtns[j].classList.remove('active');
-        target.classList.add('active');
-        AudioFX.playPop();
-      });
-    }
-
-    // Idea chips prefill cleanly
     const ideaChips = document.querySelectorAll ? document.querySelectorAll('#ideasChipsGrid .idea-chip') : [];
     for (let i = 0; i < ideaChips.length; i++) {
       ideaChips[i].addEventListener('click', (e) => {
@@ -1691,7 +1444,6 @@
       });
     }
 
-    // Seal Card
     if (sealBtn) {
       sealBtn.addEventListener('click', () => {
         const sVal = secretBox ? secretBox.value.trim() : '';
@@ -1707,7 +1459,6 @@
           r: rVal,
           s: sVal,
           c: cVal,
-          m: state.mood || 'Auto',
           from: fromVal,
           id: safeRandAlphaId(ALPHA_ID_LEN)
         };
@@ -1718,11 +1469,10 @@
         showView('ready');
         AudioFX.playChime();
         safeVibrate(30);
-        trackEvent('card_sealed', { has_clue: Boolean(cVal), festival: state.festival.id });
+        trackEvent('card_sealed', { has_clue: Boolean(cVal) });
       });
     }
 
-    // 2. Ready View Actions
     const editBtn = $('editSealedBtn');
     const copyBtn = $('copyUrlBtn');
     const waShareBtn = $('whatsappShareBtn');
@@ -1776,7 +1526,7 @@
 
     if (tgBtn) {
       tgBtn.addEventListener('click', () => {
-        const msg = `🤫 Scratch off my secret note on Unseal!`;
+        const msg = '🤫 Scratch off my secret note on Unseal!';
         const href = `https://t.me/share/url?url=${encodeURIComponent(state.currentUrl)}&text=${encodeURIComponent(msg)}`;
         window.open(href, '_blank', 'noopener,noreferrer');
       });
@@ -1787,7 +1537,7 @@
         if (navigator.share) {
           try {
             await navigator.share({ title: 'Unseal Secret Note', text: 'Rub the gold foil to read my secret!', url: state.currentUrl });
-          } catch (_) { /* user cancelled */ }
+          } catch (_) { /* cancelled */ }
         } else if (copyBtn) {
           copyBtn.click();
         }
@@ -1797,7 +1547,6 @@
     if (dlGiftBtn) dlGiftBtn.addEventListener('click', () => generateGiftCardPng('sender', false));
     if (shareGiftImgBtn) shareGiftImgBtn.addEventListener('click', () => generateGiftCardPng('sender', true));
 
-    // 3. Receiver Scratch Card + Interactions
     const backReadyBtn = $('backToReadyBtn');
     const quickRevealBtn = $('quickRevealBtn');
     const scratchCanvas = $('scratchCanvas');
@@ -1823,12 +1572,10 @@
     if (openShareModalBtn) {
       openShareModalBtn.addEventListener('click', () => {
         syncRevealPopupVault();
-        const modal = $('revealShareModal');
-        if (modal) modal.classList.remove('hidden');
+        $('revealShareModal')?.classList.remove('hidden');
       });
     }
 
-    // One-tap Receiver Reactions
     const reactPills = document.querySelectorAll ? document.querySelectorAll('#receiverReactionsRow .react-pill') : [];
     for (let i = 0; i < reactPills.length; i++) {
       reactPills[i].addEventListener('click', (e) => {
@@ -1878,7 +1625,6 @@
       });
     }
 
-    // 4. Reveal Modal Popup Actions
     const closeModalBtn = $('closeRevealModalBtn');
     const modalShareWaBtn = $('modalShareWhatsAppBtn');
     const modalClaimBtn = $('modalClaimGiftBtn');
@@ -1898,14 +1644,14 @@
         generateGiftCardPng(role, false);
       });
     }
-    if (modalShareNativeBtn && nativeBtn) {
+    if (modalShareNativeBtn) {
       modalShareNativeBtn.addEventListener('click', () => {
         if (navigator.share) {
           navigator.share({
-            title: 'Unseal Mystery Gift Vault',
-            text: 'Crack 1 of 100 random Collector Cards on Unseal!',
+            title: 'Unseal Surprise Story Gift',
+            text: 'Send a secret scratch card & claim your bespoke Story Gift on Unseal!',
             url: `${PRODUCTION_ORIGIN}/`
-          }).catch(() => {});
+          }).catch(() => { });
         }
       });
     }
@@ -1916,41 +1662,6 @@
       });
     }
 
-    // 5. Festival Theme Switcher Modal
-    const festBtn = $('festivalThemeBtn');
-    const festRibbonBtn = $('festivalRibbonBtn');
-    const festModal = $('festivalModal');
-    const closeFestBtn = $('closeFestivalModalBtn');
-    const festAutoBtn = $('festivalAutoBtn');
-    const festGrid = $('festivalThemeGrid');
-
-    const openFest = () => {
-      renderFestivalModalGrid();
-      if (festModal) festModal.classList.remove('hidden');
-    };
-    if (festBtn) festBtn.addEventListener('click', openFest);
-    if (festRibbonBtn) festRibbonBtn.addEventListener('click', openFest);
-    if (closeFestBtn) closeFestBtn.addEventListener('click', () => festModal?.classList.add('hidden'));
-    if (festAutoBtn) {
-      festAutoBtn.addEventListener('click', () => {
-        lsRemove('unseal_v8_festival_override');
-        applyFestivalTheme(detectFestivalByDate(), false);
-        festModal?.classList.add('hidden');
-        AudioFX.playPop();
-      });
-    }
-    if (festGrid) {
-      festGrid.addEventListener('click', (e) => {
-        const btn = e.target && e.target.closest ? e.target.closest('.festival-option-btn') : null;
-        if (!btn) return;
-        applyFestivalTheme(btn.dataset.festId, true);
-        AudioFX.playPop();
-        burstConfetti(32);
-        festModal?.classList.add('hidden');
-      });
-    }
-
-    // 6. Header Audio, Fullscreen & Auto PWA Install Triggers
     const audioBtn = $('audioToggleBtn');
     const audioIcon = $('audioToggleIcon');
     if (audioBtn) {
@@ -1970,9 +1681,9 @@
           document.documentElement.requestFullscreen().then(() => {
             fsBtn.setAttribute('aria-pressed', 'true');
             if (fsIcon) fsIcon.textContent = '🗗';
-          }).catch(() => {});
+          }).catch(() => { });
         } else if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
-          document.exitFullscreen().catch(() => {});
+          document.exitFullscreen().catch(() => { });
           fsBtn.setAttribute('aria-pressed', 'false');
           if (fsIcon) fsIcon.textContent = '⛶';
         }
@@ -1990,7 +1701,7 @@
     if (ftrInstall) ftrInstall.addEventListener('click', openInstallAnimationModal);
     if (bibDismiss) {
       bibDismiss.addEventListener('click', () => {
-        lsSet('unseal_v8_bib_dismissed', '1');
+        lsSet('unseal_v9_bib_dismissed', '1');
         $('browserInstallBanner')?.classList.add('hidden');
       });
     }
@@ -2002,7 +1713,6 @@
       refreshInstallBannerVisibility();
     });
 
-    // 7. Legal Compliance Modal & Mailto Form
     const legalModal = $('legalModal');
     const closeLegal = $('closeLegalModalBtn');
     const legalLinks = document.querySelectorAll ? document.querySelectorAll('[data-open-legal]') : [];
@@ -2056,21 +1766,14 @@
   function registerServiceWorker() {
     try {
       if (navigator && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
+        navigator.serviceWorker.register('./sw.js').catch(() => { });
       }
     } catch (_) { /* ignore */ }
   }
 
   function bootstrap() {
     initAnalyticsAndAds();
-
-    // Load saved override or automatic Indian & Worldwide festival calendar theme
-    const savedFest = lsGet('unseal_v8_festival_override');
-    const festId = savedFest && FESTIVAL_THEMES.some((t) => t.id === savedFest)
-      ? savedFest
-      : detectFestivalByDate();
-    applyFestivalTheme(festId, false);
-
+    applySilentDateTheme();
     refreshInstallBannerVisibility();
     initLiveCounter();
     bindEvents();

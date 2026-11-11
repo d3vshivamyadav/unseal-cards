@@ -1,176 +1,145 @@
 /* ==========================================================================
-   UNSEAL v8 — Flagship Full-Screen Stylesheet
-   Smooth Velvet Stationery (Zero Ruled Lines) · 12 Festival Themes · PWA UI
+   UNSEAL v9 — Atelier Luxury Redesign
+   - Smooth Frosted Porcelain & Velvet Stationery (Zero Book Lines)
+   - Silent Date-Driven Background Ambience (12 Indian & Global Themes)
+   - Bespoke Mystery Gift Vault (Zero Exposed Edition Numbers)
+   - Full-Ratio Screen Fit Across Mobile, Tablet, Laptop & PWA
    ========================================================================== */
 
 :root {
-  --bg: #FAF6F0;
-  --bg-glow-1: rgba(217, 56, 58, 0.08);
-  --bg-glow-2: rgba(212, 168, 83, 0.14);
-  --surface: #FFFFFF;
-  --surface-soft: #F7F1E7;
-  --border: #E8DFD1;
-  --text: #1E1B18;
-  --muted: #665E55;
+  --bg: #F9F4EC;
+  --bg-glow-1: rgba(200, 40, 43, 0.10);
+  --bg-glow-2: rgba(208, 162, 72, 0.18);
+  --surface: rgba(255, 253, 249, 0.93);
+  --surface-soft: #F7EFE2;
+  --border: #E8DEC9;
+  --text: #1B1815;
+  --muted: #675E54;
   --accent: #C8282B;
-  --accent-dark: #9B1B1E;
-  --gold: #C79A3E;
-  --gold-light: #F3E0B5;
+  --accent-dark: #97191C;
+  --gold: #C89B3C;
+  --gold-light: #F6E2B3;
   --whatsapp: #1FAF54;
-  --whatsapp-dark: #158B40;
-  --sparkle-color: rgba(200, 145, 50, 0.55);
-  --ribbon-bg: #FFF9EE;
-  --ribbon-border: #EADBC0;
-  --ribbon-text: #6E4713;
-  --shadow-lg: 0 24px 60px rgba(35, 24, 16, 0.10), 0 4px 16px rgba(35, 24, 16, 0.05);
-  --shadow-sm: 0 6px 20px rgba(35, 24, 16, 0.06);
+  --whatsapp-dark: #14893E;
+  --sparkle-color: rgba(200, 152, 54, 0.56);
+  --shadow-lg:
+    0 28px 65px rgba(32, 22, 14, 0.12),
+    0 6px 18px rgba(32, 22, 14, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   --font-serif: 'Playfair Display', Georgia, serif;
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-script: 'Caveat', 'Kalam', 'Noto Sans Devanagari', cursive, sans-serif;
 }
 
-/* ==================== 12 INDIAN & WORLDWIDE FESTIVAL THEMES ==================== */
+/* ==================== SILENT BACKGROUND DATE THEMES (12 SEASONS/FESTIVALS) ==================== */
 html[data-festival="diwali"] {
-  --bg: #FBF4E6;
-  --bg-glow-1: rgba(232, 138, 28, 0.18);
-  --bg-glow-2: rgba(186, 45, 76, 0.14);
+  --bg: #FAF2E3;
+  --bg-glow-1: rgba(230, 134, 24, 0.19);
+  --bg-glow-2: rgba(188, 42, 72, 0.15);
   --accent: #C93818;
-  --accent-dark: #97220B;
-  --gold: #D18E1F;
+  --accent-dark: #94210A;
+  --gold: #CF8C1D;
   --sparkle-color: rgba(218, 128, 18, 0.72);
-  --ribbon-bg: #FFF3D6;
-  --ribbon-border: #E8C67A;
-  --ribbon-text: #7A3B08;
 }
 
 html[data-festival="holi"] {
-  --bg: #FDF5FB;
-  --bg-glow-1: rgba(232, 48, 140, 0.16);
+  --bg: #FDF4FA;
+  --bg-glow-1: rgba(224, 42, 132, 0.16);
   --bg-glow-2: rgba(34, 184, 207, 0.16);
   --accent: #D6247A;
-  --accent-dark: #9D1658;
-  --gold: #E5851A;
+  --accent-dark: #9C1557;
+  --gold: #E3841A;
   --sparkle-color: rgba(214, 36, 122, 0.65);
-  --ribbon-bg: #FFE9F6;
-  --ribbon-border: #F2B5D9;
-  --ribbon-text: #7F124C;
 }
 
 html[data-festival="eid"] {
-  --bg: #F3F8F5;
+  --bg: #F2F8F4;
   --bg-glow-1: rgba(16, 128, 92, 0.16);
   --bg-glow-2: rgba(208, 160, 62, 0.18);
   --accent: #0E7A56;
   --accent-dark: #09573D;
   --gold: #C89932;
-  --sparkle-color: rgba(196, 152, 46, 0.7);
-  --ribbon-bg: #E8F5EE;
-  --ribbon-border: #A8D5BE;
-  --ribbon-text: #0A533A;
+  --sparkle-color: rgba(196, 152, 46, 0.70);
 }
 
 html[data-festival="navratri"] {
-  --bg: #FFF5EF;
+  --bg: #FFF4EE;
   --bg-glow-1: rgba(232, 89, 12, 0.17);
   --bg-glow-2: rgba(190, 24, 93, 0.14);
   --accent: #D9480F;
   --accent-dark: #A63307;
   --gold: #D49123;
   --sparkle-color: rgba(217, 72, 15, 0.65);
-  --ribbon-bg: #FFEDE0;
-  --ribbon-border: #F4BE9A;
-  --ribbon-text: #842B08;
 }
 
 html[data-festival="rakhi"] {
-  --bg: #FDF4F2;
+  --bg: #FDF3F2;
   --bg-glow-1: rgba(214, 51, 108, 0.15);
   --bg-glow-2: rgba(212, 162, 58, 0.16);
   --accent: #C2255C;
   --accent-dark: #8E1641;
   --gold: #CA9229;
   --sparkle-color: rgba(194, 37, 92, 0.62);
-  --ribbon-bg: #FFEAF1;
-  --ribbon-border: #F0BAD0;
-  --ribbon-text: #7A143A;
 }
 
 html[data-festival="pongal"] {
-  --bg: #FBF7EC;
+  --bg: #FAF6EA;
   --bg-glow-1: rgba(217, 119, 6, 0.16);
   --bg-glow-2: rgba(22, 163, 74, 0.13);
   --accent: #C2590B;
   --accent-dark: #8E3F05;
   --gold: #CA8A04;
   --sparkle-color: rgba(194, 89, 11, 0.62);
-  --ribbon-bg: #FEF2D8;
-  --ribbon-border: #E8CA88;
-  --ribbon-text: #723707;
 }
 
 html[data-festival="newyear"] {
-  --bg: #F6F5FB;
+  --bg: #F5F4FB;
   --bg-glow-1: rgba(91, 61, 214, 0.15);
   --bg-glow-2: rgba(212, 168, 83, 0.18);
   --accent: #5234C8;
   --accent-dark: #3B229C;
   --gold: #C8972F;
   --sparkle-color: rgba(108, 72, 224, 0.62);
-  --ribbon-bg: #EFEBFF;
-  --ribbon-border: #CFC3F8;
-  --ribbon-text: #3A2291;
 }
 
 html[data-festival="valentine"] {
-  --bg: #FFF3F5;
+  --bg: #FFF2F5;
   --bg-glow-1: rgba(225, 29, 72, 0.16);
   --bg-glow-2: rgba(244, 114, 182, 0.16);
   --accent: #D01B46;
   --accent-dark: #9B1032;
   --gold: #C88A56;
   --sparkle-color: rgba(208, 27, 70, 0.65);
-  --ribbon-bg: #FFE6EB;
-  --ribbon-border: #F5B8C6;
-  --ribbon-text: #83112D;
 }
 
 html[data-festival="cherry"] {
-  --bg: #FDF5F7;
+  --bg: #FDF4F7;
   --bg-glow-1: rgba(236, 72, 153, 0.13);
   --bg-glow-2: rgba(251, 182, 206, 0.22);
   --accent: #C0386B;
   --accent-dark: #93244E;
   --gold: #C89260;
   --sparkle-color: rgba(220, 92, 140, 0.62);
-  --ribbon-bg: #FCEBF1;
-  --ribbon-border: #F3C4D5;
-  --ribbon-text: #7E2044;
 }
 
 html[data-festival="halloween"] {
-  --bg: #FBF5F0;
+  --bg: #FAF4EE;
   --bg-glow-1: rgba(234, 88, 12, 0.17);
   --bg-glow-2: rgba(126, 34, 206, 0.14);
   --accent: #C2410C;
   --accent-dark: #8C2D07;
   --gold: #D97706;
   --sparkle-color: rgba(194, 65, 12, 0.66);
-  --ribbon-bg: #FFEDE0;
-  --ribbon-border: #F2BA93;
-  --ribbon-text: #7A2908;
 }
 
 html[data-festival="christmas"] {
-  --bg: #F5F9F6;
+  --bg: #F4F9F5;
   --bg-glow-1: rgba(22, 128, 72, 0.15);
   --bg-glow-2: rgba(200, 40, 43, 0.14);
   --accent: #B81F28;
   --accent-dark: #89131B;
   --gold: #C29132;
   --sparkle-color: rgba(22, 128, 72, 0.62);
-  --ribbon-bg: #EAF5EE;
-  --ribbon-border: #B5D9C0;
-  --ribbon-text: #125832;
 }
 
 /* ==================== RESET & BASE ==================== */
@@ -211,7 +180,7 @@ button {
   display: none !important;
 }
 
-/* ==================== AUTO BROWSER PWA INSTALL BANNER ==================== */
+/* ==================== AUTO BROWSER PWA INSTALL PROMPT ==================== */
 .browser-install-banner {
   position: sticky;
   top: 0;
@@ -220,17 +189,24 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.65rem;
-  padding: 0.55rem 1rem;
-  background: linear-gradient(90deg, #1F1916 0%, #31231E 100%);
+  padding: 0.52rem 1rem;
+  background: linear-gradient(90deg, #1A1512 0%, #2B201A 100%);
   color: #FFFDF9;
   border-bottom: 1px solid rgba(212, 168, 83, 0.38);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
-  animation: bannerSlideDown 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  animation: bannerSlideDown 0.36s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes bannerSlideDown {
-  from { opacity: 0; transform: translateY(-100%); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .bib-left {
@@ -241,11 +217,11 @@ button {
 }
 
 .bib-icon {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 9px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
 }
 
 .bib-copy {
@@ -255,7 +231,7 @@ button {
 }
 
 .bib-copy strong {
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #FFFDF9;
   white-space: nowrap;
@@ -264,7 +240,7 @@ button {
 }
 
 .bib-copy span {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #E3D6C3;
   white-space: nowrap;
   overflow: hidden;
@@ -274,20 +250,20 @@ button {
 .bib-actions {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.42rem;
   flex-shrink: 0;
 }
 
 .bib-install-btn {
   border: none;
   border-radius: 999px;
-  padding: 0.42rem 0.9rem;
-  font-size: 0.78rem;
+  padding: 0.38rem 0.88rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  color: #1E1B18;
-  background: linear-gradient(135deg, #F5E1B0 0%, #DCA946 100%);
-  box-shadow: 0 3px 10px rgba(220, 169, 70, 0.35);
-  transition: transform 0.18s ease;
+  color: #1B1815;
+  background: linear-gradient(135deg, #F6E2B3 0%, #DCA844 100%);
+  box-shadow: 0 3px 12px rgba(220, 168, 68, 0.36);
+  transition: transform 0.16s ease;
 }
 
 .bib-install-btn:hover {
@@ -298,16 +274,16 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.08);
   color: #EAE0D2;
-  width: 28px;
-  height: 28px;
+  width: 27px;
+  height: 27px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
 }
 
-/* ==================== FULL-SCREEN ADAPTIVE APP SHELL ==================== */
+/* ==================== FULL-SCREEN ADAPTIVE ATELIER SHELL ==================== */
 .app-fullscreen-shell {
   min-height: 100vh;
   min-height: 100dvh;
@@ -317,13 +293,12 @@ button {
   position: relative;
   overflow-x: clip;
   background:
-    radial-gradient(circle at 12% 14%, var(--bg-glow-1), transparent 46%),
-    radial-gradient(circle at 88% 82%, var(--bg-glow-2), transparent 50%),
+    radial-gradient(ellipse at 14% 12%, var(--bg-glow-1), transparent 48%),
+    radial-gradient(ellipse at 86% 84%, var(--bg-glow-2), transparent 52%),
     var(--bg);
-  transition: background 0.45s ease;
+  transition: background 0.55s ease;
 }
 
-/* Ambient Floating Festival Sparkles */
 .ambient-sparkles {
   position: fixed;
   inset: 0;
@@ -335,34 +310,70 @@ button {
 .spark-dot {
   position: absolute;
   color: var(--sparkle-color);
-  font-size: 1.05rem;
+  font-size: 1rem;
   animation: floatSpark 11s ease-in-out infinite;
-  opacity: 0.6;
+  opacity: 0.56;
 }
 
 .spark-dot::before {
   content: attr(data-glyph);
 }
 
-.spark-dot.s1 { top: 14%; left: 7%; animation-delay: 0s; }
-.spark-dot.s2 { top: 22%; right: 8%; animation-delay: 2.1s; font-size: 1.25rem; }
-.spark-dot.s3 { bottom: 26%; left: 10%; animation-delay: 4.2s; font-size: 1.15rem; }
-.spark-dot.s4 { bottom: 18%; right: 11%; animation-delay: 6.3s; }
-.spark-dot.s5 { top: 52%; left: 4%; animation-delay: 8.1s; font-size: 0.95rem; }
-
-@keyframes floatSpark {
-  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.42; }
-  50% { transform: translateY(-16px) rotate(10deg) scale(1.16); opacity: 0.78; }
+.spark-dot.s1 {
+  top: 15%;
+  left: 7%;
+  animation-delay: 0s;
 }
 
-/* ==================== TOP HEADER BAR ==================== */
+.spark-dot.s2 {
+  top: 24%;
+  right: 8%;
+  animation-delay: 2.2s;
+  font-size: 1.2rem;
+}
+
+.spark-dot.s3 {
+  bottom: 26%;
+  left: 10%;
+  animation-delay: 4.3s;
+  font-size: 1.1rem;
+}
+
+.spark-dot.s4 {
+  bottom: 18%;
+  right: 11%;
+  animation-delay: 6.4s;
+}
+
+.spark-dot.s5 {
+  top: 52%;
+  left: 4%;
+  animation-delay: 8.3s;
+  font-size: 0.92rem;
+}
+
+@keyframes floatSpark {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 0.38;
+  }
+
+  50% {
+    transform: translateY(-16px) rotate(12deg) scale(1.16);
+    opacity: 0.76;
+  }
+}
+
+/* ==================== CLEAN MINIMAL HEADER ==================== */
 .site-header {
   position: relative;
   z-index: 15;
   width: 100%;
-  max-width: 1120px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 0.85rem 1.25rem;
+  padding: 0.9rem 1.25rem 0.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -372,7 +383,7 @@ button {
 .brand-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.52rem;
   text-decoration: none;
   color: var(--text);
   flex-shrink: 0;
@@ -381,18 +392,18 @@ button {
 .brand-logo-img {
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: 9px;
 }
 
 .brand-wordmark-wrap {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.25rem;
+  gap: 0.24rem;
 }
 
 .brand-wordmark {
   font-family: var(--font-serif);
-  font-size: 1.42rem;
+  font-size: 1.44rem;
   font-weight: 700;
   font-style: italic;
   letter-spacing: -0.02em;
@@ -410,21 +421,19 @@ button {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.42rem;
-  flex-wrap: nowrap;
+  gap: 0.44rem;
 }
 
-.festival-pill-btn,
 .install-app-btn,
 .audio-toggle-btn,
 .icon-pill-btn {
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(8px);
+  border: 1px solid rgba(226, 214, 194, 0.9);
+  background: rgba(255, 253, 249, 0.85);
+  backdrop-filter: blur(10px);
   color: var(--text);
   border-radius: 999px;
   height: 34px;
-  padding: 0 0.72rem;
+  padding: 0 0.78rem;
   font-size: 0.77rem;
   font-weight: 600;
   display: inline-flex;
@@ -434,14 +443,8 @@ button {
   white-space: nowrap;
 }
 
-.festival-pill-btn {
-  border-color: var(--ribbon-border);
-  background: var(--ribbon-bg);
-  color: var(--ribbon-text);
-}
-
 .install-app-btn {
-  border-color: rgba(200, 40, 43, 0.25);
+  border-color: rgba(200, 40, 43, 0.28);
   color: var(--accent);
 }
 
@@ -452,7 +455,6 @@ button {
   font-size: 0.92rem;
 }
 
-.festival-pill-btn:hover,
 .install-app-btn:hover,
 .audio-toggle-btn:hover,
 .icon-pill-btn:hover {
@@ -466,65 +468,47 @@ button {
   border-color: var(--text);
 }
 
-/* ==================== MAIN FULL-RATIO CENTERED STAGE ==================== */
+/* ==================== MAIN CENTERED FULL-RATIO STAGE ==================== */
 .main-stage {
   position: relative;
   z-index: 10;
   flex: 1;
   width: 100%;
-  max-width: 540px;
+  max-width: 500px;
   margin: 0 auto;
-  padding: 0.25rem 1rem 0.9rem;
+  padding: 0.35rem 1rem 0.9rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.festival-ribbon-wrap {
-  margin-bottom: 0.65rem;
-  text-align: center;
-  max-width: 100%;
-}
-
-.festival-ribbon-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.32rem 0.85rem;
-  border-radius: 999px;
-  background: var(--ribbon-bg);
-  border: 1px solid var(--ribbon-border);
-  color: var(--ribbon-text);
-  font-size: 0.75rem;
-  font-weight: 600;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
-  transition: transform 0.18s ease;
-  max-width: 100%;
-}
-
-.festival-ribbon-pill:hover {
-  transform: translateY(-1px);
-}
-
 .stage-view {
   width: 100%;
 }
 
-/* ==================== MAIN STATIONERY CARDS (SMOOTH PARCHMENT) ==================== */
+/* ==================== ATELIER PORCELAIN CARDS ==================== */
 .paper-card {
   width: 100%;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 1.4rem 1.35rem 1.35rem;
+  backdrop-filter: blur(22px);
+  border: 1px solid rgba(228, 216, 196, 0.95);
+  border-radius: 26px;
+  padding: 1.5rem 1.42rem 1.42rem;
   box-shadow: var(--shadow-lg);
-  animation: cardFadeUp 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: cardFadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes cardFadeUp {
-  from { opacity: 0; transform: translateY(10px) scale(0.99); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .card-top-meta {
@@ -532,14 +516,14 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.5rem;
 }
 
 .kicker-badge {
   display: inline-block;
-  font-size: 0.67rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -549,82 +533,50 @@ button {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: radial-gradient(circle at 32% 30%, #E65052, var(--accent) 60%, var(--accent-dark));
+  background: radial-gradient(circle at 32% 30%, #EB585A, var(--accent) 58%, var(--accent-dark));
   color: #FFFDF8;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(175, 32, 34, 0.28), inset 0 1px 2px rgba(255, 255, 255, 0.45);
+  box-shadow: 0 5px 14px rgba(175, 32, 34, 0.28), inset 0 1px 2px rgba(255, 255, 255, 0.45);
   flex-shrink: 0;
 }
 
 .card-headline {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.34rem;
   font-family: var(--font-serif);
-  font-size: clamp(1.38rem, 4.2vw, 1.8rem);
-  line-height: 1.16;
+  font-size: clamp(1.4rem, 4.3vw, 1.82rem);
+  line-height: 1.15;
   font-weight: 700;
+  letter-spacing: -0.015em;
   color: var(--text);
 }
 
 .card-lead {
-  margin: 0 0 0.95rem;
+  margin: 0 0 1rem;
   font-size: 0.87rem;
   color: var(--muted);
   line-height: 1.48;
 }
 
-/* ==================== MOOD VIBE CHIPS ==================== */
-.mood-chips-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.34rem;
-  margin-bottom: 0.82rem;
-}
-
-.mood-chip {
-  border: 1px solid var(--border);
-  background: var(--surface-soft);
-  color: var(--muted);
-  border-radius: 999px;
-  padding: 0.28rem 0.6rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: all 0.16s ease;
-}
-
-.mood-chip:hover {
-  border-color: var(--gold);
-  color: var(--text);
-}
-
-.mood-chip.active {
-  background: var(--text);
-  color: #FFFDF9;
-  border-color: var(--text);
-}
-
-/* ==================== FORM INPUTS & SMOOTH UNLINED LETTER BOX ==================== */
+/* ==================== CLEAN COMPOSER INPUTS & UNLINED VELLUM ==================== */
 .form-stack {
   display: flex;
   flex-direction: column;
-  gap: 0.82rem;
+  gap: 0.86rem;
 }
 
 .name-pair-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.7rem;
+  gap: 0.72rem;
 }
 
 .field-group {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.28rem;
 }
 
 .field-label {
@@ -649,10 +601,10 @@ button {
 
 .text-input {
   width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.68rem 0.85rem;
-  font-size: 0.92rem;
+  border: 1px solid #E5DAC6;
+  border-radius: 13px;
+  padding: 0.68rem 0.86rem;
+  font-size: 0.9rem;
   color: var(--text);
   background: #FFFDF9;
   outline: none;
@@ -661,26 +613,26 @@ button {
 
 .text-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(200, 40, 43, 0.1);
+  box-shadow: 0 0 0 3px rgba(200, 40, 43, 0.10);
 }
 
 .text-input-compact {
-  padding: 0.58rem 0.8rem;
+  padding: 0.6rem 0.82rem;
   font-size: 0.86rem;
 }
 
-/* SMOOTH VELVET PARCHMENT — ZERO BOOK/NOTEBOOK HORIZONTAL LINES */
+/* SMOOTH VELVET PARCHMENT — ZERO BOOK OR NOTEBOOK LINES */
 .signature-letter-box {
   position: relative;
-  border-radius: 16px;
-  border: 1px solid #E3D6C0;
+  border-radius: 18px;
+  border: 1px solid #E2D5BE;
   background: linear-gradient(180deg, #FFFDF9 0%, #FAF3E6 100%);
   box-shadow:
     inset 0 0 0 4px #FFFDF9,
-    inset 0 0 0 5px rgba(199, 154, 62, 0.24),
-    0 4px 14px rgba(35, 24, 16, 0.04);
-  padding: 0.75rem 0.95rem 0.5rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    inset 0 0 0 5px rgba(200, 155, 60, 0.24),
+    0 4px 16px rgba(32, 22, 14, 0.04);
+  padding: 0.82rem 1rem 0.52rem;
+  transition: border-color 0.2s ease;
 }
 
 .signature-letter-box:focus-within {
@@ -694,23 +646,29 @@ button {
   resize: none;
   outline: none;
   font-family: var(--font-script);
-  font-size: 1.48rem;
+  font-size: 1.5rem;
   line-height: 1.38;
-  color: #1F1B18;
-  min-height: 104px;
+  color: #1B1815;
+  min-height: 108px;
 }
 
 .letter-textarea::placeholder {
   color: #A79C8E;
-  font-size: 1.25rem;
+  font-size: 1.24rem;
 }
 
 .letter-box-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 0.25rem;
-  border-top: 1px dashed rgba(199, 154, 62, 0.24);
+  padding-top: 0.28rem;
+  border-top: 1px dashed rgba(200, 155, 60, 0.22);
+}
+
+.vellum-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #968A7B;
 }
 
 .text-action-btn {
@@ -728,27 +686,54 @@ button {
 }
 
 .char-count {
-  font-size: 0.73rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--muted);
 }
 
+/* METALLIC SPECULAR PRIMARY SEAL CTA */
 .wax-seal-btn {
+  position: relative;
+  overflow: hidden;
   width: 100%;
   border: none;
-  border-radius: 14px;
-  padding: 0.9rem 1.2rem;
+  border-radius: 15px;
+  padding: 0.92rem 1.2rem;
   font-size: 0.96rem;
   font-weight: 700;
   color: #FFFDF8;
-  background: linear-gradient(135deg, #D9383A 0%, var(--accent) 55%, var(--accent-dark) 100%);
-  box-shadow: 0 10px 26px rgba(185, 28, 28, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #DC3A3D 0%, var(--accent) 55%, var(--accent-dark) 100%);
+  box-shadow: 0 12px 28px rgba(185, 28, 28, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.32);
   transition: transform 0.16s ease, box-shadow 0.2s ease;
+}
+
+.wax-seal-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 45%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: rotate(22deg);
+  animation: ctaSweep 4.8s ease-in-out infinite;
+}
+
+@keyframes ctaSweep {
+
+  0%,
+  60% {
+    left: -60%;
+  }
+
+  100% {
+    left: 130%;
+  }
 }
 
 .wax-seal-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 30px rgba(185, 28, 28, 0.34);
+  box-shadow: 0 16px 34px rgba(185, 28, 28, 0.34);
 }
 
 .wax-seal-btn:active {
@@ -758,39 +743,21 @@ button {
 /* ==================== SENDER READY VIEW ==================== */
 .ready-top-bar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
   margin-bottom: 0.8rem;
 }
 
 .ready-title {
-  margin: 0.15rem 0 0;
+  margin: 0.14rem 0 0;
   font-family: var(--font-serif);
-  font-size: clamp(1.12rem, 4vw, 1.36rem);
+  font-size: clamp(1.18rem, 4vw, 1.42rem);
   line-height: 1.2;
 }
 
-.ready-top-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-shrink: 0;
-}
-
-.mono-id-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.73rem;
-  font-weight: 700;
-  padding: 0.24rem 0.55rem;
-  border-radius: 8px;
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-
 .url-trust-wrap {
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.78rem;
 }
 
 .url-copy-bar {
@@ -798,8 +765,8 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.48rem 0.55rem 0.48rem 0.75rem;
-  border-radius: 12px;
+  padding: 0.48rem 0.52rem 0.48rem 0.78rem;
+  border-radius: 13px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
 }
@@ -813,7 +780,7 @@ button {
 
 .url-preview-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.77rem;
+  font-size: 0.76rem;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -832,81 +799,74 @@ button {
 }
 
 .link-trust-caption {
-  margin: 0.35rem 0 0 0.15rem;
-  font-size: 0.72rem;
-  color: #1A7A42;
+  margin: 0.32rem 0 0 0.15rem;
+  font-size: 0.71rem;
+  color: #167A40;
   font-weight: 600;
 }
 
-/* ==================== WHATSAPP PREVIEW CARD ==================== */
-.wa-link-preview-shell {
-  margin-bottom: 0.85rem;
-}
-
-.wa-preview-kicker {
-  display: block;
-  font-size: 0.67rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  margin-bottom: 0.35rem;
-}
-
-.wa-preview-card {
+/* SLEEK COMPACT WHATSAPP LINK PREVIEW PILL */
+.wa-mini-preview {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 0.72rem;
+  padding: 0.52rem;
   border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid #DCE7DC;
-  background: #EFF7EF;
+  border: 1px solid #D7E5D7;
+  background: #EFF7F0;
+  margin-bottom: 0.82rem;
 }
 
-.wa-preview-thumb {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1200 / 630;
+.wa-mini-thumb {
+  width: 96px;
+  height: 50px;
+  border-radius: 9px;
   object-fit: cover;
-  display: block;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.wa-preview-body {
-  padding: 0.62rem 0.8rem 0.72rem;
+.wa-mini-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.16rem;
+  min-width: 0;
 }
 
-.wa-preview-domain {
-  font-size: 0.69rem;
+.wa-mini-domain {
+  font-size: 0.66rem;
   font-weight: 700;
   color: #167942;
 }
 
-.wa-preview-title {
-  font-size: 0.85rem;
-  color: #16241B;
-  line-height: 1.3;
+.wa-mini-title {
+  font-size: 0.8rem;
+  color: #142218;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.wa-preview-desc {
-  font-size: 0.74rem;
-  color: #4A5A50;
-  line-height: 1.35;
+.wa-mini-sub {
+  font-size: 0.7rem;
+  color: #485A4E;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ==================== SHARE ACTION BUTTONS ==================== */
+/* ==================== SHARE BUTTONS ==================== */
 .share-actions-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.55rem;
-  margin-bottom: 1rem;
+  gap: 0.52rem;
+  margin-bottom: 0.95rem;
 }
 
 .btn-whatsapp,
 .btn-instagram,
 .btn-soft,
 .btn-gold-gift {
-  border-radius: 12px;
+  border-radius: 13px;
   padding: 0.72rem 0.85rem;
   font-size: 0.82rem;
   font-weight: 700;
@@ -929,7 +889,7 @@ button {
   grid-column: span 2;
   background: linear-gradient(135deg, #25D366 0%, var(--whatsapp-dark) 100%);
   color: #FFFFFF;
-  box-shadow: 0 8px 20px rgba(31, 175, 84, 0.25);
+  box-shadow: 0 8px 22px rgba(31, 175, 84, 0.26);
 }
 
 .btn-instagram {
@@ -948,16 +908,16 @@ button {
 .btn-gold-gift {
   background: linear-gradient(135deg, #F5DC9B 0%, #CFA03B 100%);
   color: #1E1810;
-  box-shadow: 0 8px 20px rgba(207, 160, 59, 0.3);
+  box-shadow: 0 8px 20px rgba(207, 160, 59, 0.30);
 }
 
-/* ==================== 100-DESIGN MYSTERY GIFT VAULT ==================== */
+/* ==================== BESPOKE SURPRISE GIFT VAULT ==================== */
 .gift-reward-panel {
-  border: 1px solid #EBDAB6;
-  background: linear-gradient(180deg, #FFFBF2 0%, #FDF4E1 100%);
-  border-radius: 18px;
+  border: 1px solid #EAD8B3;
+  background: linear-gradient(180deg, #FFFBF3 0%, #FCF3E0 100%);
+  border-radius: 19px;
   padding: 0.95rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.82rem;
 }
 
 .gift-header-row {
@@ -965,7 +925,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.42rem;
 }
 
 .gift-badge {
@@ -976,39 +936,39 @@ button {
 }
 
 .gift-status-tag {
-  font-size: 0.72rem;
+  font-size: 0.71rem;
   font-weight: 700;
-  padding: 0.2rem 0.55rem;
+  padding: 0.18rem 0.58rem;
   border-radius: 999px;
-  background: #F4E4C0;
+  background: #F4E3BD;
   color: #6B430A;
 }
 
 .gift-desc {
-  margin: 0 0 0.75rem;
-  font-size: 0.8rem;
+  margin: 0 0 0.72rem;
+  font-size: 0.79rem;
   color: #5A4B38;
-  line-height: 1.45;
+  line-height: 1.44;
 }
 
 .quest-meter-box {
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.78rem;
 }
 
 .wax-seals-row {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0.42rem;
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.44rem;
 }
 
 .wax-slot {
-  height: 30px;
+  height: 29px;
   border-radius: 999px;
   border: 1.5px dashed #D8BE8B;
   background: #FFF9EB;
   color: #9A773E;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -1019,9 +979,9 @@ button {
 .wax-slot.is-cracked {
   border-style: solid;
   border-color: var(--accent);
-  background: linear-gradient(135deg, #D9383A, var(--accent-dark));
+  background: linear-gradient(135deg, #DC3A3D, var(--accent-dark));
   color: #FFFFFF;
-  box-shadow: 0 3px 10px rgba(200, 40, 43, 0.25);
+  box-shadow: 0 3px 10px rgba(200, 40, 43, 0.26);
 }
 
 .quest-bar-track {
@@ -1039,17 +999,17 @@ button {
   transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* 100-Design Procedural SVG Mini Collector Card */
+/* Live Bespoke Vector Gift Card (No numbers exposed) */
 .gift-mini-card {
   position: relative;
-  border-radius: 16px;
+  border-radius: 17px;
   overflow: hidden;
-  min-height: 194px;
-  margin-bottom: 0.75rem;
+  min-height: 192px;
+  margin-bottom: 0.74rem;
   background: var(--gift-bg, linear-gradient(135deg, #22191C 0%, #3D1F28 100%));
   color: var(--gift-ink, #FFF8EC);
-  border: 1px solid rgba(255, 224, 150, 0.36);
-  box-shadow: 0 12px 28px rgba(24, 18, 16, 0.22);
+  border: 1px solid rgba(255, 224, 150, 0.38);
+  box-shadow: 0 14px 32px rgba(24, 18, 16, 0.22);
 }
 
 .gift-pattern-svg {
@@ -1064,8 +1024,8 @@ button {
 .gift-mini-inner {
   position: relative;
   z-index: 1;
-  min-height: 194px;
-  padding: 0.9rem 1rem;
+  min-height: 192px;
+  padding: 0.88rem 1rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1074,7 +1034,7 @@ button {
 
 .gift-mini-card.is-locked-vault .gift-mini-inner,
 .gift-mini-card.is-locked-vault .gift-pattern-svg {
-  filter: blur(7px) saturate(0.8);
+  filter: blur(7px) saturate(0.82);
   transform: scale(1.03);
 }
 
@@ -1084,7 +1044,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.67rem;
+  font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   opacity: 0.9;
@@ -1092,13 +1052,13 @@ button {
 
 .gift-mini-center {
   text-align: center;
-  padding: 0.45rem 0;
+  padding: 0.4rem 0;
 }
 
 .gift-mini-crest {
   font-size: 1.75rem;
   line-height: 1.1;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.22rem;
 }
 
 .gift-mini-main {
@@ -1119,7 +1079,7 @@ button {
   position: absolute;
   inset: 0;
   z-index: 2;
-  background: rgba(18, 14, 13, 0.62);
+  background: rgba(18, 14, 13, 0.64);
   backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
@@ -1138,18 +1098,18 @@ button {
 
 .vault-lock-icon {
   font-size: 1.55rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.22rem;
 }
 
 .vault-lock-veil strong {
   font-size: 0.92rem;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.18rem;
 }
 
 .vault-lock-veil span:last-child {
   font-size: 0.74rem;
   color: #E5D7C3;
-  max-width: 260px;
+  max-width: 250px;
 }
 
 .quest-cta-btn {
@@ -1168,7 +1128,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding-top: 0.25rem;
+  padding-top: 0.22rem;
 }
 
 .dot-sep {
@@ -1180,32 +1140,25 @@ button {
   margin-bottom: 0.55rem;
 }
 
-.receiver-meta-left {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-}
-
 .postcard-heading {
-  margin-bottom: 0.95rem;
+  margin-bottom: 0.9rem;
 }
 
 .scratch-box {
   position: relative;
-  border-radius: 18px;
+  border-radius: 19px;
   overflow: hidden;
-  min-height: 220px;
+  min-height: 222px;
   border: 1px solid #DFD1BA;
-  box-shadow: 0 8px 24px rgba(35, 24, 16, 0.08);
+  box-shadow: 0 10px 26px rgba(32, 22, 14, 0.08);
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* SMOOTH LUXURY PAPER UNDER FOIL — ZERO HORIZONTAL BOOK LINES */
+/* SMOOTH VELVET PAPER UNDER FOIL — ZERO HORIZONTAL BOOK LINES */
 .underneath-secret-box {
-  min-height: 220px;
+  min-height: 222px;
   padding: 1.25rem 1.2rem 1rem;
   display: flex;
   flex-direction: column;
@@ -1213,22 +1166,22 @@ button {
   background: linear-gradient(180deg, #FFFDF9 0%, #FAF3E6 100%);
   box-shadow:
     inset 0 0 0 6px #FFFDF9,
-    inset 0 0 0 7px rgba(199, 154, 62, 0.30);
+    inset 0 0 0 7px rgba(200, 155, 60, 0.30);
 }
 
 .note-kicker {
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.12em;
   color: var(--accent);
 }
 
 .revealed-secret-text {
-  margin: 0.6rem 0;
+  margin: 0.55rem 0;
   font-family: var(--font-script);
-  font-size: clamp(1.52rem, 4.8vw, 1.85rem);
+  font-size: clamp(1.52rem, 4.8vw, 1.88rem);
   line-height: 1.32;
-  color: #1F1B18;
+  color: #1B1815;
   word-break: break-word;
   text-align: center;
 }
@@ -1239,7 +1192,7 @@ button {
   justify-content: space-between;
   font-size: 0.72rem;
   color: var(--muted);
-  border-top: 1px dashed rgba(199, 154, 62, 0.25);
+  border-top: 1px dashed rgba(200, 155, 60, 0.24);
   padding-top: 0.4rem;
 }
 
@@ -1266,20 +1219,20 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin: 0.65rem 0 0.75rem;
+  margin: 0.62rem 0 0.72rem;
 }
 
 .scratch-status-pill {
   font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.28rem 0.7rem;
+  padding: 0.28rem 0.72rem;
   border-radius: 999px;
   background: var(--surface-soft);
   color: var(--muted);
 }
 
 .clue-card {
-  padding: 0.75rem 0.9rem;
+  padding: 0.72rem 0.9rem;
   border-radius: 14px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
@@ -1288,11 +1241,11 @@ button {
 
 .clue-label {
   display: block;
-  font-size: 0.66rem;
-  font-weight: 700;
+  font-size: 0.65rem;
+  font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--muted);
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.14rem;
 }
 
 .clue-text {
@@ -1307,7 +1260,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: 0.38rem;
   flex-wrap: wrap;
   margin-bottom: 0.85rem;
 }
@@ -1317,7 +1270,7 @@ button {
   background: #FFFDF9;
   color: var(--text);
   border-radius: 999px;
-  padding: 0.36rem 0.72rem;
+  padding: 0.36rem 0.74rem;
   font-size: 0.76rem;
   font-weight: 600;
   transition: all 0.18s ease;
@@ -1335,21 +1288,29 @@ button {
 }
 
 @keyframes reactPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.12); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .post-reveal-secondary {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.55rem;
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.42rem;
 }
 
 .center-inline-link {
   display: block;
-  margin: 0.15rem auto 0;
+  margin: 0.14rem auto 0;
 }
 
 /* ==================== STAGE FOOTER BAR ==================== */
@@ -1357,7 +1318,7 @@ button {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 1120px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: 0.35rem 1.25rem 0.9rem;
   display: flex;
@@ -1373,10 +1334,10 @@ button {
   gap: 0.42rem;
   padding: 0.32rem 0.78rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 253, 249, 0.86);
   border: 1px solid var(--border);
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.75rem;
 }
 
 .live-pulse-dot {
@@ -1388,12 +1349,19 @@ button {
 }
 
 @keyframes livePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 40, 43, 0.45); }
-  60% { box-shadow: 0 0 0 6px rgba(200, 40, 43, 0); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 40, 43, 0.45);
+  }
+
+  60% {
+    box-shadow: 0 0 0 6px rgba(200, 40, 43, 0);
+  }
 }
 
 .scroll-cue-link {
-  font-size: 0.77rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: var(--muted);
   text-decoration: none;
@@ -1408,8 +1376,8 @@ button {
   position: fixed;
   inset: 0;
   z-index: 120;
-  background: rgba(22, 18, 16, 0.62);
-  backdrop-filter: blur(5px);
+  background: rgba(20, 16, 14, 0.62);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1420,11 +1388,11 @@ button {
 .modal-card {
   position: relative;
   width: 100%;
-  max-width: 460px;
+  max-width: 450px;
   background: #FFFDF9;
   border: 1px solid var(--border);
-  border-radius: 22px;
-  padding: 1.4rem 1.3rem;
+  border-radius: 24px;
+  padding: 1.42rem 1.32rem;
   box-shadow: var(--shadow-lg);
   max-height: 90dvh;
   overflow-y: auto;
@@ -1510,80 +1478,8 @@ button {
 }
 
 .popup-reply-btn {
-  padding: 0.75rem 1rem;
+  padding: 0.76rem 1rem;
   font-size: 0.86rem;
-}
-
-/* ==================== FESTIVAL THEME PICKER MODAL ==================== */
-.festival-modal-card {
-  max-width: 560px;
-}
-
-.festival-auto-btn {
-  width: 100%;
-  border: 1px solid var(--ribbon-border);
-  background: var(--ribbon-bg);
-  color: var(--ribbon-text);
-  border-radius: 12px;
-  padding: 0.65rem 0.9rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  margin-bottom: 0.85rem;
-  text-align: left;
-}
-
-.festival-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.52rem;
-}
-
-.festival-option-btn {
-  border: 1px solid var(--border);
-  background: #FFFFFF;
-  border-radius: 14px;
-  padding: 0.65rem 0.55rem;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 0.18rem;
-  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.festival-option-btn:hover {
-  transform: translateY(-1px);
-  border-color: var(--gold);
-}
-
-.festival-option-btn.active {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(200, 40, 43, 0.18);
-  background: #FFF9F5;
-}
-
-.fest-opt-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 1.05rem;
-}
-
-.fest-opt-swatch {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-.fest-opt-name {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.fest-opt-region {
-  font-size: 0.68rem;
-  color: var(--muted);
 }
 
 /* ==================== UNIQUE PWA INSTALL ORBITAL ANIMATION ==================== */
@@ -1610,8 +1506,13 @@ button {
 }
 
 @keyframes spinOrbit {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .pwa-orbit-spark {
@@ -1621,13 +1522,36 @@ button {
   animation: pulseSpark 2s ease-in-out infinite;
 }
 
-.pwa-orbit-spark.sp-a { top: -4px; left: 50%; transform: translateX(-50%); }
-.pwa-orbit-spark.sp-b { bottom: 10px; left: 6px; animation-delay: 0.6s; }
-.pwa-orbit-spark.sp-c { bottom: 10px; right: 6px; animation-delay: 1.2s; }
+.pwa-orbit-spark.sp-a {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.pwa-orbit-spark.sp-b {
+  bottom: 10px;
+  left: 6px;
+  animation-delay: 0.6s;
+}
+
+.pwa-orbit-spark.sp-c {
+  bottom: 10px;
+  right: 6px;
+  animation-delay: 1.2s;
+}
 
 @keyframes pulseSpark {
-  0%, 100% { opacity: 0.45; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1.2); }
+
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
 .pwa-icon-squircle {
@@ -1711,9 +1635,19 @@ button {
   padding: 0.75rem;
 }
 
-.ad-slot-banner { min-height: 92px; }
-.ad-slot-rect { min-height: 250px; max-width: 340px; margin: 0 auto; }
-.ad-slot-multiplex { min-height: 140px; }
+.ad-slot-banner {
+  min-height: 92px;
+}
+
+.ad-slot-rect {
+  min-height: 250px;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.ad-slot-multiplex {
+  min-height: 140px;
+}
 
 .editorial-section {
   width: 100%;
@@ -1899,49 +1833,44 @@ button {
   line-height: 1.55;
 }
 
-/* ==================== RESPONSIVE FULL-RATIO FIT (ALL PHONES TO DESKTOPS) ==================== */
+/* ==================== RESPONSIVE FULL-RATIO FIT (ALL SCREENS) ==================== */
 @media (max-width: 560px) {
   .site-header {
     padding: 0.68rem 0.85rem;
   }
 
   .brand-wordmark {
-    font-size: 1.25rem;
+    font-size: 1.26rem;
   }
 
-  .festival-btn-label,
   .install-btn-label,
   .audio-toggle-label {
     display: none;
   }
 
-  .festival-pill-btn,
   .install-app-btn,
   .audio-toggle-btn {
     padding: 0 0.58rem;
   }
 
   .main-stage {
-    padding: 0.15rem 0.7rem 0.65rem;
+    padding: 0.15rem 0.72rem 0.68rem;
   }
 
   .paper-card {
-    padding: 1.12rem 0.98rem;
-    border-radius: 20px;
+    padding: 1.15rem 1rem;
+    border-radius: 21px;
   }
 
   .name-pair-grid,
-  .festival-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .festival-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .gift-btn-row,
   .popup-two-col {
     grid-template-columns: 1fr;
+  }
+
+  .wa-mini-thumb {
+    width: 78px;
+    height: 44px;
   }
 
   .stage-bottom-bar {
@@ -1965,22 +1894,18 @@ button {
   }
 
   .paper-card {
-    padding: 0.95rem 0.8rem;
+    padding: 0.96rem 0.82rem;
   }
 }
 
 @media (max-height: 690px) {
   .site-header {
     padding-top: 0.5rem;
-    padding-bottom: 0.45rem;
-  }
-
-  .festival-ribbon-wrap {
-    margin-bottom: 0.4rem;
+    padding-bottom: 0.42rem;
   }
 
   .paper-card {
-    padding: 1rem 1.1rem;
+    padding: 1rem 1.12rem;
   }
 
   .letter-textarea {
@@ -1988,7 +1913,6 @@ button {
   }
 }
 
-/* PWA Standalone Mode Polish */
 html.is-pwa .site-header {
   padding-top: max(0.85rem, env(safe-area-inset-top));
 }
