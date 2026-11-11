@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Instant Receiver Mode Boot Guard (prevents creator-form or spoiler flash on ?seal= links) -->
+  <script>if (location.search.indexOf('seal=') !== -1) { document.documentElement.className += ' receiver-boot'; }</script>
+
+  <title>Unseal — Free Scratch-to-Reveal Secret Note &amp; Confession Card Maker</title>
+  <meta name="description"
+    content="Send an anonymous message link or secret crush scratch card online. Free digital scratch-off note maker &amp; confession link generator for WhatsApp &amp; Instagram—zero sign-up, 100% private.">
+  <meta name="keywords"
+    content="send anonymous message link, secret crush scratch card online, digital scratch off note maker, confession link generator for WhatsApp, Instagram secret note link, scratch to reveal note">
+  <meta name="author" content="Unseal">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="theme-color" content="#FAF6F0">
+  <link rel="canonical" href="https://unseal.cards/">
+
+  <!-- Google Search Console Verification (Replace content with your Search Console token) -->
+  <!-- <meta name="google-site-verification" content="REPLACE_WITH_SEARCH_CONSOLE_TOKEN" /> -->
+
+  <!-- OpenGraph / WhatsApp / Instagram Preview Tags -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Unseal">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://unseal.cards/">
+  <meta property="og:title" content="Unseal — Scratch-to-Reveal Secret Note &amp; Confession Card Maker">
+  <meta property="og:description"
+    content="Create a silver or gold foil scratch-off secret note in 10 seconds. Share the link on WhatsApp or Instagram—no app or login needed.">
+  <meta property="og:image" content="https://unseal.cards/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt"
+    content="Unseal scratch-to-reveal secret postcard showing brushed silver foil and handwritten note">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Unseal — Scratch-to-Reveal Secret Note &amp; Confession Card Maker">
+  <meta name="twitter:description"
+    content="Send a secret crush scratch card or inside joke link on WhatsApp &amp; Instagram. Zero servers, 100% URL-encoded privacy.">
+  <meta name="twitter:image" content="https://unseal.cards/assets/og-image.png">
+
+  <!-- Brand Icons & PWA Manifest -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+
+  <!-- Google Fonts (Playfair Display, Caveat, Kalam & Noto Sans Devanagari for Hindi, Yatra One, Rozha One, JetBrains Mono, DM Sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&amp;family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;family=JetBrains+Mono:wght@500;600&amp;family=Kalam:wght@400;700&amp;family=Noto+Sans+Devanagari:wght@400;500;700&amp;family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600;1,700&amp;family=Rozha+One&amp;family=Yatra+One&amp;display=swap"
+    rel="stylesheet">
+
+  <!-- Static Zero-Runtime Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Schema.org JSON-LD: WebApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Unseal",
+    "alternateName": "Unseal Scratch-to-Reveal Secret Note Maker",
+    "url": "https://unseal.cards/",
+    "description": "Free digital scratch-off note maker and confession link generator for WhatsApp and Instagram. Encode secret notes inside a shareable URL with a realistic silver or gold scratch foil canvas.",
+    "applicationCategory": "SocialNetworkingApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires JavaScript and HTML5 Canvas",
+    "isAccessibleForFree": true,
+    "image": "https://unseal.cards/assets/og-image.png",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "Zero-server client-side URL encoding",
+      "Realistic metallic silver and gold HTML5 scratch foil",
+      "Full UTF-8 support for Hindi, Hinglish, and emojis",
+      "One-tap WhatsApp, Instagram DM, and Native Web Share triggers",
+      "Downloadable 9:16 Story Card PNG export"
+    ]
+  }
+  </script>
+
+  <!-- Schema.org JSON-LD: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does Unseal send secret scratch-off notes without a server or login?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Unseal converts your recipient name, mood tag, secret message, and sender clue into a compact, UTF-8 URL-safe Base64 token directly inside your browser and places it inside the ?seal= query parameter. No database, backend API, or account sign-up ever sees or stores your message."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does Unseal support Hindi, Hinglish, and emojis inside secret notes?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Unseal uses standard browser TextEncoder UTF-8 byte encoding before building the URL token, so Devanagari Hindi, Hinglish, Urdu, accented characters, and all modern emojis encode and reveal cleanly across Android, iPhone, and desktop browsers."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I share my secret scratch card on WhatsApp or Instagram Stories?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "After typing your note and clicking Seal with Foil & Get Link, tap Send Secret Card on WhatsApp to launch a pre-filled invite message, or tap Copy Link for Instagram Story / DM to paste the link into a Story link sticker or direct message."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can the recipient find out who sent the secret note?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Unseal never attaches your IP address, device ID, email, or name to the link—only the optional Sender Clue you choose to write. Keep in mind that if you send the link directly from your personal WhatsApp or Instagram DM, the receiver will naturally see which chat sent the link."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the scratch-off foil work on iPhone, Android, and desktop browsers?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. The HTML5 Canvas metallic foil uses touch-locked listeners so your mobile screen stays still while your finger rubs away the foil, and works smoothly with a mouse or trackpad on laptops and desktops. Once 45% of the foil is cleared, the note auto-reveals with confetti."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How can I save or post an unsealed note to my Instagram Story or WhatsApp Status?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Once you scratch off at least 45% of the metallic foil (or tap Quick Reveal), tap Download Story Card (PNG) right below the postcard. Unseal exports a high-resolution 9:16 linen paper postcard image ready to upload to Instagram Stories or WhatsApp Status."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+
+<body>
+
+  <!-- Subtle Full-Screen Ambient Stationery Bokeh Canvas -->
+  <canvas id="ambientCanvas" class="ambient-particles-canvas" aria-hidden="true"></canvas>
+  <div id="reactionFloatLayer" class="reaction-float-layer" aria-hidden="true"></div>
+
+  <!-- MAIN INTERACTIVE APP SHELL (Focused Single-Stage Studio: Clean 440px Mobile -> 780px Pro Studio on Desktop) -->
+  <main class="app-shell">
+
+    <!-- 1. STUDIO HEADER -->
+    <header class="site-header">
+      <div class="header-top-row">
+        <div class="brand-cluster">
+          <a id="brandResetLink" href="./" class="brand-link" aria-label="Unseal Home">
+            <img src="assets/logo.svg" alt="Unseal wax seal logo" width="30" height="30" class="brand-logo-img">
+            <span class="brand-wordmark-wrap">
+              <span class="brand-wordmark">Unseal</span>
+              <span class="brand-wax-dot" aria-hidden="true"></span>
+            </span>
+          </a>
+          <button id="audioToggleBtn" type="button" class="audio-toggle-btn" aria-label="Toggle Sound Effects"
+            aria-pressed="false" title="Toggle ASMR Scratch &amp; Unseal Sound Effects">🔇</button>
+        </div>
+
+        <div class="live-counter-pill desktop-center-pill" title="Live community unseal activity">
+          <span class="live-pulse-dot" aria-hidden="true"></span>
+          <span><strong id="liveCounterCount">4,842</strong> notes unsealed today</span>
+        </div>
+
+        <div class="header-right-cluster">
+          <div class="security-pill" title="Messages live purely inside the URL token with zero backend storage">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <span>End-to-End URL Locked</span>
+          </div>
+          <button id="fullscreenBtn" type="button" class="fullscreen-toggle-btn" aria-label="Toggle Full Screen Mode"
+            aria-pressed="false" title="Toggle Immersive Full Screen">⛶</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. VIEW MODE SWITCHER (Always Clean Single-Focus Switching) -->
+    <nav id="viewSwitcher" class="view-switcher studio-stage-width" aria-label="Card Mode Switcher" role="tablist">
+      <button id="tabWriteBtn" type="button" role="tab" aria-selected="true" aria-controls="viewWrite"
+        class="nav-tab active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+          <line x1="16" x2="2" y1="8" y2="22" />
+          <line x1="17.5" x2="9" y1="15" y2="15" />
+        </svg>
+        <span>1. Write &amp; Style</span>
+      </button>
+      <button id="tabPreviewBtn" type="button" role="tab" aria-selected="false" aria-controls="viewPreview"
+        class="nav-tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path
+            d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+        </svg>
+        <span>2. Preview Scratch Card</span>
+        <span class="pulse-dot" aria-hidden="true"></span>
+      </button>
+    </nav>
+
+    <!-- WORKSPACE STAGE (Single Focused Card Stage — Zero Confusing Side-by-Side Clutter) -->
+    <div id="studioWorkspace" class="studio-workspace studio-stage-width">
+
+      <!-- 3. VIEW 1: WRITE & STYLE A SECRET -->
+      <article id="viewWrite" class="paper-card card-stack studio-pane-enter" role="tabpanel"
+        aria-labelledby="tabWriteBtn">
+
+        <div class="composer-intro-row">
+          <div>
+            <span class="step-kicker">Step 01 • Confidential Letter Studio</span>
+            <h1 class="card-title">Seal a secret for someone special.</h1>
+            <p class="card-subtitle">
+              Write your note below, customize Hindi/English fonts &amp; paper stationery, then seal it under metallic
+              scratch foil.
+            </p>
+          </div>
+        </div>
+
+        <!-- Mood & Foil Controls -->
+        <div class="field-group">
+          <span class="field-label-caps">Select Mood Stamp</span>
+          <div class="mood-grid">
+            <button type="button" class="mood-chip active" data-mood="💌 Crush Confession">
+              <span aria-hidden="true">💌</span>
+              <span>Crush Confession</span>
+            </button>
+            <button type="button" class="mood-chip" data-mood="🌙 Midnight Thought">
+              <span aria-hidden="true">🌙</span>
+              <span>Midnight Thought</span>
+            </button>
+            <button type="button" class="mood-chip" data-mood="🤫 Inside Joke">
+              <span aria-hidden="true">🤫</span>
+              <span>Inside Joke</span>
+            </button>
+            <button type="button" class="mood-chip" data-mood="🎲 Wild Dare">
+              <span aria-hidden="true">🎲</span>
+              <span>Wild Dare</span>
+            </button>
+          </div>
+
+          <!-- Silver / Gold / Rose Gold / Holographic Foil Finish Selector -->
+          <div class="foil-toggle-row">
+            <span class="field-label-caps">Scratch Foil Finish</span>
+            <div class="foil-pills" role="group" aria-label="Select Foil Color">
+              <button type="button" class="foil-pill active" data-foil="silver">
+                <span class="foil-swatch swatch-silver" aria-hidden="true"></span>
+                <span>Silver</span>
+              </button>
+              <button type="button" class="foil-pill" data-foil="gold">
+                <span class="foil-swatch swatch-gold" aria-hidden="true"></span>
+                <span>Gold</span>
+              </button>
+              <button type="button" class="foil-pill" data-foil="rosegold">
+                <span class="foil-swatch swatch-rosegold" aria-hidden="true"></span>
+                <span>Rose Gold</span>
+              </button>
+              <button type="button" class="foil-pill" data-foil="holo">
+                <span class="foil-swatch swatch-holo" aria-hidden="true"></span>
+                <span>Holo</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Inputs -->
+        <div class="card-stack">
+
+          <!-- Recipient Name + Sender Clue 2-col on Desktop -->
+          <div class="form-split-row">
+            <div class="field-group">
+              <label for="recipientInput" class="field-label">To (Their Name or Nickname)</label>
+              <div class="input-wrap">
+                <input id="recipientInput" type="text" maxlength="60" value="Maya"
+                  placeholder="e.g. Maya, Coffee Girl, or Secret Crush" class="text-input text-input-pr">
+                <span class="input-badge">Private</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="clueInput" class="field-label">Sender Clue (Mysterious Hint)</label>
+              <input id="clueInput" type="text" maxlength="140"
+                value="Someone who sits two rows behind you in Astronomy"
+                placeholder="e.g. We shared an umbrella on Tuesday..." class="text-input text-input-sm">
+            </div>
+          </div>
+
+          <!-- Secret Note (Live Font, Paper & Ink Preview as You Type) -->
+          <div class="field-group">
+            <div class="field-header">
+              <label for="secretTextarea" class="field-label">The Secret Note (Live Styled Preview)</label>
+              <span class="field-label-caps"
+                style="display:inline-flex;align-items:center;gap:4px;text-transform:none;letter-spacing:0;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                Encrypted in foil
+              </span>
+            </div>
+
+            <div class="notebook-box">
+              <span class="notebook-watermark">Live Paper &amp; Font</span>
+              <textarea id="secretTextarea" rows="4" maxlength="320" class="lined-notebook secret-textarea"
+                placeholder="Write what you can't say out loud... (Hindi, Hinglish &amp; emojis welcome)">I still keep the little paper airplane you folded during the rainy lecture last Thursday. I smile whenever I see it.</textarea>
+            </div>
+
+            <div class="notebook-footer">
+              <div class="notebook-tools-left">
+                <button id="clearComposerBtn" type="button" class="text-link-btn">Clear &amp; write fresh</button>
+                <span aria-hidden="true" style="color:var(--stone-border);">•</span>
+                <button id="randomPromptBtn" type="button" class="text-link-btn text-link-accent">🎲 Random
+                  Idea</button>
+              </div>
+              <span id="secretCharCount">115/320</span>
+            </div>
+
+            <!-- 1-Tap Hindi Devanagari & Hinglish Quick Starters -->
+            <div class="quick-hindi-bar" role="group" aria-label="Quick Hindi and Hinglish Confession Starters">
+              <span class="quick-hindi-tag">✨ हिंदी Quick Notes:</span>
+              <button type="button" class="quick-hindi-chip"
+                data-quick-note="तुम्हारे बिना कॉलेज की ये कैंटीन अधूरी लगती है ❤️☕">💌 कैंटीन Crush</button>
+              <button type="button" class="quick-hindi-chip"
+                data-quick-note="रात के 2 बजे भी बस तुम्हारा ही ख़याल आता है 🌙✨">🌙 आधी रात</button>
+              <button type="button" class="quick-hindi-chip"
+                data-quick-note="एक राज़ बताऊँ? जब तुम मुस्कुराते हो, मेरा पूरा दिन बन जाता है 😊✨">🤫 दिल की
+                बात</button>
+              <button type="button" class="quick-hindi-chip"
+                data-quick-note="हिम्मत है तो अभी कॉल करो और सच बताओ! 📞🎲">🔥 हिंदी Dare</button>
+            </div>
+          </div>
+
+          <!-- Stationery Addons Studio: Self-Demonstrating Fonts, Paper, Ink, Envelope Frame & Seal -->
+          <section class="quiz-builder-box studio-addons-box" aria-label="Font, Paper, Ink and Seal Style Customizer">
+            <div class="addons-studio-header">
+              <span class="addons-studio-title">🎨 Font, Hindi Script &amp; Stationery Studio</span>
+              <span class="addons-live-pill">Live Styling</span>
+            </div>
+
+            <div class="addons-stack">
+              <!-- Visible Self-Previewing Fonts -->
+              <div class="addon-row">
+                <span class="field-label-caps">Font &amp; Hindi Typography</span>
+                <div class="addon-pills font-preview-pills" id="fontPickerGroup" role="group"
+                  aria-label="Select Handwriting or Hindi Font">
+                  <button type="button" class="addon-pill font-sample-hand active" data-font="hand">Aa/क
+                    Classic</button>
+                  <button type="button" class="addon-pill font-sample-hindi" data-font="hindi">हिंदी कलम</button>
+                  <button type="button" class="addon-pill font-sample-shayari" data-font="shayari">शायरी Yatra</button>
+                  <button type="button" class="addon-pill font-sample-bold" data-font="bold">दिल Bold</button>
+                  <button type="button" class="addon-pill font-sample-mono" data-font="mono">Typewriter</button>
+                </div>
+              </div>
+
+              <!-- Clearly Labeled Paper Themes -->
+              <div class="addon-row">
+                <span class="field-label-caps">Paper Stationery</span>
+                <div class="addon-pills" id="paperPickerGroup" role="group" aria-label="Select Paper Theme">
+                  <button type="button" class="color-chip active" data-paper="cream">
+                    <span class="chip-swatch theme-cream" aria-hidden="true"></span><span>Linen</span>
+                  </button>
+                  <button type="button" class="color-chip" data-paper="blush">
+                    <span class="chip-swatch theme-blush" aria-hidden="true"></span><span>Blush</span>
+                  </button>
+                  <button type="button" class="color-chip" data-paper="midnight">
+                    <span class="chip-swatch theme-midnight" aria-hidden="true"></span><span>Midnight</span>
+                  </button>
+                  <button type="button" class="color-chip" data-paper="sage">
+                    <span class="chip-swatch theme-sage" aria-hidden="true"></span><span>Sage</span>
+                  </button>
+                  <button type="button" class="color-chip" data-paper="parchment">
+                    <span class="chip-swatch theme-parchment" aria-hidden="true"></span><span>Gold Parchment</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Clearly Labeled Pen Inks -->
+              <div class="addon-row">
+                <span class="field-label-caps">Fountain Pen Ink</span>
+                <div class="addon-pills" id="inkPickerGroup" role="group" aria-label="Select Pen Ink Color">
+                  <button type="button" class="color-chip active" data-ink="espresso">
+                    <span class="chip-swatch ink-espresso" aria-hidden="true"></span><span>Espresso</span>
+                  </button>
+                  <button type="button" class="color-chip" data-ink="crimson">
+                    <span class="chip-swatch ink-crimson" aria-hidden="true"></span><span>Crimson</span>
+                  </button>
+                  <button type="button" class="color-chip" data-ink="cobalt">
+                    <span class="chip-swatch ink-cobalt" aria-hidden="true"></span><span>Sapphire</span>
+                  </button>
+                  <button type="button" class="color-chip" data-ink="emerald">
+                    <span class="chip-swatch ink-emerald" aria-hidden="true"></span><span>Emerald</span>
+                  </button>
+                  <button type="button" class="color-chip" data-ink="plum">
+                    <span class="chip-swatch ink-plum" aria-hidden="true"></span><span>Royal Plum</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Card Border Frame Addon + Wax Seal Emblem -->
+              <div class="addon-row-split">
+                <div class="addon-row">
+                  <span class="field-label-caps">Postcard Border Frame</span>
+                  <div class="addon-pills" id="framePickerGroup" role="group" aria-label="Select Card Border Style">
+                    <button type="button" class="addon-pill active" data-frame="classic">Clean</button>
+                    <button type="button" class="addon-pill" data-frame="airmail">✉️ Airmail</button>
+                    <button type="button" class="addon-pill" data-frame="goldtrim">✨ Gold Trim</button>
+                    <button type="button" class="addon-pill" data-frame="roseglow">🌸 Rose Frame</button>
+                  </div>
+                </div>
+
+                <div class="addon-row">
+                  <span class="field-label-caps">Wax Seal Stamp</span>
+                  <div class="addon-pills" id="emblemPickerGroup" role="group" aria-label="Select Wax Seal Emblem">
+                    <button type="button" class="addon-pill active" data-emblem="quill">🪶 Quill</button>
+                    <button type="button" class="addon-pill" data-emblem="heart">❤️ Dil</button>
+                    <button type="button" class="addon-pill" data-emblem="butterfly">🦋 Butterflies</button>
+                    <button type="button" class="addon-pill" data-emblem="moon">🌙 Moon</button>
+                    <button type="button" class="addon-pill" data-emblem="fire">🔥 Spark</button>
+                    <button type="button" class="addon-pill" data-emblem="crown">👑 Royal</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Optional: Guess Who I Am Mini-Game Builder -->
+          <details class="quiz-builder-box" id="quizBuilderDetails">
+            <summary class="quiz-builder-summary">
+              <span>💌 Add “Guess Who I Am” 1-Tap Quiz (Optional)</span>
+              <span style="color:var(--stone-500);font-size:11px;">+ Mini-Game</span>
+            </summary>
+            <div class="quiz-fields-stack">
+              <div class="field-group">
+                <label for="guessCorrectInput" class="field-label">Correct Identity (You)</label>
+                <input id="guessCorrectInput" type="text" maxlength="40" placeholder="e.g. Your Canteen Partner"
+                  class="text-input text-input-sm">
+              </div>
+              <div class="quiz-decoys-grid">
+                <div class="field-group">
+                  <label for="guessDecoy1Input" class="field-label">Decoy Option 1</label>
+                  <input id="guessDecoy1Input" type="text" maxlength="40" placeholder="e.g. Front Bencher"
+                    class="text-input text-input-sm">
+                </div>
+                <div class="field-group">
+                  <label for="guessDecoy2Input" class="field-label">Decoy Option 2</label>
+                  <input id="guessDecoy2Input" type="text" maxlength="40" placeholder="e.g. Gym Buddy"
+                    class="text-input text-input-sm">
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- Optional: Burn After Reveal 60s Ephemeral Toggle -->
+          <label for="burnTimerToggle" class="burn-toggle-label">
+            <input id="burnTimerToggle" type="checkbox" class="burn-toggle-checkbox">
+            <span>🔥 Burn note 60s after unsealing (Ephemeral Secret)</span>
+          </label>
+
+          <!-- Primary CTA -->
+          <button id="sealCardBtn" type="button" class="wax-seal-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(255,255,255,0.2)" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path
+                d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+            </svg>
+            <span>Seal with Silver Foil &amp; Get Link</span>
+          </button>
+
+        </div>
+
+        <!-- Instant Social Share & Chain-Loop Suite -->
+        <div id="shareBox" class="share-box">
+          <div class="share-status-row">
+            <span class="status-badge">
+              <span class="status-dot" aria-hidden="true"></span>
+              Secret Postcard Ready to Send
+            </span>
+            <span id="shareCardId" style="color: var(--stone-500);">Card #UNS-8924</span>
+          </div>
+
+          <div class="url-copy-bar">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--stone-500);"
+              aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            <span id="previewUrlText" class="url-text">Generating sealed link...</span>
+            <button id="copyUrlBtn" type="button" class="mini-copy-btn">Copy</button>
+          </div>
+
+          <div class="primary-share-grid">
+            <button id="whatsappShareBtn" type="button" class="btn-whatsapp">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+              </svg>
+              <span>Share on WhatsApp</span>
+            </button>
+
+            <button id="copyIgBtn" type="button" class="btn-instagram">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+              </svg>
+              <span id="copyIgBtnText">Instagram Story / DM</span>
+            </button>
+          </div>
+
+          <!-- Complete Multi-Platform Social Share Row -->
+          <div class="social-share-grid" role="group" aria-label="Share on Social Media Platforms">
+            <button id="shareTelegramBtn" type="button" class="btn-social btn-telegram">
+              <span>✈️ Telegram</span>
+            </button>
+            <button id="shareTwitterBtn" type="button" class="btn-social btn-x">
+              <span>𝕏 Post / DM</span>
+            </button>
+            <button id="shareFacebookBtn" type="button" class="btn-social btn-fb">
+              <span>📘 Facebook</span>
+            </button>
+            <button id="nativeShareBtn" type="button" class="btn-social">
+              <span>📤 More Apps</span>
+            </button>
+          </div>
+
+          <button id="previewScratchShortcutBtn" type="button" class="btn-outline">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span>Preview &amp; Test Your Scratch Card</span>
+          </button>
+
+          <p class="helper-note">
+            Recipient doesn’t need an app or account. Instant scratch-off in any mobile or desktop browser.
+          </p>
+        </div>
+
+      </article>
+
+      <!-- 4. VIEW 2: THE SCRATCH POSTCARD (Focused Preview & Receiver Experience) -->
+      <article id="viewPreview" class="paper-card card-stack hidden studio-pane-enter" role="tabpanel"
+        aria-labelledby="tabPreviewBtn">
+
+        <div id="creatorPreviewBar" class="creator-preview-bar">
+          <span class="creator-preview-badge">👀 Creator Preview — Test scratching below</span>
+          <button id="backToEditBtn" type="button" class="mini-copy-btn">← Back to Edit</button>
+        </div>
+
+        <div class="postcard-header">
+          <div>
+            <span class="postcard-badge">Confidential Postcard</span>
+            <h2 id="postcardHeading" class="postcard-heading">
+              For Maya, someone left you a sealed note.
+            </h2>
+          </div>
+          <div id="waxStampBadge" class="wax-stamp-badge" aria-hidden="true">
+            <span id="waxStampEmblem" class="wax-stamp-emblem">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 22h14" />
+                <path
+                  d="M19.27 13.73A2.5 2.5 0 0 0 17.5 13h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1.5c0-.66-.26-1.3-.73-1.77Z" />
+                <path d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-3-3c-1.66 0-3 1-3 3s1 2 1 3.5V13" />
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <!-- POSTCARD STAGE: 300x190 / 380x228 Zero-CLS Scratch Canvas -->
+        <div class="scratch-stage-wrap">
+          <div class="scratch-box">
+
+            <!-- Underneath Layer: Handwritten Secret Note -->
+            <div id="underneathSecretBox" class="underneath-note lined-notebook">
+              <div>
+                <span id="burnCountdownBadge" class="burn-countdown-badge hidden" aria-live="polite">
+                  ⏳ This note will self-destruct in 00:59...
+                </span>
+                <span class="revealed-kicker">Revealed Note:</span>
+                <p id="revealedSecretText" class="revealed-secret-text">
+                  I still keep the little paper airplane you folded during the rainy lecture last Thursday. I smile
+                  whenever I see it.
+                </p>
+              </div>
+              <div class="revealed-meta-row">
+                <span id="revealedMoodTag">💌 Crush Confession</span>
+                <span class="unsealed-stamp">Unsealed</span>
+              </div>
+            </div>
+
+            <!-- Top Layer: Brushed Metallic Scratch Foil Canvas -->
+            <canvas id="scratchCanvas" width="600" height="380" class="foil-silver-fallback"
+              aria-label="Scratch off the metallic foil to reveal the secret note"></canvas>
+
+          </div>
+
+          <div class="scratch-hint-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D9383A" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2" />
+              <path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2" />
+              <path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8" />
+              <path
+                d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+            </svg>
+            <span class="font-display" style="font-style:italic;font-size:13px;">Rub gently with your finger or mouse to
+              unseal</span>
+            <button id="quickRevealBtn" type="button" class="text-link-btn">(Quick Reveal)</button>
+          </div>
+
+          <div id="scratchProgressPill" class="scratch-progress-pill" aria-live="polite">
+            Scratch 45% to unseal
+          </div>
+
+          <!-- Anonymous Sender Clue -->
+          <div class="clue-card">
+            <span style="font-size:18px;line-height:1;" aria-hidden="true">🕵️‍♂️</span>
+            <div>
+              <span class="clue-kicker">Anonymous Sender Clue</span>
+              <p id="revealedClueText" class="clue-quote">
+                "Someone who sits two rows behind you in Astronomy"
+              </p>
+            </div>
+          </div>
+
+          <!-- Guess the Sender 1-Tap Mini-Game -->
+          <div id="guessGameBox" class="guess-game-box hidden" aria-live="polite">
+            <div>
+              <span class="clue-kicker">💌 Guess Who Sent This</span>
+              <span style="font-size:12px;color:var(--stone-600);">Tap one option to lock in your guess:</span>
+            </div>
+            <div id="guessOptionsGrid" class="guess-options-grid"></div>
+            <p id="guessFeedback" class="guess-feedback"></p>
+          </div>
+
+          <!-- Post-Reveal 1-Tap Live Emoji Reaction Shower (Shown cleanly right after unsealing) -->
+          <div id="reactionBar" class="reaction-bar hidden" role="group" aria-label="React to this secret note">
+            <span class="reaction-label">✨ Send a live reaction burst:</span>
+            <div class="reaction-pills">
+              <button type="button" class="reaction-btn" data-reaction="❤️‍🔥"
+                aria-label="Heart on fire reaction">❤️‍🔥</button>
+              <button type="button" class="reaction-btn" data-reaction="🦋"
+                aria-label="Butterflies reaction">🦋</button>
+              <button type="button" class="reaction-btn" data-reaction="🥹" aria-label="Touched reaction">🥹</button>
+              <button type="button" class="reaction-btn" data-reaction="🤣" aria-label="Laughing reaction">🤣</button>
+              <button type="button" class="reaction-btn" data-reaction="🫣" aria-label="Shy peek reaction">🫣</button>
+              <button type="button" class="reaction-btn" data-reaction="🫶"
+                aria-label="Heart hands reaction">🫶</button>
+            </div>
+            <button id="reactionWhatsAppBtn" type="button" class="reaction-wa-btn hidden">
+              💬 Send this reaction on WhatsApp
+            </button>
+          </div>
+        </div>
+
+        <!-- VIRAL CHAIN-SHARE FOOTER -->
+        <section class="viral-loop-box" aria-label="Reply and Story Share">
+          <div class="viral-loop-header">
+            <span class="viral-kicker">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m17 2 4 4-4 4" />
+                <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+                <path d="m7 22-4-4 4-4" />
+                <path d="M21 13v1a4 4 0 0 1-4 4H3" />
+              </svg>
+              Viral Chain Loop
+            </span>
+            <h3 class="viral-heading">Keep the chain going</h3>
+            <p class="viral-sub">
+              Reply with your own sealed secret card, export a 9:16 Story Card PNG, or share Unseal on social media.
+            </p>
+          </div>
+
+          <button id="sealBackBtn" type="button" class="wax-seal-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+              <line x1="16" x2="2" y1="8" y2="22" />
+            </svg>
+            <span>Seal a Secret Card Back (Takes 10s)</span>
+          </button>
+
+          <button id="downloadStoryBtn" type="button" class="btn-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" x2="12" y1="15" y2="3" />
+            </svg>
+            <span id="downloadStoryBtnText">Download 9:16 Story Card (PNG)</span>
+          </button>
+
+          <div id="previewShareBackRow" class="social-share-grid">
+            <button id="previewShareWhatsAppBtn" type="button" class="btn-social btn-wa-soft">
+              <span>💬 WhatsApp</span>
+            </button>
+            <button id="previewShareTelegramBtn" type="button" class="btn-social btn-telegram">
+              <span>✈️ Telegram</span>
+            </button>
+            <button id="previewShareTwitterBtn" type="button" class="btn-social btn-x">
+              <span>𝕏 Share</span>
+            </button>
+            <button id="previewCopyLinkBtn" type="button" class="btn-social">
+              <span>📋 Copy Link</span>
+            </button>
+          </div>
+        </section>
+
+      </article>
+
+    </div><!-- /.studio-workspace -->
+
+  </main>
+
+  <!-- ADSENSE SLOT 1: High-Viewability Post-Stage Leaderboard (AdSense policy compliant: generous 32px clearance) -->
+  <aside class="ad-section" aria-label="Advertisement">
+    <span class="ad-label">Advertisement</span>
+    <div id="ad-slot-leaderboard" class="ad-slot ad-slot-banner">
+      <!-- Replace with Google AdSense Display Responsive <ins class="adsbygoogle" data-ad-format="auto" data-full-width-responsive="true"> -->
+      <span>Responsive Display Ad • High-Viewability Leaderboard (728×90 Desktop / 320×100 Mobile)</span>
+    </div>
+  </aside>
+
+  <!-- BELOW-THE-FOLD EDITORIAL GUIDE, IDEA VAULT & STICKY DESKTOP AD RAIL -->
+  <section class="editorial-wrap" aria-label="Guide, Confession Ideas and Frequently Asked Questions">
+
+    <div class="editorial-divider">Unseal Editorial Guide &amp; Prompt Vault</div>
+
+    <div class="editorial-desktop-grid">
+      <div class="editorial-main-col">
+
+        <!-- Editorial Guide 1: How It Works & Zero-Server Privacy -->
+        <article class="editorial-card">
+          <h2 class="editorial-h2">How Digital Scratch-Off Secret Notes Work (Zero-Server Privacy)</h2>
+          <p class="editorial-p">
+            Ever wished you could drop a handwritten folded chit on someone’s desk—without risking awkward screenshots
+            on a
+            random confession app? <strong>Unseal</strong> brings back that nostalgic stationery magic for WhatsApp,
+            Instagram DMs, and Stories using pure client-side URL encoding. Instead of saving your crush confession, 2
+            AM
+            thought, or inside joke inside a third-party database, your browser turns the entire note into a compact,
+            UTF-8
+            safe URL token (<code>?seal=...</code>).
+          </p>
+          <p class="editorial-p">
+            Chahe aap English mein likhein, Hinglish mein dil ki baat bolein, ya Hindi Devanagari aur emojis use karein,
+            your message never touches a server log or requires an account. Jab aapka friend link open karta hai, unki
+            screen par ek realistic brushed silver ya champagne gold foil postcard load hota hai. Only when they rub off
+            45%
+            of the foil with their finger or mouse does the handwritten Caveat note unseal with warm paper confetti.
+          </p>
+
+          <div class="how-steps-grid">
+            <div class="how-step-tile">
+              <span class="how-step-num">01 • Craft &amp; Clue</span>
+              <h3 class="how-step-title">Pick a Mood &amp; Foil</h3>
+              <p class="how-step-desc">
+                Choose Crush Confession, Midnight Thought, Inside Joke, or Wild Dare, pick Silver or Gold foil, and
+                leave a
+                subtle clue only they will decode.
+              </p>
+            </div>
+            <div class="how-step-tile">
+              <span class="how-step-num">02 • Encode in URL</span>
+              <h3 class="how-step-title">Zero-Database Seal</h3>
+              <p class="how-step-desc">
+                Everything stays encoded inside your share link. Nothing is stored in cloud servers, and no app install
+                or
+                login is ever required to open it.
+              </p>
+            </div>
+            <div class="how-step-tile">
+              <span class="how-step-num">03 • Scratch &amp; Chain</span>
+              <h3 class="how-step-title">Rub to Unseal &amp; Reply</h3>
+              <p class="how-step-desc">
+                Once 45% of the metallic foil is scratched off, the note reveals with confetti—plus a 1-tap 9:16 Story
+                Card PNG download for WhatsApp Status or IG.
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Editorial Guide 2: 26 Curated Ideas (1-Tap Use & Copy) -->
+        <article class="editorial-card" id="ideaVault">
+          <h2 class="editorial-h2">25+ Best Secret Crush Confession Ideas, Inside Jokes &amp; Dares to Send</h2>
+          <p class="editorial-p">
+            Blank notebook dekh kar words freeze ho gaye? Browse 26 ready-to-seal English and Hinglish prompts curated
+            for
+            crushes, best friends, late-night overthinkers, quiet apologies, and daring chats. Tap <strong>Use
+              Note</strong>
+            on any card to load it straight into the composer in one click.
+          </p>
+
+          <div class="idea-filter-bar" role="group" aria-label="Filter Confession Ideas by Category">
+            <button type="button" class="idea-filter-btn active" data-filter="all">All Ideas (26)</button>
+            <button type="button" class="idea-filter-btn" data-filter="crush">💌 Crush (6)</button>
+            <button type="button" class="idea-filter-btn" data-filter="bestie">🫶 Bestie &amp; Jokes (5)</button>
+            <button type="button" class="idea-filter-btn" data-filter="midnight">🌙 Midnight Thought (5)</button>
+            <button type="button" class="idea-filter-btn" data-filter="apology">🕊️ Apology (5)</button>
+            <button type="button" class="idea-filter-btn" data-filter="dare">🎲 Wild Dare (5)</button>
+          </div>
+
+          <div class="ideas-grid">
+            <!-- Crush (6) -->
+            <div class="idea-card" data-category="crush" data-mood="💌 Crush Confession">
+              <div>
+                <span class="idea-cat-tag">Crush Confession</span>
+                <p class="idea-quote">Coffee ke bahane roz canteen aata hoon, asli reason sirf tumhari smile hai. ☕✨</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="crush" data-mood="💌 Crush Confession">
+              <div>
+                <span class="idea-cat-tag">Crush Confession</span>
+                <p class="idea-quote">You have no idea how fast my mood fixes itself the second your name pops up on my
+                  screen.</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="crush" data-mood="💌 Crush Confession">
+              <div>
+                <span class="idea-cat-tag">Crush Confession</span>
+                <p class="idea-quote">Every group playlist gets ten times better whenever you’re the one queuing the
+                  next
+                  song. 🎧</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="crush" data-mood="💌 Crush Confession">
+              <div>
+                <span class="idea-cat-tag">Crush Confession</span>
+                <p class="idea-quote">Sach bataun? Lecture mein notes kam aur tumhari taraf chhup-chhup ke zyada dekhta
+                  hoon. 👀💌</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="crush" data-mood="💌 Crush Confession">
+              <div>
+                <span class="idea-cat-tag">Crush Confession</span>
+                <p class="idea-quote">If I casually ask you for chai after class this week, please say yes—I’ve been
+                  practicing that line since Monday.</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="crush" data-mood="💌 Crush Confession">
+              <div>
+                <span class="idea-cat-tag">Crush Confession</span>
+                <p class="idea-quote">Out of everyone in the room, you’re somehow always the first person I look for
+                  when
+                  something funny happens.</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <!-- Bestie & Inside Jokes (5) -->
+            <div class="idea-card" data-category="bestie" data-mood="🤫 Inside Joke">
+              <div>
+                <span class="idea-cat-tag">Bestie &amp; Inside Joke</span>
+                <p class="idea-quote">Bro tu single isliye nahi hai ki options kam hain—tere standards aur teri 3 PM
+                  wali
+                  neend dono unrealistic hain. 😂</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="bestie" data-mood="🤫 Inside Joke">
+              <div>
+                <span class="idea-cat-tag">Bestie &amp; Inside Joke</span>
+                <p class="idea-quote">Reminder: You still owe me momos from the bet you confidently lost last month. Pay
+                  up
+                  before I leak the voice note. 🥟</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="bestie" data-mood="🤫 Inside Joke">
+              <div>
+                <span class="idea-cat-tag">Bestie &amp; Inside Joke</span>
+                <p class="idea-quote">Duniya ko lagta hai hum mature adults hain, par sirf humein pata hai hum "5 minute
+                  mein ready" bolke 40 min baad nikalte hain.</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="bestie" data-mood="🤫 Inside Joke">
+              <div>
+                <span class="idea-cat-tag">Bestie &amp; Inside Joke</span>
+                <p class="idea-quote">Lowkey grateful you’re the one person I can send 14 unhinged reels to at 1 AM and
+                  still wake up to thoughtful replies. 🫶</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="bestie" data-mood="🤫 Inside Joke">
+              <div>
+                <span class="idea-cat-tag">Bestie &amp; Inside Joke</span>
+                <p class="idea-quote">Next time you say "bas last episode dekh ke sota hoon," remember we all saw you
+                  online
+                  at 4:12 AM. 🫡</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <!-- Midnight Thought (5) -->
+            <div class="idea-card" data-category="midnight" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Midnight Thought</span>
+                <p class="idea-quote">Raat ke 2 baje sabse zyada yaad wahi log aate hain jinhe hum din bhar "I'm fine"
+                  bolke
+                  taal dete hain. 🌙</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="midnight" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Midnight Thought</span>
+                <p class="idea-quote">I hope whatever quiet battle you’re fighting this week feels a little lighter
+                  tomorrow
+                  morning. You’re doing better than you think.</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="midnight" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Midnight Thought</span>
+                <p class="idea-quote">Isn’t it strange how one random old song can take you right back to a version of
+                  yourself you hadn’t thought about in years?</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="midnight" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Midnight Thought</span>
+                <p class="idea-quote">Kuch baatein text par cold lagti hain aur call par awkward—shayad isliye log
+                  purani
+                  khidkiyon aur baarish se baatein karte hain. 🌧️</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="midnight" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Midnight Thought</span>
+                <p class="idea-quote">Just checking in silently—don’t forget to drink water, close the 19 open tabs, and
+                  actually get some sleep tonight. ✨</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <!-- Apology (5) -->
+            <div class="idea-card" data-category="apology" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Heartfelt Apology</span>
+                <p class="idea-quote">Ego thoda bada ho gaya tha us din, par sach toh yeh hai ki tumse bina baat kiye
+                  din
+                  adhoora lagta hai. Sorry yaar. 🕊️</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="apology" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Heartfelt Apology</span>
+                <p class="idea-quote">I replayed what I said last week and realized I didn’t listen when you needed me
+                  to.
+                  You deserved patience, not attitude.</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="apology" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Heartfelt Apology</span>
+                <p class="idea-quote">Meri silence ko ignore samajhna mat—I was just scared I’d say the wrong thing
+                  again.
+                  Can we hit reset over coffee?</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="apology" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Heartfelt Apology</span>
+                <p class="idea-quote">No excuses this time. I messed up, I own it completely, and whenever you’re ready
+                  to
+                  talk, I’m right here.</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="apology" data-mood="🌙 Midnight Thought">
+              <div>
+                <span class="idea-cat-tag">Heartfelt Apology</span>
+                <p class="idea-quote">Sorry for disappearing when life got chaotic. Our friendship means way more to me
+                  than
+                  my messy schedule ever showed.</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <!-- Wild Dare (5) -->
+            <div class="idea-card" data-category="dare" data-mood="🎲 Wild Dare">
+              <div>
+                <span class="idea-cat-tag">Wild Dare</span>
+                <p class="idea-quote">Dare: Screenshot this card, post it on your Story with "Guess who sent this 👀",
+                  and
+                  see who replies first in 10 mins!</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="dare" data-mood="🎲 Wild Dare">
+              <div>
+                <span class="idea-cat-tag">Wild Dare</span>
+                <p class="idea-quote">Rule of the foil: You scratched it open, so now you HAVE to tell me the initials
+                  of
+                  your current crush. No dodging! 🎲</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="dare" data-mood="🎲 Wild Dare">
+              <div>
+                <span class="idea-cat-tag">Wild Dare</span>
+                <p class="idea-quote">Dare: Send a 5-second voice note singing the last song in your Spotify history—no
+                  second takes allowed! 🎤</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="dare" data-mood="🎲 Wild Dare">
+              <div>
+                <span class="idea-cat-tag">Wild Dare</span>
+                <p class="idea-quote">Challenge accepted? Text the 3rd person on your WhatsApp recent list "Chai date at
+                  5?"
+                  without any context. ☕🔥</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+
+            <div class="idea-card" data-category="dare" data-mood="🎲 Wild Dare">
+              <div>
+                <span class="idea-cat-tag">Wild Dare</span>
+                <p class="idea-quote">Scratch rule: Reply with a sealed card confessing one harmless secret nobody in
+                  our
+                  group knows about you yet! 🤫</p>
+              </div>
+              <div class="idea-actions">
+                <button type="button" class="idea-btn idea-btn-primary" data-use-idea>Use Note</button>
+                <button type="button" class="idea-btn" data-copy-idea>Copy</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- ADSENSE SLOT 2: Mid-Content Native Rectangle (Safe distance from interactive UI) -->
+        <aside class="ad-section" style="margin-top:0;" aria-label="Advertisement">
+          <span class="ad-label">Advertisement</span>
+          <div id="ad-slot-rectangle" class="ad-slot ad-slot-rect">
+            <!-- Replace with Google AdSense In-Article / Responsive <ins class="adsbygoogle" data-ad-format="fluid"> -->
+            <span>In-Feed Display Ad • Responsive Rectangle (336×280 / 300×250)</span>
+          </div>
+        </aside>
+
+        <!-- Editorial Guide 3: 6 Detailed FAQs -->
+        <article class="editorial-card" id="faqSection">
+          <h2 class="editorial-h2">Frequently Asked Questions (FAQ)</h2>
+          <p class="editorial-p">
+            Quick answers on URL-based privacy, mobile touch foil, Hinglish &amp; emoji support, and sharing on
+            Instagram or
+            WhatsApp.
+          </p>
+
+          <div class="faq-list">
+            <details class="faq-item" open>
+              <summary class="faq-question">
+                <span>1. How does Unseal send secret scratch-off notes without a server or login?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                Every character you type—recipient name, mood stamp, secret note, foil finish, and optional sender
+                clue—is
+                serialized locally inside your browser into a UTF-8 URL-safe token attached to the <code>?seal=</code>
+                parameter. Because all data lives inside the link itself, Unseal never uploads your confessions to any
+                backend server, database, or third-party cloud.
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>2. Does Unseal support Hindi, Hinglish, and emojis inside secret notes?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                Yes! Standard browser Base64 functions break on Unicode characters, so Unseal converts text with
+                <code>TextEncoder</code> UTF-8 bytes first before encoding. That means Hindi Devanagari, Hinglish, Urdu,
+                accented characters, and all modern emojis render flawlessly on every phone and laptop.
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>3. How do I share my secret scratch card on WhatsApp or Instagram Stories?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                Tap <strong>Seal with Silver Foil &amp; Get Link</strong> to lock your card. From there, tap
+                <strong>Send
+                  Secret Card on WhatsApp</strong> to open a ready-to-send message with your link, use <strong>Share
+                  via...</strong> for your phone’s native share sheet, or click <strong>Copy Link for Instagram Story /
+                  DM</strong> to drop it into a Story link sticker or DM.
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>4. Can the recipient find out who sent the secret note?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                Unseal does not track or embed your name, phone number, email, or IP address inside the link—the card
+                only
+                shows the Sender Clue you type. However, remember that messaging apps show who sent a message: if you
+                want
+                true mystery, share through a story link, anonymous group drop, or play along with a fun clue.
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>5. Does the scratch-off foil work smoothly on iPhone, Android, and desktop?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                Yes. The interactive HTML5 Canvas uses <code>touchmove</code> with <code>passive: false</code> and
+                <code>touch-action: none</code> so mobile browsers never scroll while your finger rubs away the foil.
+                Desktop visitors can scratch using a mouse or trackpad. Once 45% of the foil is cleared, the remaining
+                layer
+                fades away automatically with a paper-confetti burst.
+              </div>
+            </details>
+
+            <details class="faq-item">
+              <summary class="faq-question">
+                <span>6. How can I save or post an unsealed note to my WhatsApp Status or IG Story?</span>
+                <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </summary>
+              <div class="faq-answer">
+                After scratching off at least 45% of the foil (or tapping Quick Reveal), click <strong>Download 9:16
+                  Story Card
+                  (PNG)</strong> directly under the postcard. Unseal renders a crisp 9:16 warm-linen postcard image with
+                your revealed handwritten note and clue ready to upload straight to Instagram Stories or WhatsApp
+                Status.
+              </div>
+            </details>
+          </div>
+        </article>
+
+      </div><!-- /.editorial-main-col -->
+
+      <!-- Sticky Desktop High-Viewability Ad Rail (Zero overlap with scratch canvas) -->
+      <aside class="editorial-rail" aria-label="Advertisement and Privacy Summary">
+        <div class="editorial-sticky-box">
+          <div class="ad-rail-wrap">
+            <span class="ad-label">Advertisement</span>
+            <div id="ad-slot-sidebar" class="ad-slot ad-slot-rail">
+              <!-- Replace with Google AdSense Display Responsive / Half-Page 300x600 or 300x250 <ins class="adsbygoogle"> -->
+              <span>Responsive Desktop Ad<br>(300×600 / 300×250)</span>
+            </div>
+          </div>
+
+          <div class="rail-trust-card">
+            <span class="rail-trust-title">🔒 Zero-Server Promise</span>
+            <p class="rail-trust-copy">
+              Every character you type stays inside your encrypted URL link. No accounts, no database, and full support
+              for Hindi Devanagari, Shayari &amp; Hinglish.
+            </p>
+            <button type="button" id="railTopCtaBtn" class="idea-btn idea-btn-primary"
+              style="width:100%;padding:0.5rem;">
+              ✍️ Create a Sealed Card
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div><!-- /.editorial-desktop-grid -->
+
+  </section>
+
+  <!-- FOOTER & MANDATORY ADSENSE COMPLIANCE TRUST LINKS -->
+  <footer class="site-footer">
+    <p style="margin:0;font-size:12px;color:var(--stone-600);">
+      Crafted for honest confessions • Zero data stored on servers
+    </p>
+    <div class="footer-badges">
+      <span>No Sign-Up Required</span>
+      <span aria-hidden="true">•</span>
+      <span>Pure Client-Side Encoding</span>
+      <span aria-hidden="true">•</span>
+      <span>Mobile Touch Foil</span>
+    </div>
+
+    <nav class="footer-legal-nav" aria-label="Legal and Compliance Pages">
+      <a href="#privacy" class="footer-legal-link" data-open-legal="privacy">Privacy Policy</a>
+      <a href="#terms" class="footer-legal-link" data-open-legal="terms">Terms of Use</a>
+      <a href="#disclaimer" class="footer-legal-link" data-open-legal="disclaimer">Disclaimer</a>
+      <a href="#contact" class="footer-legal-link" data-open-legal="contact">Contact / Report Abuse</a>
+    </nav>
+
+    <p style="margin:0.25rem 0 0;font-size:11px;color:var(--stone-500);">
+      © 2026 Unseal (unseal.cards). All rights reserved.
+    </p>
+  </footer>
+
+  <!-- LEGAL & TRUST COMPLIANCE MODAL (Crawlable semantic content + accessible modal) -->
+  <div id="legalModal" class="legal-modal-backdrop hidden" role="dialog" aria-modal="true"
+    aria-labelledby="legalModalTitle">
+    <div class="legal-modal-card">
+      <div class="legal-modal-header">
+        <span id="legalModalTitle" class="font-display"
+          style="font-style:italic;font-weight:700;font-size:1.1rem;color:var(--espresso);">
+          Unseal Trust, Privacy &amp; Compliance
+        </span>
+        <button id="closeLegalModalBtn" type="button" class="modal-close-btn" aria-label="Close legal dialog">✕</button>
+      </div>
+
+      <div class="legal-modal-tabs" role="tablist" aria-label="Legal sections">
+        <button type="button" class="legal-tab-btn active" data-legal-tab="privacy">Privacy Policy</button>
+        <button type="button" class="legal-tab-btn" data-legal-tab="terms">Terms of Use</button>
+        <button type="button" class="legal-tab-btn" data-legal-tab="disclaimer">Disclaimer</button>
+        <button type="button" class="legal-tab-btn" data-legal-tab="contact">Contact / Report Abuse</button>
+      </div>
+
+      <div class="legal-modal-body">
+
+        <!-- Privacy Policy -->
+        <section class="legal-panel" data-legal-panel="privacy">
+          <h3>Privacy Policy</h3>
+          <p><strong>Effective Date:</strong> November 2026</p>
+          <p>
+            At <strong>Unseal</strong> (<code>unseal.cards</code>), user privacy is built directly into the
+            architecture. Unseal operates as a 100% client-side web application using <strong>client-side URL
+              encoding</strong>. When you create a scratch-off note, your recipient name, mood tag, message text, and
+            sender clue are encoded inside the <code>?seal=</code> URL parameter directly in your browser. We do not
+            collect, transmit, store, or maintain any database of secret notes on our servers.
+          </p>
+          <h4>Google AdSense &amp; Cookies (DART Cookie Notice)</h4>
+          <p>
+            To keep Unseal completely free, we display third-party advertisements served by <strong>Google
+              AdSense</strong> and Google-certified ad networks:
+          </p>
+          <ul>
+            <li>Third-party vendors, including Google, use cookies to serve ads based on a user’s prior visits to this
+              website or other websites on the internet.</li>
+            <li>Google’s use of advertising cookies (including the <strong>Google DART / DoubleClick cookie</strong>)
+              enables it and its partners to serve personalized ads to visitors based on their browsing activity across
+              Unseal and other sites.</li>
+            <li>Users may opt out of personalized advertising at any time by visiting <a
+                href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>
+              or opting out of third-party vendor cookies via <a href="https://www.aboutads.info/choices/"
+                target="_blank" rel="noopener noreferrer">aboutads.info</a>.</li>
+          </ul>
+          <h4>Server Logs &amp; Browser Data</h4>
+          <p>
+            Standard static hosting infrastructure (Vercel) may temporarily process anonymized network metadata (such as
+            HTTP status codes and security headers) for performance and DDoS protection, without parsing or logging
+            private user notes.
+          </p>
+        </section>
+
+        <!-- Terms of Use -->
+        <section class="legal-panel hidden" data-legal-panel="terms">
+          <h3>Terms of Use</h3>
+          <p>
+            By accessing or creating a scratch-off card on <strong>Unseal</strong>, you agree to use this service
+            responsibly and respectfully.
+          </p>
+          <h4>Acceptable &amp; Prohibited Conduct</h4>
+          <ul>
+            <li>You must be at least 13 years old (or the minimum digital consent age in your country) to use Unseal.
+            </li>
+            <li>You agree <strong>not</strong> to create or share notes containing harassment, hate speech,
+              cyberbullying, threats, doxxing, non-consensual explicit content, impersonation, or phishing links.</li>
+            <li>You remain solely responsible for the messages you compose and share via WhatsApp, Instagram, or any
+              external messaging channel.</li>
+          </ul>
+          <h4>Intellectual Property &amp; Availability</h4>
+          <p>
+            The Unseal brand name, wax-seal logo, layout, and client-side code are owned by Unseal. We reserve the right
+            to update or modify features at any time without notice.
+          </p>
+        </section>
+
+        <!-- Disclaimer -->
+        <section class="legal-panel hidden" data-legal-panel="disclaimer">
+          <h3>Disclaimer</h3>
+          <p>
+            Unseal is provided strictly for creative communication, friendly confessions, inside jokes, and
+            entertainment purposes on an "as-is" and "as-available" basis.
+          </p>
+          <ul>
+            <li><strong>No Guarantee of Recipient Anonymity:</strong> While Unseal itself does not attach sender
+              identity to the URL, the messaging platform you use to share the link (such as WhatsApp or Instagram DM)
+              will display your account unless shared publicly.</li>
+            <li><strong>Share Links Are Self-Contained:</strong> Because Unseal stores zero messages on any server, we
+              cannot retrieve lost links, edit sent notes, or remotely delete URLs already shared in third-party chats.
+            </li>
+            <li><strong>External Links &amp; Ads:</strong> Sponsored advertisements displayed on this site are provided
+              by third-party networks, and Unseal does not endorse advertised third-party products or services.</li>
+          </ul>
+        </section>
+
+        <!-- Contact / Report Abuse -->
+        <section class="legal-panel hidden" data-legal-panel="contact">
+          <h3>Contact &amp; Report Abuse</h3>
+          <p>
+            Have feedback, partnership questions, AdSense inquiries, or need to report misuse? Reach our safety and
+            support desk directly at <a href="mailto:support@unseal.cards">support@unseal.cards</a>.
+          </p>
+          <p>
+            <em>Note on URL-encoded cards:</em> Because Unseal never stores notes on a server, anyone receiving unwanted
+            messages from an acquaintance should block or report the sender directly inside WhatsApp or Instagram, as
+            blocking stops future links immediately.
+          </p>
+          <form id="abuseReportForm" class="card-stack" style="margin-top:0.85rem;">
+            <div class="field-group">
+              <label for="reportReason" class="field-label">Topic / Reason</label>
+              <select id="reportReason" class="text-input text-input-sm">
+                <option value="Report Harassment or Abuse">Report Harassment or Abuse</option>
+                <option value="Technical Bug / Scratch Issue">Technical Bug / Scratch Issue</option>
+                <option value="Privacy or AdSense Inquiry">Privacy or AdSense Inquiry</option>
+                <option value="General Feedback">General Feedback</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="reportDetails" class="field-label">Details</label>
+              <textarea id="reportDetails" rows="3" class="text-input text-input-sm"
+                placeholder="Describe the issue or share your feedback..."></textarea>
+            </div>
+            <button type="submit" class="wax-seal-btn" style="padding:0.7rem 1rem;">Prepare Email Report</button>
+          </form>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- OFF-SCREEN 9:16 STORY CARD PNG EXPORT TEMPLATE (Captured by html2canvas) -->
+  <div id="storyCardExportRoot" class="story-export-stage" aria-hidden="true">
+    <div style="width:100%;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:14px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#6B655E;">
+        UNSEALED SECRET POSTCARD
+      </span>
+      <span id="storyExportCardId" style="font-size:14px;font-weight:600;color:#6B655E;">
+        Card #UNS-8924
+      </span>
+    </div>
+
+    <div id="storyExportCard" class="story-export-card">
+      <div
+        style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:16px;border-bottom:2px dashed #E6E0D6;">
+        <div>
+          <span
+            style="display:inline-block;padding:4px 10px;border-radius:6px;background:#F4EFE6;color:#57534E;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">
+            RUBBED &amp; UNSEALED
+          </span>
+          <div id="storyExportHeading"
+            style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-weight:700;font-size:30px;line-height:1.25;color:#1C1917;">
+            For Maya, someone left you a sealed note.
+          </div>
+        </div>
+        <div id="storyExportEmblemBadge"
+          style="width:54px;height:54px;border-radius:9999px;background:#D9383A;color:#FAF6F0;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:3px solid #A82426;">
+          ♥
+        </div>
+      </div>
+
+      <div id="storyExportNoteBox" class="story-export-note">
+        <div>
+          <span
+            style="display:block;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6B655E;margin-bottom:10px;">
+            REVEALED SECRET NOTE
+          </span>
+          <p id="storyExportSecret"
+            style="margin:0;font-family:'Caveat','Kalam',cursive;font-size:34px;line-height:1.35;color:#1C1917;word-break:break-word;">
+            I still keep the little paper airplane you folded during the rainy lecture last Thursday.
+          </p>
+        </div>
+        <div
+          style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid #E6E0D6;font-size:15px;color:#57534E;font-weight:600;">
+          <span id="storyExportMood">💌 Crush Confession</span>
+          <span style="font-family:'Playfair Display',Georgia,serif;font-style:italic;color:#D9383A;">Unsealed</span>
+        </div>
+      </div>
+
+      <div style="padding:18px 20px;border-radius:16px;background:#F7F2E9;border:1.5px solid #E6E0D6;">
+        <span
+          style="display:block;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6B655E;">
+          🕵️‍♂️ ANONYMOUS SENDER CLUE
+        </span>
+        <p id="storyExportClue"
+          style="margin:6px 0 0;font-family:'Caveat','Kalam',cursive;font-size:26px;line-height:1.25;color:#1C1917;">
+          "Someone who sits two rows behind you in Astronomy"
+        </p>
+      </div>
+    </div>
+
+    <div style="text-align:center;">
+      <div style="display:inline-flex;align-items:center;gap:8px;">
+        <span
+          style="font-family:'Playfair Display',Georgia,serif;font-style:italic;font-weight:700;font-size:34px;color:#1C1917;">Unseal</span>
+        <span
+          style="width:12px;height:12px;border-radius:9999px;background:#D9383A;display:inline-block;transform:translateY(-6px);"></span>
+      </div>
+      <div style="font-size:16px;font-weight:500;color:#57534E;margin-top:4px;">
+        Send a secret scratch-off note at <strong>unseal.cards</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Non-blocking Core App Engine -->
+  <script src="app.js" defer></script>
+</body>
+
+</html>

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-label="Unseal Logo">
+  <defs>
+    <linearGradient id="foilGrad" x1="12" y1="16" x2="54" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#CBD5E1"/>
+      <stop offset="30%" stop-color="#F1F5F9"/>
+      <stop offset="55%" stop-color="#94A3B8"/>
+      <stop offset="80%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+    <linearGradient id="waxGrad" x1="22" y1="26" x2="42" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E5484A"/>
+      <stop offset="55%" stop-color="#D9383A"/>
+      <stop offset="100%" stop-color="#A82426"/>
+    </linearGradient>
+    <filter id="cardShadow" x="2" y="8" width="60" height="50" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1C1917" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <!-- Warm Linen Backing -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="#FAF6F0" stroke="#E6E0D6" stroke-width="1.5"/>
+
+  <!-- Tactile Ivory Postcard -->
+  <g filter="url(#cardShadow)">
+    <rect x="9" y="15" width="46" height="34" rx="7" fill="#FFFFFF" stroke="#E6E0D6" stroke-width="1.4"/>
+  </g>
+
+  <!-- Subtle Notebook Lines inside Note -->
+  <line x1="14" y1="24" x2="49" y2="24" stroke="#EBE4D8" stroke-width="1" stroke-linecap="round"/>
+  <line x1="14" y1="31" x2="49" y2="31" stroke="#EBE4D8" stroke-width="1" stroke-linecap="round"/>
+  <line x1="14" y1="38" x2="49" y2="38" stroke="#EBE4D8" stroke-width="1" stroke-linecap="round"/>
+
+  <!-- Brushed Silver Scratch Foil Ribbon (partially revealed corner) -->
+  <path d="M13 19.5C13 18.6716 13.6716 18 14.5 18H49.5C50.3284 18 51 18.6716 51 19.5V35.5C51 36.3284 50.3284 37 49.5 37H29.5C24.5 37 21 31 14.5 29.5C13.6 29.3 13 28.6 13 27.7V19.5Z" fill="url(#foilGrad)" opacity="0.95"/>
+  <!-- Foil specular highlight line -->
+  <path d="M16 21.5L47 21.5" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="1.2" stroke-linecap="round"/>
+
+  <!-- Envelope / Letter Fold Hint -->
+  <path d="M10.5 17L32 32.5L53.5 17" stroke="#D6CEC2" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Embossed Crimson Wax Seal -->
+  <circle cx="32" cy="36" r="10.5" fill="url(#waxGrad)"/>
+  <circle cx="32" cy="36" r="10.5" stroke="#A82426" stroke-width="1.2"/>
+  <circle cx="32" cy="36" r="7.4" stroke="#FAF6F0" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="1.8 1.4"/>
+
+  <!-- Delicate Heart/Spark Stamp inside Wax Seal -->
+  <path d="M32 39.8C32 39.8 27.6 36.9 27.6 34.1C27.6 32.7 28.7 31.7 30 31.7C30.9 31.7 31.6 32.2 32 32.9C32.4 32.2 33.1 31.7 34 31.7C35.3 31.7 36.4 32.7 36.4 34.1C36.4 36.9 32 39.8 32 39.8Z" fill="#FAF6F0"/>
+</svg>
+

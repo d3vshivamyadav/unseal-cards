@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /code.html
+
+Sitemap: https://unseal.cards/sitemap.xml
+

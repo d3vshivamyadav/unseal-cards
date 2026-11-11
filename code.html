@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unseal — Scratch-to-Reveal Secret Note</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            hand: ['"Caveat"', 'cursive'],
+            sans: ['"DM Sans"', 'sans-serif'],
+          },
+          colors: {
+            linen: '#FAF6F0',
+            ivory: '#FFFFFF',
+            stoneBorder: '#E6E0D6',
+            espresso: '#1C1917',
+            crimson: '#D9383A',
+            crimsonHover: '#C22D2F',
+            subtlePaper: '#F4EFE6',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Paper Texture effect & tactile styling */
+    body {
+      background-color: #FAF6F0;
+      background-image: radial-gradient(#E8E1D5 0.75px, transparent 0.75px);
+      background-size: 16px 16px;
+      color: #1C1917;
+      font-family: 'DM Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Lined Paper Pattern for Handwritten Area */
+    .lined-notebook {
+      background: repeating-linear-gradient(
+        transparent,
+        transparent 31px,
+        #EBE4D8 31px,
+        #EBE4D8 32px
+      );
+      line-height: 32px;
+    }
+
+    /* Brushed Metallic Silver Scratch Foil */
+    .silver-foil-shimmer {
+      background: linear-gradient(135deg, 
+        #d1d5db 0%, 
+        #e5e7eb 25%, 
+        #cbd5e1 45%, 
+        #f1f5f9 55%, 
+        #94a3b8 75%, 
+        #cbd5e1 100%
+      );
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.7), inset 0 -2px 4px rgba(0,0,0,0.15), 0 4px 14px rgba(0,0,0,0.08);
+    }
+
+    /* Stamp tab active */
+    .mood-chip.active {
+      background-color: #1C1917;
+      color: #FAF6F0;
+      border-color: #1C1917;
+    }
+
+    /* Tab switcher pill */
+    .nav-tab.active {
+      background-color: #FFFFFF;
+      color: #1C1917;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+      font-weight: 600;
+    }
+
+    /* Wax seal button effect */
+    .wax-seal-btn {
+      box-shadow: 0 4px 0 #A82426, 0 8px 16px rgba(217, 56, 58, 0.25);
+      transition: all 0.15s ease;
+    }
+    .wax-seal-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 0 #A82426, 0 10px 20px rgba(217, 56, 58, 0.3);
+    }
+    .wax-seal-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #A82426, 0 3px 6px rgba(217, 56, 58, 0.2);
+    }
+
+    /* Postcard stamp ornament */
+    .postage-stamp-edge {
+      border: 1px dashed #D6CEC2;
+    }
+
+    /* Custom canvas cursor */
+    #scratchCanvas {
+      touch-action: none;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body class="min-h-screen py-6 sm:py-10 px-3 flex flex-col items-center justify-start text-espresso selection:bg-crimson/15 selection:text-crimson">
+
+  <!-- MAIN CONTAINER (Max width 440px Mobile First) -->
+  <main class="w-full max-w-[440px] flex flex-col items-stretch space-y-4">
+
+    <!-- 1. MINIMAL HEADER (NO PROFILE, NO ROBOTIC BELLS) -->
+    <header class="flex items-center justify-between px-1 py-1">
+      <div class="flex items-center space-x-1.5 cursor-pointer select-none">
+        <span class="font-display font-bold text-2xl tracking-tight text-espresso italic">Unseal</span>
+        <!-- Tiny crimson wax-seal dot -->
+        <span class="w-2.5 h-2.5 rounded-full bg-crimson shadow-sm inline-block ring-2 ring-crimson/20 transform -translate-y-1"></span>
+      </div>
+
+      <!-- Minimal status badge -->
+      <div class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-subtlePaper border border-stoneBorder text-[11px] font-medium text-stone-600 tracking-wide">
+        <i data-lucide="lock" class="w-3 h-3 text-stone-500"></i>
+        <span>End-to-End URL Locked</span>
+      </div>
+    </header>
+
+    <!-- 2. VIEW MODE SWITCHER (Segmented control) -->
+    <section class="p-1 rounded-xl bg-subtlePaper/80 border border-stoneBorder flex items-center justify-between text-xs text-stone-600">
+      <button id="tabWriteBtn" onclick="switchView('write')" class="nav-tab active flex-1 py-2 rounded-lg transition-all duration-200 text-center flex items-center justify-center space-x-1.5">
+        <i data-lucide="feather" class="w-3.5 h-3.5"></i>
+        <span>Write a Secret</span>
+      </button>
+      <button id="tabPreviewBtn" onclick="switchView('preview')" class="nav-tab flex-1 py-2 rounded-lg transition-all duration-200 text-center flex items-center justify-center space-x-1.5">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        <span>Preview Scratch Card</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-crimson animate-pulse"></span>
+      </button>
+    </section>
+
+    <!-- 3. VIEW 1: "WRITE A SECRET" CARD (Creator Studio) -->
+    <article id="viewWrite" class="bg-ivory border border-stoneBorder rounded-2xl p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-5 transition-all">
+      
+      <!-- Editorial Header -->
+      <div class="space-y-1 text-center sm:text-left">
+        <span class="text-[10px] uppercase font-semibold tracking-widest text-stone-400">Step 01 • Confidential Letter</span>
+        <h1 class="font-display italic text-2xl sm:text-[26px] font-semibold text-espresso leading-snug">
+          Seal a secret for someone special.
+        </h1>
+        <p class="text-xs text-stone-500">
+          They can only reveal your message by scratching off the silver foil on their phone.
+        </p>
+      </div>
+
+      <!-- Mood Stamp Selector -->
+      <div class="space-y-2 pt-1">
+        <label class="block text-[11px] font-medium uppercase tracking-wider text-stone-500">
+          Select Mood Stamp
+        </label>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button type="button" onclick="setMood(this, 'Crush Confession')" class="mood-chip active border border-stoneBorder px-3 py-2 rounded-xl text-center font-medium transition flex items-center justify-center gap-1.5">
+            <span>💌</span>
+            <span>Crush Confession</span>
+          </button>
+          <button type="button" onclick="setMood(this, 'Midnight Thought')" class="mood-chip bg-white border border-stoneBorder text-espresso px-3 py-2 rounded-xl text-center font-medium transition flex items-center justify-center gap-1.5 hover:bg-subtlePaper">
+            <span>🌙</span>
+            <span>Midnight Thought</span>
+          </button>
+          <button type="button" onclick="setMood(this, 'Inside Joke')" class="mood-chip bg-white border border-stoneBorder text-espresso px-3 py-2 rounded-xl text-center font-medium transition flex items-center justify-center gap-1.5 hover:bg-subtlePaper">
+            <span>🤫</span>
+            <span>Inside Joke</span>
+          </button>
+          <button type="button" onclick="setMood(this, 'Dare')" class="mood-chip bg-white border border-stoneBorder text-espresso px-3 py-2 rounded-xl text-center font-medium transition flex items-center justify-center gap-1.5 hover:bg-subtlePaper">
+            <span>🎲</span>
+            <span>Wild Dare</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Inputs Form -->
+      <div class="space-y-4 pt-1">
+        
+        <!-- Input 1: Recipient Name -->
+        <div class="space-y-1.5">
+          <label for="recipientInput" class="block text-xs font-semibold text-stone-700">
+            To (Their First Name or Pet Name)
+          </label>
+          <div class="relative">
+            <input 
+              id="recipientInput" 
+              type="text" 
+              value="Maya" 
+              placeholder="e.g. Maya, Coffee Girl, or Secret Crush"
+              class="w-full bg-[#FAF8F5] border border-stoneBorder rounded-xl px-3.5 py-2.5 text-sm text-espresso focus:outline-none focus:border-espresso focus:bg-white transition placeholder:text-stone-400 font-sans"
+              oninput="syncPreviewRecipient()"
+            >
+            <span class="absolute right-3.5 top-3 text-stone-400 text-xs font-serif italic">Private</span>
+          </div>
+        </div>
+
+        <!-- Input 2: The Secret (Lined Notebook with Handwritten Caveat Font) -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label for="secretTextarea" class="block text-xs font-semibold text-stone-700">
+              The Secret Note
+            </label>
+            <span class="text-[11px] text-stone-400 flex items-center gap-1">
+              <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600"></i>
+              Encrypted in foil
+            </span>
+          </div>
+          
+          <div class="rounded-xl border border-stoneBorder bg-[#FDFBF7] p-3 shadow-inner relative overflow-hidden">
+            <div class="absolute top-2 right-2 text-[10px] font-sans text-stone-400 uppercase tracking-widest pointer-events-none">
+              Handwritten Preview
+            </div>
+            <textarea 
+              id="secretTextarea" 
+              rows="4" 
+              class="lined-notebook w-full bg-transparent border-0 resize-none font-hand text-[22px] text-espresso leading-8 focus:outline-none placeholder:text-stone-400"
+              placeholder="Write what you can't say out loud... (hidden under silver foil)"
+              oninput="syncPreviewSecret()"
+            >I still keep the little paper airplane you folded during the rainy lecture last Thursday. I smile whenever I see it.</textarea>
+          </div>
+        </div>
+
+        <!-- Input 3: Anonymous Clue -->
+        <div class="space-y-1.5">
+          <label for="clueInput" class="block text-xs font-semibold text-stone-700">
+            Sender Clue (Shown without revealing who you are)
+          </label>
+          <div class="relative">
+            <input 
+              id="clueInput" 
+              type="text" 
+              value="Someone who sits two rows behind you in Astronomy" 
+              placeholder="e.g. We shared an umbrella on Tuesday..."
+              class="w-full bg-[#FAF8F5] border border-stoneBorder rounded-xl px-3.5 py-2.5 text-xs text-espresso focus:outline-none focus:border-espresso focus:bg-white transition placeholder:text-stone-400"
+              oninput="syncPreviewClue()"
+            >
+          </div>
+        </div>
+
+        <!-- Primary CTA Button -->
+        <button 
+          id="sealCardBtn" 
+          onclick="generateConfessionLink()" 
+          class="wax-seal-btn w-full py-3.5 px-4 rounded-xl bg-crimson text-white font-medium text-sm tracking-wide flex items-center justify-center space-x-2"
+        >
+          <i data-lucide="flame" class="w-4 h-4 fill-white/20"></i>
+          <span class="font-semibold">Seal with Silver Foil &amp; Get Link</span>
+        </button>
+
+      </div>
+
+      <!-- Instant Chain-Share Box (Appears/Active below button) -->
+      <div id="shareBox" class="mt-4 pt-4 border-t border-dashed border-stoneBorder space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold tracking-wider text-stone-600 uppercase flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Secret Postcard Ready
+          </span>
+          <span class="text-[11px] text-stone-400">Card #UNS-8924</span>
+        </div>
+
+        <!-- URL preview container -->
+        <div class="flex items-center space-x-2 p-2.5 rounded-xl bg-subtlePaper border border-stoneBorder">
+          <i data-lucide="link" class="w-4 h-4 text-stone-500 shrink-0"></i>
+          <span id="previewUrlText" class="text-xs text-stone-600 font-mono truncate select-all">
+            https://unseal.cards/s/maya#k8qL9xZ
+          </span>
+          <button onclick="copyCurrentLink()" class="px-2 py-1 rounded bg-white text-xs font-medium text-espresso border border-stoneBorder hover:bg-stone-50 shrink-0">
+            Copy
+          </button>
+        </div>
+
+        <!-- Viral Direct CTAs -->
+        <div class="space-y-2">
+          <!-- WhatsApp Green Button -->
+          <button onclick="shareWhatsApp()" class="w-full py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-medium text-xs flex items-center justify-center space-x-2 shadow-sm transition">
+            <i data-lucide="message-circle" class="w-4 h-4"></i>
+            <span>Send Secret Card on WhatsApp</span>
+          </button>
+
+          <!-- Instagram / DM Copy -->
+          <button onclick="copyForInstagram()" class="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-stone-50 border border-stoneBorder text-espresso font-medium text-xs flex items-center justify-center space-x-2 transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5 text-stone-500"></i>
+            <span id="copyIgBtnText">Copy Link for Instagram Story / DM</span>
+          </button>
+        </div>
+
+        <p class="text-[11px] text-stone-400 text-center italic">
+          Recipient doesn’t need an app or account. Free instant scratch-off in mobile browser.
+        </p>
+      </div>
+
+    </article>
+
+
+    <!-- 4. VIEW 2: "THE SCRATCH POSTCARD" (What Receiver Opens + Viral Chain Loop) -->
+    <article id="viewPreview" class="hidden bg-ivory border border-stoneBorder rounded-2xl p-5 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.05)] space-y-5 transition-all">
+      
+      <!-- Postcard Top Meta with postage stamp accent -->
+      <div class="flex items-start justify-between pb-1 border-b border-dashed border-stoneBorder">
+        <div>
+          <span class="inline-block px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-stone-100 text-stone-600 mb-1">
+            CONFIDENTIAL POSTCARD
+          </span>
+          <h2 id="postcardHeading" class="font-display italic text-xl sm:text-2xl font-bold text-espresso">
+            For Maya, someone left you a sealed note.
+          </h2>
+        </div>
+        <!-- Vintage Wax Stamp Accent -->
+        <div class="shrink-0 w-11 h-11 rounded-full bg-crimson/10 border-2 border-dashed border-crimson/40 flex items-center justify-center text-crimson">
+          <i data-lucide="stamp" class="w-5 h-5"></i>
+        </div>
+      </div>
+
+      <!-- POSTCARD STAGE: THE SCRATCH FOIL AREA -->
+      <div class="flex flex-col items-center justify-center py-1">
+        
+        <!-- Postcard Card Container (Fixed 300px by 190px scratch area) -->
+        <div class="relative w-[300px] h-[190px] rounded-2xl border-2 border-stoneBorder shadow-md overflow-hidden bg-[#FAF6EE] select-none">
+          
+          <!-- UNDERNEATH LAYER: The Revealed Handwritten Secret Note -->
+          <div id="underneathSecretBox" class="absolute inset-0 p-4 flex flex-col justify-between lined-notebook z-0">
+            <div class="space-y-1">
+              <span class="text-[10px] uppercase tracking-widest text-stone-400 font-sans font-semibold">Revealed Note:</span>
+              <p id="revealedSecretText" class="font-hand text-[22px] leading-7 text-espresso">
+                I still keep the little paper airplane you folded during the rainy lecture last Thursday. I smile whenever I see it.
+              </p>
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-sans text-stone-400 border-t border-stone-200/80 pt-1">
+              <span id="revealedMoodTag">💌 Crush Confession</span>
+              <span class="font-serif italic text-crimson font-medium">Unsealed</span>
+            </div>
+          </div>
+
+          <!-- TOP LAYER: Interactive Scratch Canvas with Brushed Silver Foil -->
+          <canvas 
+            id="scratchCanvas" 
+            width="300" 
+            height="190" 
+            class="absolute inset-0 z-10 w-full h-full rounded-2xl cursor-pointer"
+          ></canvas>
+
+        </div>
+
+        <!-- Scratch instruction badge -->
+        <div class="flex items-center space-x-2 mt-3 text-stone-500 text-xs">
+          <i data-lucide="hand" class="w-3.5 h-3.5 text-crimson animate-bounce"></i>
+          <span class="font-display italic text-[13px] text-stone-600">Rub gently with your finger or mouse to unseal</span>
+          <button onclick="revealAllScratch()" class="text-[11px] text-crimson underline ml-2 hover:text-crimsonHover">
+            (Quick Reveal)
+          </button>
+        </div>
+
+        <!-- Clue Tag (Below Foil) -->
+        <div class="w-full mt-3 p-3 rounded-xl bg-[#F7F2E9] border border-stoneBorder text-left flex items-start space-x-2.5">
+          <span class="text-base">🕵️‍♂️</span>
+          <div class="text-xs">
+            <span class="text-stone-400 uppercase tracking-wider text-[10px] font-bold block">Anonymous Sender Clue</span>
+            <p id="revealedClueText" class="font-hand text-[19px] text-stone-800 leading-tight">
+              "Someone who sits two rows behind you in Astronomy"
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 5. THE VIRAL CHAIN-SHARE FOOTER (Crucial for exponential traffic) -->
+      <section class="p-4 rounded-xl bg-gradient-to-b from-[#FFFDF9] to-[#F7F2E9] border border-stoneBorder space-y-3.5 shadow-sm">
+        <div class="text-center space-y-1">
+          <div class="inline-flex items-center space-x-1 text-crimson font-medium text-xs">
+            <i data-lucide="repeat" class="w-3 h-3"></i>
+            <span class="tracking-wide uppercase text-[10px] font-bold">Viral Chain Loop</span>
+          </div>
+          <h3 class="font-display italic text-lg font-bold text-espresso">
+            Keep the chain going
+          </h3>
+          <p class="text-xs text-stone-600 px-2 leading-relaxed">
+            Your secret sender is waiting. Reply with your own sealed card or send one to your crush.
+          </p>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <!-- Button 1 (Primary Crimson) -->
+          <button 
+            onclick="switchView('write'); scrollToComposer();" 
+            class="wax-seal-btn w-full py-3 px-4 rounded-xl bg-crimson hover:bg-crimsonHover text-white font-medium text-xs sm:text-sm tracking-wide flex items-center justify-center space-x-2"
+          >
+            <i data-lucide="feather" class="w-4 h-4"></i>
+            <span class="font-semibold">Seal a Secret Card Back (Takes 10s)</span>
+          </button>
+
+          <!-- Button 2 (Outline Story) -->
+          <button 
+            onclick="shareStoryPrompt()" 
+            class="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-stone-50 border border-stoneBorder text-espresso font-medium text-xs flex items-center justify-center space-x-2 transition"
+          >
+            <i data-lucide="camera" class="w-3.5 h-3.5 text-stone-500"></i>
+            <span>Share My Unsealed Card on Story</span>
+          </button>
+        </div>
+      </section>
+
+    </article>
+
+    <!-- 6. MINIMAL FOOTER -->
+    <footer class="text-center pt-2 pb-6 space-y-2">
+      <p class="text-[11px] text-stone-400 font-sans tracking-wide">
+        Crafted for honest confessions • Zero data stored on servers
+      </p>
+      <div class="flex items-center justify-center space-x-4 text-[10px] text-stone-400">
+        <span>No Sign-Up Required</span>
+        <span>•</span>
+        <span>Self-Destructs in 24h</span>
+        <span>•</span>
+        <span>Pure Client Crypto</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Interactive JavaScript for Scratch Card & View Switcher -->
+  <script>
+    // Initialize icons
+    lucide.createIcons();
+
+    // State
+    let activeMood = 'Crush Confession';
+    let isDrawing = false;
+    let canvas, ctx;
+    let scratchedPixels = 0;
+    let totalPixels = 0;
+
+    // View Switcher logic
+    function switchView(viewName) {
+      const tabWriteBtn = document.getElementById('tabWriteBtn');
+      const tabPreviewBtn = document.getElementById('tabPreviewBtn');
+      const viewWrite = document.getElementById('viewWrite');
+      const viewPreview = document.getElementById('viewPreview');
+
+      if (viewName === 'write') {
+        tabWriteBtn.classList.add('active');
+        tabPreviewBtn.classList.remove('active');
+        viewWrite.classList.remove('hidden');
+        viewPreview.classList.add('hidden');
+      } else {
+        tabWriteBtn.classList.remove('active');
+        tabPreviewBtn.classList.add('active');
+        viewWrite.classList.add('hidden');
+        viewPreview.classList.remove('hidden');
+        // reinit scratch foil canvas if not yet initialized
+        setTimeout(initScratchCanvas, 50);
+      }
+    }
+
+    // Mood Selector
+    function setMood(button, mood) {
+      document.querySelectorAll('.mood-chip').forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.remove('bg-espresso', 'text-white');
+        btn.classList.add('bg-white', 'text-espresso');
+      });
+      button.classList.add('active');
+      activeMood = mood;
+      document.getElementById('revealedMoodTag').textContent = button.innerText;
+    }
+
+    // Dynamic Live Syncing
+    function syncPreviewRecipient() {
+      const val = document.getElementById('recipientInput').value.trim() || 'Someone';
+      document.getElementById('postcardHeading').textContent = `For ${val}, someone left you a sealed note.`;
+      document.getElementById('previewUrlText').textContent = `https://unseal.cards/s/${val.toLowerCase().replace(/\s+/g, '')}#k8qL9xZ`;
+    }
+
+    function syncPreviewSecret() {
+      const text = document.getElementById('secretTextarea').value || "No words written yet...";
+      document.getElementById('revealedSecretText').textContent = text;
+    }
+
+    function syncPreviewClue() {
+      const clue = document.getElementById('clueInput').value || "A quiet observer";
+      document.getElementById('revealedClueText').textContent = `"${clue}"`;
+    }
+
+    // Action button logic
+    function generateConfessionLink() {
+      // Auto open preview view and scroll to scratch card
+      syncPreviewRecipient();
+      syncPreviewSecret();
+      syncPreviewClue();
+      
+      switchView('preview');
+      initScratchCanvas();
+      
+      // Toast notification
+      showToast('🎉 Secret Card sealed! Try scratching it off below.');
+    }
+
+    function copyCurrentLink() {
+      const url = document.getElementById('previewUrlText').textContent.trim();
+      navigator.clipboard?.writeText(url);
+      showToast('📋 Link copied to clipboard!');
+    }
+
+    function shareWhatsApp() {
+      const recipient = document.getElementById('recipientInput').value.trim() || 'you';
+      const text = encodeURIComponent(`Hey ${recipient}, I sealed a secret confession note for you. Rub with your finger to scratch the silver foil and read it: https://unseal.cards/s/${recipient.toLowerCase()}#secret`);
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+
+    function copyForInstagram() {
+      const btn = document.getElementById('copyIgBtnText');
+      const original = btn.textContent;
+      navigator.clipboard?.writeText('https://unseal.cards/s/maya#k8qL9xZ');
+      btn.textContent = 'Copied! Paste into Story Sticker';
+      setTimeout(() => {
+        btn.textContent = original;
+      }, 2500);
+      showToast('✨ Copied link! Paste it into your Instagram Story link sticker.');
+    }
+
+    function shareStoryPrompt() {
+      showToast('📸 Screenshot card or copied link to paste in IG Story sticker!');
+    }
+
+    function scrollToComposer() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Scratch Card Engine (HTML5 Canvas with GlobalCompositeOperation)
+    function initScratchCanvas() {
+      canvas = document.getElementById('scratchCanvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Draw Brushed Silver Foil texture
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0.0, '#CBD5E1');
+      grad.addColorStop(0.2, '#E2E8F0');
+      grad.addColorStop(0.4, '#94A3B8');
+      grad.addColorStop(0.6, '#F8FAFC');
+      grad.addColorStop(0.8, '#CBD5E1');
+      grad.addColorStop(1.0, '#94A3B8');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Add speckle noise/brushed grain effect
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+      for (let i = 0; i < 2000; i++) {
+        const rx = Math.random() * width;
+        const ry = Math.random() * height;
+        ctx.fillRect(rx, ry, Math.random() * 2, 1);
+      }
+
+      // Border and instruction typography on the foil
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(6, 6, width - 12, height - 12);
+
+      // Centered instruction on foil
+      ctx.fillStyle = '#334155';
+      ctx.font = 'italic 600 13px "Playfair Display", serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Rub gently with your finger to unseal', width / 2, height / 2 - 8);
+
+      ctx.font = '500 11px "DM Sans", sans-serif';
+      ctx.fillStyle = '#64748B';
+      ctx.fillText('• 100% SILVER FOIL SEAL •', width / 2, height / 2 + 12);
+
+      // Setup scratch events
+      canvas.onmousedown = startScratching;
+      canvas.onmousemove = scratch;
+      window.onmouseup = stopScratching;
+
+      canvas.ontouchstart = (e) => {
+        startScratching(e.touches[0]);
+      };
+      canvas.ontouchmove = (e) => {
+        scratch(e.touches[0]);
+        e.preventDefault();
+      };
+      window.ontouchend = stopScratching;
+    }
+
+    function getPosition(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+
+    function startScratching(e) {
+      isDrawing = true;
+      scratch(e);
+    }
+
+    function scratch(e) {
+      if (!isDrawing) return;
+      const pos = getPosition(e);
+
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 22, 0, Math.PI * 2, false);
+      ctx.fill();
+    }
+
+    function stopScratching() {
+      isDrawing = false;
+    }
+
+    function revealAllScratch() {
+      if (!ctx || !canvas) return;
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      showToast('✨ Unsealed! Message fully revealed.');
+    }
+
+    // Lightweight clean toast
+    function showToast(msg) {
+      const existing = document.getElementById('app-toast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'app-toast';
+      toast.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-espresso text-linen text-xs font-medium px-4 py-2.5 rounded-full shadow-lg border border-stoneBorder flex items-center space-x-2 z-50 animate-fade-in';
+      toast.innerHTML = `<span>${msg}</span>`;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    // Auto-init on load
+    window.addEventListener('DOMContentLoaded', () => {
+      syncPreviewRecipient();
+      syncPreviewSecret();
+      syncPreviewClue();
+    });
+  </script>
+</body>
+</html>

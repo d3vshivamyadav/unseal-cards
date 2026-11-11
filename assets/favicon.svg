@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none">
+  <defs>
+    <linearGradient id="fWax" x1="6" y1="6" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E5484A"/>
+      <stop offset="60%" stop-color="#D9383A"/>
+      <stop offset="100%" stop-color="#A82426"/>
+    </linearGradient>
+    <linearGradient id="fSilver" x1="4" y1="4" x2="18" y2="18" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E2E8F0"/>
+      <stop offset="50%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+  </defs>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#FAF6F0" stroke="#E6E0D6" stroke-width="1.5"/>
+  <!-- Silver foil corner strip -->
+  <path d="M4 9C4 6.23858 6.23858 4 9 4H23C25.7614 4 28 6.23858 28 9V12.5H4V9Z" fill="url(#fSilver)" opacity="0.9"/>
+  <!-- Crimson Wax Seal -->
+  <circle cx="16" cy="17.5" r="8.5" fill="url(#fWax)" stroke="#A82426" stroke-width="1"/>
+  <circle cx="16" cy="17.5" r="6.2" stroke="#FAF6F0" stroke-opacity="0.45" stroke-width="0.9" stroke-dasharray="1.5 1.2"/>
+  <path d="M16 20.8C16 20.8 12.2 18.3 12.2 15.9C12.2 14.7 13.1 13.8 14.2 13.8C15 13.8 15.6 14.2 16 14.9C16.4 14.2 17 13.8 17.8 13.8C18.9 13.8 19.8 14.7 19.8 15.9C19.8 18.3 16 20.8 16 20.8Z" fill="#FAF6F0"/>
+</svg>
+

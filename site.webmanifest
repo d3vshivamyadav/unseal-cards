@@ -1,0 +1,36 @@
+{
+  "name": "Unseal — Scratch-to-Reveal Secret Notes",
+  "short_name": "Unseal",
+  "description": "Create and share tactile metallic scratch-off secret notes, crush confessions, and dares for WhatsApp & Instagram without any account.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF6F0",
+  "theme_color": "#D9383A",
+  "categories": [
+    "social",
+    "entertainment",
+    "lifestyle"
+  ],
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
