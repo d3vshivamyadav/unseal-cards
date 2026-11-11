@@ -2091,6 +2091,198 @@ html.receiver-boot #underneathSecretBox {
   color: #047857;
 }
 
+.mood-audio-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  padding: 0.34rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px dashed var(--stone-border);
+  background-color: rgba(255, 255, 255, 0.82);
+  color: var(--stone-700);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.mood-audio-pill:hover {
+  border-color: var(--crimson);
+  color: var(--crimson-deep);
+  background-color: #FFF5F5;
+  transform: translateY(-1px);
+}
+
+.mood-audio-pill.is-unmuted {
+  border-style: solid;
+  border-color: rgba(217, 56, 58, 0.35);
+  background-color: rgba(217, 56, 58, 0.08);
+  color: var(--crimson-deep);
+}
+
+.chain-streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.16rem 0.55rem;
+  border-radius: 9999px;
+  background-color: #FFF1F2;
+  border: 1px solid #FECDD3;
+  color: #BE123C;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.scratch-sparks-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 4;
+}
+
+.scratch-spark {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  pointer-events: none;
+  animation: sparkFly 0.55s ease-out forwards;
+}
+
+@keyframes sparkFly {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--sx, 14px)), calc(-50% + var(--sy, -16px))) scale(0.15);
+  }
+}
+
+.passcode-gate-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: rgba(28, 25, 23, 0.88);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem;
+  border-radius: inherit;
+  color: var(--ivory);
+  text-align: center;
+}
+
+.passcode-gate-inner {
+  width: 100%;
+  max-width: 265px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.passcode-gate-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #FDE68A;
+}
+
+.passcode-gate-hint {
+  margin: 0;
+  font-size: 11.5px;
+  color: #E7E5E4;
+  line-height: 1.35;
+}
+
+.passcode-input-row {
+  display: flex;
+  width: 100%;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.passcode-unlock-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.42rem 0.65rem;
+  font-size: 12.5px;
+  background-color: rgba(255, 255, 255, 0.96);
+  color: var(--espresso);
+}
+
+.passcode-unlock-btn {
+  border: 0;
+  border-radius: 0.55rem;
+  background-color: var(--crimson);
+  color: var(--ivory);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0.42rem 0.75rem;
+  cursor: pointer;
+}
+
+.passcode-unlock-btn:hover {
+  background-color: var(--crimson-deep);
+}
+
+.passcode-gate-error {
+  font-size: 11px;
+  font-weight: 600;
+  color: #FCA5A5;
+}
+
+.scratch-tool-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.scratch-tool-btn {
+  border: 1px solid var(--stone-border);
+  background-color: var(--ivory);
+  color: var(--stone-700);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0.25rem 0.62rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scratch-tool-btn:hover {
+  border-color: var(--espresso);
+}
+
+.scratch-tool-btn.active {
+  background-color: var(--espresso);
+  border-color: var(--espresso);
+  color: var(--linen);
+}
+
+.scratch-box canvas.tool-wand {
+  cursor: crosshair;
+}
+
+.btn-caption-copy {
+  width: 100%;
+  font-size: 12.5px;
+  padding: 0.6rem 0.9rem;
+}
+
 .clue-card {
   width: 100%;
   margin-top: 0.85rem;

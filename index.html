@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Instant Receiver Mode Boot Guard (prevents creator-form or spoiler flash on ?seal= links) -->
-  <script>if (location.search.indexOf('seal=') !== -1) { document.documentElement.className += ' receiver-boot'; }</script>
+  <script>if (location.search.indexOf('seal=') !== -1 || location.search.indexOf('s=') !== -1) { document.documentElement.className += ' receiver-boot'; }</script>
 
   <title>Unseal — Free Scratch-to-Reveal Secret Note &amp; Confession Card Maker</title>
   <meta name="description"
@@ -229,12 +229,21 @@
               Write your note below, customize Hindi/English fonts &amp; paper stationery, then seal it under metallic
               scratch foil.
             </p>
+            <div class="composer-intro-badges hidden" id="chainComposerBanner" style="margin-top:0.5rem;">
+              <span class="chain-streak-badge" id="chainComposerBadge">🔗 Reply Chain #2</span>
+            </div>
           </div>
         </div>
 
         <!-- Mood & Foil Controls -->
         <div class="field-group">
-          <span class="field-label-caps">Select Mood Stamp</span>
+          <div class="field-header">
+            <span class="field-label-caps">Select Mood Stamp</span>
+            <button id="testMoodAudioBtn" type="button" class="text-link-btn"
+              title="Preview reveal music or sound effect for selected mood">
+              🎵 Test Mood Sound
+            </button>
+          </div>
           <div class="mood-grid">
             <button type="button" class="mood-chip active" data-mood="💌 Crush Confession">
               <span aria-hidden="true">💌</span>
@@ -286,7 +295,7 @@
             <div class="field-group">
               <label for="recipientInput" class="field-label">To (Their Name or Nickname)</label>
               <div class="input-wrap">
-                <input id="recipientInput" type="text" maxlength="60" value="Maya"
+                <input id="recipientInput" type="text" maxlength="60" value="" autocomplete="off"
                   placeholder="e.g. Maya, Coffee Girl, or Secret Crush" class="text-input text-input-pr">
                 <span class="input-badge">Private</span>
               </div>
@@ -294,9 +303,8 @@
 
             <div class="field-group">
               <label for="clueInput" class="field-label">Sender Clue (Mysterious Hint)</label>
-              <input id="clueInput" type="text" maxlength="140"
-                value="Someone who sits two rows behind you in Astronomy"
-                placeholder="e.g. We shared an umbrella on Tuesday..." class="text-input text-input-sm">
+              <input id="clueInput" type="text" maxlength="140" value="" autocomplete="off"
+                placeholder="e.g. Someone two rows behind you..." class="text-input text-input-sm">
             </div>
           </div>
 
@@ -317,8 +325,9 @@
 
             <div class="notebook-box">
               <span class="notebook-watermark">Live Paper &amp; Font</span>
-              <textarea id="secretTextarea" rows="4" maxlength="320" class="lined-notebook secret-textarea"
-                placeholder="Write what you can't say out loud... (Hindi, Hinglish &amp; emojis welcome)">I still keep the little paper airplane you folded during the rainy lecture last Thursday. I smile whenever I see it.</textarea>
+              <textarea id="secretTextarea" rows="4" maxlength="320" autocomplete="off"
+                class="lined-notebook secret-textarea"
+                placeholder="Write what you can't say out loud... (Hindi, Hinglish &amp; emojis welcome)"></textarea>
             </div>
 
             <div class="notebook-footer">
@@ -328,7 +337,7 @@
                 <button id="randomPromptBtn" type="button" class="text-link-btn text-link-accent">🎲 Random
                   Idea</button>
               </div>
-              <span id="secretCharCount">115/320</span>
+              <span id="secretCharCount">0/320</span>
             </div>
 
             <!-- 1-Tap Hindi Devanagari & Hinglish Quick Starters -->
@@ -466,6 +475,26 @@
             </div>
           </details>
 
+          <!-- Optional: Secret Passcode Lock -->
+          <details class="quiz-builder-box" id="passcodeDetails">
+            <summary class="quiz-builder-summary">
+              <span>🔐 Lock Foil with Secret Code / Word (Optional)</span>
+              <span style="color:var(--stone-500);font-size:11px;">+ Passcode Gate</span>
+            </summary>
+            <div class="quiz-decoys-grid" style="margin-top:0.65rem;">
+              <div class="field-group">
+                <label for="passcodeInput" class="field-label">Secret Unlock Code / Word</label>
+                <input id="passcodeInput" type="text" maxlength="20" autocomplete="off"
+                  placeholder="e.g. 1402 or chai" class="text-input text-input-sm">
+              </div>
+              <div class="field-group">
+                <label for="passcodeHintInput" class="field-label">Hint for Receiver (Optional)</label>
+                <input id="passcodeHintInput" type="text" maxlength="60" autocomplete="off"
+                  placeholder="e.g. Our favorite canteen spot" class="text-input text-input-sm">
+              </div>
+            </div>
+          </details>
+
           <!-- Optional: Burn After Reveal 60s Ephemeral Toggle -->
           <label for="burnTimerToggle" class="burn-toggle-label">
             <input id="burnTimerToggle" type="checkbox" class="burn-toggle-checkbox">
@@ -501,7 +530,7 @@
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
-            <span id="previewUrlText" class="url-text">Generating sealed link...</span>
+            <span id="previewUrlText" class="url-text">Write your secret note above to generate link...</span>
             <button id="copyUrlBtn" type="button" class="mini-copy-btn">Copy</button>
           </div>
 
@@ -568,9 +597,12 @@
 
         <div class="postcard-header">
           <div>
-            <span class="postcard-badge">Confidential Postcard</span>
+            <div style="display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;">
+              <span class="postcard-badge">Confidential Postcard</span>
+              <span id="chainStreakBadge" class="chain-streak-badge hidden">🔗 Chain #2</span>
+            </div>
             <h2 id="postcardHeading" class="postcard-heading">
-              For Maya, someone left you a sealed note.
+              For Someone Special, someone left you a sealed note.
             </h2>
           </div>
           <div id="waxStampBadge" class="wax-stamp-badge" aria-hidden="true">
@@ -598,8 +630,7 @@
                 </span>
                 <span class="revealed-kicker">Revealed Note:</span>
                 <p id="revealedSecretText" class="revealed-secret-text">
-                  I still keep the little paper airplane you folded during the rainy lecture last Thursday. I smile
-                  whenever I see it.
+                  Your handwritten secret note will appear here once you write it in Step 1...
                 </p>
               </div>
               <div class="revealed-meta-row">
@@ -612,6 +643,31 @@
             <canvas id="scratchCanvas" width="600" height="380" class="foil-silver-fallback"
               aria-label="Scratch off the metallic foil to reveal the secret note"></canvas>
 
+            <!-- Tactile Sparkles Layer during Scratch -->
+            <div id="scratchSparksLayer" class="scratch-sparks-layer" aria-hidden="true"></div>
+
+            <!-- Optional Client-Side Passcode Lock Overlay -->
+            <div id="passcodeGateOverlay" class="passcode-gate-overlay hidden" role="dialog"
+              aria-label="Secret code unlock">
+              <div class="passcode-gate-inner">
+                <span class="passcode-gate-title">🔐 Protected Seal</span>
+                <p id="passcodeGateHint" class="passcode-gate-hint">Enter the secret code from the sender</p>
+                <div class="passcode-input-row">
+                  <input id="unlockCodeInput" type="text" maxlength="20" autocomplete="off"
+                    placeholder="Enter secret code..." class="text-input passcode-unlock-input">
+                  <button id="unlockSealBtn" type="button" class="passcode-unlock-btn">Unlock</button>
+                </div>
+                <span id="passcodeGateError" class="passcode-gate-error hidden" aria-live="polite">Wrong code — try
+                  again!</span>
+              </div>
+            </div>
+
+          </div>
+
+          <div id="scratchToolGroup" class="scratch-tool-group" role="group" aria-label="Select Scratch Tool">
+            <button type="button" class="scratch-tool-btn active" data-tool="coin">🪙 Lucky Coin</button>
+            <button type="button" class="scratch-tool-btn" data-tool="key">🗝️ Vintage Key</button>
+            <button type="button" class="scratch-tool-btn" data-tool="wand">✨ Magic Wand</button>
           </div>
 
           <div class="scratch-hint-row">
@@ -632,13 +688,18 @@
             Scratch 45% to unseal
           </div>
 
+          <button id="moodAudioPillBtn" type="button" class="mood-audio-pill" data-situation="crush"
+            aria-pressed="false">
+            <span id="moodAudioPillText">🔇 Sound Off — Tap for Romantic Reveal Music 🎵</span>
+          </button>
+
           <!-- Anonymous Sender Clue -->
           <div class="clue-card">
             <span style="font-size:18px;line-height:1;" aria-hidden="true">🕵️‍♂️</span>
             <div>
               <span class="clue-kicker">Anonymous Sender Clue</span>
               <p id="revealedClueText" class="clue-quote">
-                "Someone who sits two rows behind you in Astronomy"
+                "A quiet observer"
               </p>
             </div>
           </div>
@@ -725,6 +786,10 @@
               <span>📋 Copy Link</span>
             </button>
           </div>
+
+          <button id="copyCaptionBtn" type="button" class="btn-outline btn-caption-copy">
+            <span>💬 Copy Viral Story / Status Caption</span>
+          </button>
         </section>
 
       </article>

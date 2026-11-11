@@ -7,15 +7,56 @@
 (function () {
   'use strict';
 
-  const DEFAULT_RECIPIENT = 'Maya';
-  const DEFAULT_SECRET =
-    'I still keep the little paper airplane you folded during the rainy lecture last Thursday. I smile whenever I see it.';
-  const DEFAULT_CLUE = 'Someone who sits two rows behind you in Astronomy';
   const DEFAULT_MOOD = '💌 Crush Confession';
   const REVEAL_THRESHOLD_PCT = 45;
   const BURN_DURATION_SEC = 60;
   const HTML2CANVAS_CDN = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
   const KEY_STREAM_TAG = [85, 78, 83, 69, 65, 76, 50, 54]; // 'UNSEAL26'
+
+  const SITUATION_PROFILES = {
+    crush: {
+      key: 'crush',
+      label: 'Romantic Melody',
+      badgePrompt: 'Tap for Romantic Reveal Music 🎵',
+      readyPrompt: 'Romantic Reveal Music ON 🎵',
+      toast: '🎵 Crush Romantic reveal music played!'
+    },
+    midnight: {
+      key: 'midnight',
+      label: 'Midnight Lo-Fi Chime',
+      badgePrompt: 'Tap for Midnight Ambient Music 🌙',
+      readyPrompt: 'Midnight Ambient Music ON 🌙',
+      toast: '🌙 Midnight lo-fi reveal music played!'
+    },
+    joke: {
+      key: 'joke',
+      label: 'Playful Comedy SFX',
+      badgePrompt: 'Tap for Playful Comedy SFX 🎭',
+      readyPrompt: 'Playful Comedy SFX ON 🎭',
+      toast: '🎭 Playful reveal SFX played!'
+    },
+    dare: {
+      key: 'dare',
+      label: 'Dare Drumroll & Fanfare',
+      badgePrompt: 'Tap for Dare Drumroll Fanfare 🥁',
+      readyPrompt: 'Dare Drumroll Fanfare ON 🥁',
+      toast: '🥁 Dare drumroll & fanfare played!'
+    },
+    apology: {
+      key: 'apology',
+      label: 'Heartfelt Sorry Chime',
+      badgePrompt: 'Tap for Heartfelt Sorry Chime 🥺',
+      readyPrompt: 'Heartfelt Sorry Chime ON 🥺',
+      toast: '🥺 Heartfelt sorry melody played!'
+    },
+    celebration: {
+      key: 'celebration',
+      label: 'Celebration Fanfare',
+      badgePrompt: 'Tap for Birthday / Congrats Music 🥳',
+      readyPrompt: 'Celebration Fanfare ON 🥳',
+      toast: '🥳 Festive celebration music played!'
+    }
+  };
 
   const FOIL_THEMES = {
     silver: {
@@ -155,7 +196,10 @@
     burnIntervalId: null,
     guessData: null,
     guessSolved: false,
+    currentSituation: 'crush',
+    lastRevealSituation: '',
     soundEnabled: false,
+    userExplicitlyMuted: false,
     audioCtx: null,
     noiseBuffer: null,
     lastSoundTime: 0,
@@ -169,7 +213,14 @@
     lastProgressCheck: 0,
     scratchPct: 0,
     toastTimer: null,
-    html2CanvasPromise: null
+    html2CanvasPromise: null,
+    scratchTool: 'coin',
+    passcodeRequired: false,
+    passcodeUnlocked: true,
+    expectedPasscode: '',
+    passcodeHint: '',
+    chainDepth: 1,
+    lastSparkTime: 0
   };
 
   let scratchCanvas = null;
@@ -178,8 +229,18 @@
   const $ = (id) => document.getElementById(id);
 
   // =========================================================================
-  // 1. UTF-8 Safe URL-Safe Base64 + Light Client Payload Obfuscation (?seal=)
+  // 1. Ultra-Short U2 Binary + Devanagari 1-Byte + Sync LZ77 Codec (?seal=)
   // =========================================================================
+
+  const U2_MOODS = ['💌 Crush Confession', '🌙 Midnight Thought', '🤫 Inside Joke', '🎲 Wild Dare'];
+  const U2_FOILS = ['silver', 'gold', 'rosegold', 'holo'];
+  const U2_FONTS = ['hand', 'hindi', 'shayari', 'bold', 'mono'];
+  const U2_PAPERS = ['cream', 'blush', 'midnight', 'sage', 'parchment'];
+  const U2_INKS = ['espresso', 'crimson', 'cobalt', 'emerald', 'plum'];
+  const U2_FRAMES = ['classic', 'airmail', 'goldtrim', 'roseglow'];
+  const U2_EMBLEMS = ['quill', 'heart', 'butterfly', 'moon', 'fire', 'crown'];
+  const utf8Encoder = new TextEncoder();
+  const utf8Decoder = new TextDecoder();
 
   function bytesToBase64Url(bytes) {
     let binary = '';
@@ -215,40 +276,336 @@
     return out;
   }
 
-  function encodeSeal(payload) {
-    const json = JSON.stringify(payload);
-    const utf8 = new TextEncoder().encode(json);
-    const salt = new Uint8Array(2);
-    if (window.crypto && window.crypto.getRandomValues) {
-      window.crypto.getRandomValues(salt);
+  function writeVarint(arr, num) {
+    let v = Math.max(0, num | 0);
+    while (v >= 0x80) {
+      arr.push((v & 0x7f) | 0x80);
+      v >>>= 7;
+    }
+    arr.push(v);
+  }
+
+  function readVarint(bytes, cursor) {
+    let shift = 0;
+    let res = 0;
+    while (cursor.pos < bytes.length) {
+      const b = bytes[cursor.pos++];
+      res |= (b & 0x7f) << shift;
+      if ((b & 0x80) === 0) return res;
+      shift += 7;
+    }
+    throw new Error('Malformed varint');
+  }
+
+  // Pack ASCII + Devanagari (U+0900..U+097F) in 1 byte/char; escape other Unicode via 0x7F + UTF-8
+  function writeCompactStr(arr, str) {
+    const encoded = [];
+    for (const ch of String(str || '')) {
+      const cp = ch.codePointAt(0);
+      if (cp < 0x7f) {
+        encoded.push(cp);
+      } else if (cp >= 0x0900 && cp <= 0x097f) {
+        encoded.push(0x80 | (cp - 0x0900));
+      } else {
+        encoded.push(0x7f);
+        if (cp === 0x7f) {
+          encoded.push(0x7f);
+        } else {
+          const u8 = utf8Encoder.encode(ch);
+          for (let j = 0; j < u8.length; j++) encoded.push(u8[j]);
+        }
+      }
+    }
+    writeVarint(arr, encoded.length);
+    for (let i = 0; i < encoded.length; i++) arr.push(encoded[i]);
+  }
+
+  function readCompactStr(bytes, cursor) {
+    const len = readVarint(bytes, cursor);
+    const end = cursor.pos + len;
+    if (end > bytes.length) throw new Error('Malformed compact string');
+    let out = '';
+    while (cursor.pos < end) {
+      const b = bytes[cursor.pos++];
+      if (b < 0x7f) {
+        out += String.fromCharCode(b);
+      } else if (b >= 0x80) {
+        out += String.fromCodePoint(0x0900 + (b & 0x7f));
+      } else {
+        const b1 = bytes[cursor.pos++];
+        if (b1 === undefined) break;
+        if (b1 < 0x80) {
+          out += String.fromCharCode(b1);
+        } else {
+          let seqLen = 2;
+          if ((b1 & 0xf0) === 0xe0) seqLen = 3;
+          else if ((b1 & 0xf8) === 0xf0) seqLen = 4;
+          const seq = new Uint8Array(seqLen);
+          seq[0] = b1;
+          for (let j = 1; j < seqLen; j++) {
+            seq[j] = bytes[cursor.pos++];
+          }
+          out += utf8Decoder.decode(seq);
+        }
+      }
+    }
+    return out;
+  }
+
+  function lz77Compress(input) {
+    const n = input.length;
+    const out = [];
+    let i = 0;
+    while (i < n) {
+      const ctrlPos = out.length;
+      out.push(0);
+      let ctrl = 0;
+      for (let bit = 0; bit < 8 && i < n; bit++) {
+        let bestLen = 0;
+        let bestDist = 0;
+        const winStart = Math.max(0, i - 2048);
+        const maxLen = Math.min(34, n - i);
+        if (maxLen >= 3) {
+          for (let j = i - 1; j >= winStart; j--) {
+            if (input[j] !== input[i]) continue;
+            let len = 1;
+            while (len < maxLen && input[j + len] === input[i + len]) {
+              len++;
+            }
+            if (len >= 3 && len > bestLen) {
+              bestLen = len;
+              bestDist = i - j;
+              if (bestLen === maxLen) break;
+            }
+          }
+        }
+        if (bestLen >= 3) {
+          ctrl |= 1 << bit;
+          const distMinus1 = bestDist - 1;
+          out.push((distMinus1 >> 3) & 0xff);
+          out.push(((distMinus1 & 7) << 5) | ((bestLen - 3) & 0x1f));
+          i += bestLen;
+        } else {
+          out.push(input[i++]);
+        }
+      }
+      out[ctrlPos] = ctrl;
+    }
+    return Uint8Array.from(out);
+  }
+
+  function lz77Decompress(input) {
+    const out = [];
+    let p = 0;
+    while (p < input.length) {
+      const ctrl = input[p++];
+      for (let bit = 0; bit < 8 && p < input.length; bit++) {
+        if ((ctrl & (1 << bit)) !== 0) {
+          const b0 = input[p++];
+          const b1 = input[p++];
+          if (b1 === undefined) throw new Error('Corrupted LZ77 stream');
+          const dist = ((b0 << 3) | (b1 >> 5)) + 1;
+          const matchLen = (b1 & 0x1f) + 3;
+          if (dist > out.length) throw new Error('Invalid LZ77 backreference');
+          for (let k = 0; k < matchLen; k++) {
+            out.push(out[out.length - dist]);
+          }
+        } else {
+          out.push(input[p++]);
+        }
+      }
+    }
+    return Uint8Array.from(out);
+  }
+
+  function encodeU2Binary(payload) {
+    const arr = [];
+    const recipient = (payload.r || '').trim();
+    const clue = (payload.c || '').trim();
+    const hasRecipient = Boolean(recipient && recipient !== 'Someone');
+    const hasCustomClue = Boolean(clue && clue !== 'A quiet observer');
+    const hasBurn = payload.b === 1;
+    const hasGuess = Boolean(payload.g && Array.isArray(payload.g.options) && payload.g.options.length >= 2);
+    const hasPw = Boolean(payload.pw && payload.pw.trim());
+    const hasPwh = Boolean(hasPw && payload.pwh && payload.pwh.trim());
+    const chainVal = typeof payload.ch === 'number' && payload.ch >= 2 ? Math.min(15, payload.ch) : 1;
+    const stdIdMatch = /^UNS-(\d{4})$/.exec(String(payload.id || ''));
+
+    const flags =
+      (hasBurn ? 1 : 0) |
+      (hasGuess ? 2 : 0) |
+      (hasCustomClue ? 4 : 0) |
+      (hasPw ? 8 : 0) |
+      (hasPwh ? 16 : 0) |
+      (chainVal > 1 ? 32 : 0) |
+      (stdIdMatch ? 64 : 0) |
+      (hasRecipient ? 128 : 0);
+
+    const foilIdx = Math.max(0, U2_FOILS.indexOf(payload.f));
+    const fontIdx = Math.max(0, U2_FONTS.indexOf(payload.fn || 'hand'));
+    const paperIdx = Math.max(0, U2_PAPERS.indexOf(payload.tp || 'cream'));
+    const inkIdx = Math.max(0, U2_INKS.indexOf(payload.ik || 'espresso'));
+    const frameIdx = Math.max(0, U2_FRAMES.indexOf(payload.fr || 'classic'));
+    const emblemIdx = Math.max(0, U2_EMBLEMS.indexOf(payload.em || 'quill'));
+    const moodPos = U2_MOODS.indexOf(payload.m);
+    const moodIdx = moodPos >= 0 ? moodPos : 15;
+
+    arr.push(flags);
+    arr.push((foilIdx & 3) | ((fontIdx & 7) << 2) | ((paperIdx & 7) << 5));
+    arr.push((inkIdx & 7) | ((frameIdx & 3) << 3) | ((emblemIdx & 7) << 5));
+    arr.push((moodIdx & 15) | ((chainVal & 15) << 4));
+
+    if (stdIdMatch) {
+      const cardNum = parseInt(stdIdMatch[1], 10);
+      arr.push((cardNum >> 8) & 0xff, cardNum & 0xff);
     } else {
-      salt[0] = Math.floor(Math.random() * 256);
-      salt[1] = Math.floor(Math.random() * 256);
+      writeCompactStr(arr, payload.id || generateCardId());
     }
 
-    const cipher = xorTransform(utf8, salt[0], salt[1]);
-    const packet = new Uint8Array(4 + cipher.length);
-    packet[0] = 0x55; // 'U'
-    packet[1] = 0x31; // '1'
-    packet[2] = salt[0];
-    packet[3] = salt[1];
-    packet.set(cipher, 4);
+    if (moodIdx === 15) writeCompactStr(arr, payload.m || DEFAULT_MOOD);
+    if (hasRecipient) writeCompactStr(arr, recipient);
+    writeCompactStr(arr, payload.s);
+    if (hasCustomClue) writeCompactStr(arr, clue);
 
+    if (hasGuess) {
+      const opts = payload.g.options.slice(0, 4);
+      const corr = Math.min(Math.max(0, payload.g.correct | 0), opts.length - 1);
+      arr.push(((corr & 15) << 4) | (opts.length & 15));
+      for (let i = 0; i < opts.length; i++) writeCompactStr(arr, opts[i]);
+    }
+    if (hasPw) writeCompactStr(arr, payload.pw.trim().slice(0, 20));
+    if (hasPwh) writeCompactStr(arr, payload.pwh.trim().slice(0, 60));
+
+    return Uint8Array.from(arr);
+  }
+
+  function decodeU2Binary(bytes) {
+    if (bytes.length < 4) throw new Error('Short U2 payload');
+    const cursor = { pos: 0 };
+    const flags = bytes[cursor.pos++];
+    const p1 = bytes[cursor.pos++];
+    const p2 = bytes[cursor.pos++];
+    const p3 = bytes[cursor.pos++];
+
+    const hasBurn = (flags & 1) !== 0;
+    const hasGuess = (flags & 2) !== 0;
+    const hasCustomClue = (flags & 4) !== 0;
+    const hasPw = (flags & 8) !== 0;
+    const hasPwh = (flags & 16) !== 0;
+    const hasChain = (flags & 32) !== 0;
+    const isStdCardId = (flags & 64) !== 0;
+    const hasRecipient = (flags & 128) !== 0;
+
+    const foil = U2_FOILS[p1 & 3] || 'silver';
+    const fontStyle = U2_FONTS[(p1 >> 2) & 7] || 'hand';
+    const paperTheme = U2_PAPERS[(p1 >> 5) & 7] || 'cream';
+    const inkColor = U2_INKS[p2 & 7] || 'espresso';
+    const cardFrame = U2_FRAMES[(p2 >> 3) & 3] || 'classic';
+    const emblem = U2_EMBLEMS[(p2 >> 5) & 7] || 'quill';
+    const moodIdx = p3 & 15;
+    const chainNibble = (p3 >> 4) & 15;
+
+    let cardId = '';
+    if (isStdCardId) {
+      const hi = bytes[cursor.pos++];
+      const lo = bytes[cursor.pos++];
+      cardId = `UNS-${String((hi << 8) | lo).padStart(4, '0')}`;
+    } else {
+      cardId = readCompactStr(bytes, cursor);
+    }
+
+    const mood = moodIdx === 15 ? readCompactStr(bytes, cursor) : (U2_MOODS[moodIdx] || DEFAULT_MOOD);
+    const recipient = hasRecipient ? readCompactStr(bytes, cursor) : 'Someone';
+    const secret = readCompactStr(bytes, cursor);
+    const clue = hasCustomClue ? readCompactStr(bytes, cursor) : 'A quiet observer';
+
+    let guess = null;
+    if (hasGuess) {
+      const gHead = bytes[cursor.pos++];
+      const corr = (gHead >> 4) & 15;
+      const cnt = gHead & 15;
+      const opts = [];
+      for (let i = 0; i < cnt; i++) {
+        const opt = readCompactStr(bytes, cursor).trim().slice(0, 40);
+        if (opt) opts.push(opt);
+      }
+      if (opts.length >= 2) {
+        guess = { correct: Math.min(corr, opts.length - 1), options: opts };
+      }
+    }
+
+    const pw = hasPw ? readCompactStr(bytes, cursor) : '';
+    const pwh = hasPwh ? readCompactStr(bytes, cursor) : '';
+
+    return {
+      r: recipient,
+      m: mood,
+      s: secret,
+      c: clue,
+      f: foil,
+      fn: fontStyle,
+      tp: paperTheme,
+      ik: inkColor,
+      fr: cardFrame,
+      em: emblem,
+      b: hasBurn ? 1 : 0,
+      g: guess,
+      pw,
+      pwh,
+      ch: hasChain ? Math.max(2, chainNibble) : 1,
+      id: cardId
+    };
+  }
+
+  function encodeSeal(payload) {
+    const rawBin = encodeU2Binary(payload);
+    const lzBin = rawBin.length >= 10 ? lz77Compress(rawBin) : rawBin;
+    const useLz = lzBin.length < rawBin.length;
+    const body = useLz ? lzBin : rawBin;
+
+    const saltArr = new Uint8Array(1);
+    if (window.crypto && window.crypto.getRandomValues) {
+      window.crypto.getRandomValues(saltArr);
+    } else {
+      saltArr[0] = Math.floor(Math.random() * 256);
+    }
+    const salt7 = saltArr[0] & 0x7f;
+    const salt1 = (salt7 * 37 + 19) & 0xff;
+    const cipher = xorTransform(body, salt7, salt1);
+
+    const packet = new Uint8Array(3 + cipher.length);
+    packet[0] = 0x55; // 'U'
+    packet[1] = 0x32; // '2'
+    packet[2] = (salt7 << 1) | (useLz ? 1 : 0);
+    packet.set(cipher, 3);
     return bytesToBase64Url(packet);
   }
 
   function decodeSeal(token) {
     const raw = base64UrlToBytes(token);
-    let jsonBytes = raw;
+    let data = null;
 
-    // Support versioned obfuscated U1 format + plain UTF-8 base64url JSON fallback
-    if (raw.length > 4 && raw[0] === 0x55 && raw[1] === 0x31) {
-      const cipher = raw.subarray(4);
-      jsonBytes = xorTransform(cipher, raw[2], raw[3]);
+    if (raw.length > 4 && raw[0] === 0x55 && raw[1] === 0x32) {
+      const meta = raw[2];
+      const salt7 = (meta >> 1) & 0x7f;
+      const useLz = (meta & 1) === 1;
+      const salt1 = (salt7 * 37 + 19) & 0xff;
+      let plain = xorTransform(raw.subarray(3), salt7, salt1);
+      if (useLz) {
+        plain = lz77Decompress(plain);
+      }
+      data = decodeU2Binary(plain);
+    } else {
+      // Legacy U1 XOR-JSON or plain UTF-8 base64url JSON fallback
+      let jsonBytes = raw;
+      if (raw.length > 4 && raw[0] === 0x55 && raw[1] === 0x31) {
+        const cipher = raw.subarray(4);
+        jsonBytes = xorTransform(cipher, raw[2], raw[3]);
+      }
+      const jsonStr = utf8Decoder.decode(jsonBytes);
+      data = JSON.parse(jsonStr);
     }
 
-    const jsonStr = new TextDecoder().decode(jsonBytes);
-    const data = JSON.parse(jsonStr);
     if (!data || typeof data.s !== 'string' || !data.s.trim()) {
       throw new Error('Missing secret note payload');
     }
@@ -287,6 +644,9 @@
       em: WAX_EMBLEMS[data.em] ? data.em : 'quill',
       b: data.b === 1 ? 1 : 0,
       g: guess,
+      pw: typeof data.pw === 'string' ? data.pw.trim().slice(0, 20) : '',
+      pwh: typeof data.pwh === 'string' ? data.pwh.trim().slice(0, 60) : '',
+      ch: typeof data.ch === 'number' && data.ch >= 2 ? Math.min(15, Math.floor(data.ch)) : 1,
       id: typeof data.id === 'string' && data.id.trim() ? data.id.trim().slice(0, 16) : generateCardId()
     };
   }
@@ -305,9 +665,11 @@
 
   function getFormPayload() {
     const recipient = ($('recipientInput')?.value || '').trim() || 'Someone';
-    const secret = ($('secretTextarea')?.value || '').trim() || DEFAULT_SECRET;
+    const secret = ($('secretTextarea')?.value || '').trim();
     const clue = ($('clueInput')?.value || '').trim() || 'A quiet observer';
     const burnChecked = Boolean($('burnTimerToggle')?.checked);
+    const pw = ($('passcodeInput')?.value || '').trim().slice(0, 20);
+    const pwh = ($('passcodeHintInput')?.value || '').trim().slice(0, 60);
 
     const correctOpt = ($('guessCorrectInput')?.value || '').trim().slice(0, 40);
     const decoy1 = ($('guessDecoy1Input')?.value || '').trim().slice(0, 40);
@@ -324,6 +686,13 @@
 
     if (burnChecked) {
       payload.b = 1;
+    }
+    if (pw) {
+      payload.pw = pw;
+      if (pwh) payload.pwh = pwh;
+    }
+    if (state.chainDepth && state.chainDepth >= 2) {
+      payload.ch = Math.min(15, state.chainDepth);
     }
 
     if (state.fontStyle !== 'hand') payload.fn = state.fontStyle;
@@ -413,10 +782,88 @@
     });
   }
 
+  function applyPasscodeGateUi() {
+    const overlay = $('passcodeGateOverlay');
+    const hintEl = $('passcodeGateHint');
+    const errEl = $('passcodeGateError');
+    const inputEl = $('unlockCodeInput');
+    if (!overlay) return;
+
+    const shouldLock = Boolean(state.isReceiverMode && state.passcodeRequired && !state.passcodeUnlocked);
+    overlay.classList.toggle('hidden', !shouldLock);
+    if (shouldLock) {
+      if (hintEl) {
+        hintEl.textContent = state.passcodeHint
+          ? `Hint: ${state.passcodeHint}`
+          : 'Enter the secret code from the sender';
+      }
+      if (errEl) errEl.classList.add('hidden');
+      if (inputEl) inputEl.value = '';
+    }
+  }
+
+  function attemptUnlockPasscode() {
+    const inputEl = $('unlockCodeInput');
+    const errEl = $('passcodeGateError');
+    const inner = $('passcodeGateOverlay')?.querySelector('.passcode-gate-inner');
+    const typed = (inputEl?.value || '').trim().toLowerCase();
+    const expected = (state.expectedPasscode || '').trim().toLowerCase();
+
+    if (typed && expected && typed === expected) {
+      state.passcodeUnlocked = true;
+      errEl?.classList.add('hidden');
+      applyPasscodeGateUi();
+      unlockSoundOnInteraction();
+      if (state.soundEnabled) playGuessSfx(true);
+      showToast('🔓 Passcode unlocked! Rub the foil to reveal the secret.');
+      return true;
+    }
+
+    if (errEl) {
+      errEl.textContent = 'Wrong code — check the hint & try again';
+      errEl.classList.remove('hidden');
+    }
+    if (inner) {
+      inner.style.transform = 'translateX(-5px)';
+      setTimeout(() => {
+        inner.style.transform = 'translateX(5px)';
+      }, 75);
+      setTimeout(() => {
+        inner.style.transform = '';
+      }, 160);
+    }
+    if (state.soundEnabled) playGuessSfx(false);
+    inputEl?.focus();
+    return false;
+  }
+
+  function syncChainBadgesUi() {
+    const streak = state.chainDepth || 1;
+    const composerBanner = $('chainComposerBanner');
+    const composerBadge = $('chainComposerBadge');
+    const receiverBadge = $('chainStreakBadge');
+
+    if (composerBanner && composerBadge) {
+      const showComposerChain = !state.isReceiverMode && streak >= 2;
+      composerBanner.classList.toggle('hidden', !showComposerChain);
+      if (showComposerChain) {
+        composerBadge.textContent = `🔗 Reply Chain #${streak}`;
+      }
+    }
+
+    if (receiverBadge) {
+      const showCardChain = streak >= 2;
+      receiverBadge.classList.toggle('hidden', !showCardChain);
+      if (showCardChain) {
+        receiverBadge.textContent = `🔗 Chain #${streak}`;
+      }
+    }
+  }
+
   function syncPreviewFromInputs(regenerateUrl) {
-    const recipientVal = ($('recipientInput')?.value || '').trim() || 'Someone';
-    const secretVal = ($('secretTextarea')?.value || '').trim() || 'No words written yet...';
-    const clueVal = ($('clueInput')?.value || '').trim() || 'A quiet observer';
+    const recipientRaw = ($('recipientInput')?.value || '').trim();
+    const secretRaw = ($('secretTextarea')?.value || '').trim();
+    const clueRaw = ($('clueInput')?.value || '').trim();
 
     const headingEl = $('postcardHeading');
     const secretEl = $('revealedSecretText');
@@ -425,26 +872,49 @@
     const charCountEl = $('secretCharCount');
     const rawSecretLen = ($('secretTextarea')?.value || '').length;
 
-    if (headingEl) headingEl.textContent = `For ${recipientVal}, someone left you a sealed note.`;
-    if (secretEl) secretEl.textContent = secretVal;
-    if (clueEl) clueEl.textContent = `"${clueVal}"`;
+    if (headingEl) {
+      headingEl.textContent = recipientRaw
+        ? `For ${recipientRaw}, someone left you a sealed note.`
+        : 'For Someone Special, someone left you a sealed note.';
+    }
+    if (secretEl) {
+      secretEl.textContent = secretRaw || 'Your handwritten secret note will appear here once you write it in Step 1...';
+    }
+    if (clueEl) {
+      clueEl.textContent = clueRaw ? `"${clueRaw}"` : '"A quiet observer"';
+    }
     if (moodEl) moodEl.textContent = state.mood;
     if (charCountEl) charCountEl.textContent = `${rawSecretLen}/320`;
 
     const payload = getFormPayload();
     state.burnEnabled = payload.b === 1;
     state.guessData = payload.g || null;
+    if (!state.isReceiverMode) {
+      state.passcodeRequired = false;
+      state.passcodeUnlocked = true;
+      applyPasscodeGateUi();
+    }
 
     applyVisualThemeToDom();
+    syncMoodAudioUi();
+    syncChainBadgesUi();
 
-    if (regenerateUrl !== false) {
+    const urlPreview = $('previewUrlText');
+    if (!secretRaw) {
+      state.currentShareUrl = '';
+      if (urlPreview) urlPreview.textContent = 'Write your secret note above to generate link...';
+    } else if (regenerateUrl !== false) {
       state.currentShareUrl = buildShareUrl(payload);
-      const urlPreview = $('previewUrlText');
       if (urlPreview) urlPreview.textContent = state.currentShareUrl;
     }
 
     const cardIdEl = $('shareCardId');
-    if (cardIdEl) cardIdEl.textContent = `Card #${state.cardId}`;
+    if (cardIdEl) {
+      const tokenPart = state.currentShareUrl ? state.currentShareUrl.split('?seal=')[1] || '' : '';
+      cardIdEl.textContent = tokenPart
+        ? `Card #${state.cardId} • Short Link (${tokenPart.length} ch)`
+        : `Card #${state.cardId}`;
+    }
   }
 
   function applyReceiverPayload(data) {
@@ -458,6 +928,11 @@
     state.emblem = WAX_EMBLEMS[data.em] ? data.em : 'quill';
     state.burnEnabled = data.b === 1;
     state.guessData = data.g || null;
+    state.passcodeRequired = Boolean(data.pw);
+    state.passcodeUnlocked = !data.pw;
+    state.expectedPasscode = data.pw || '';
+    state.passcodeHint = data.pwh || '';
+    state.chainDepth = typeof data.ch === 'number' && data.ch >= 2 ? data.ch : 1;
     state.cardId = data.id;
     state.currentShareUrl = window.location.href;
     document.body?.classList?.add('is-receiver-mode');
@@ -492,8 +967,11 @@
     state.view = 'preview';
 
     applyVisualThemeToDom();
+    syncMoodAudioUi();
+    syncChainBadgesUi();
     resetBurnUi();
     renderGuessGame(state.guessData);
+    applyPasscodeGateUi();
 
     // Paint foil synchronously before making underneath note visible (zero spoiler flash)
     initScratchCanvas(true);
@@ -537,6 +1015,7 @@
       $('previewShareBackRow')?.classList.remove('hidden');
       $('waxStampBadge')?.classList.remove('is-stamped');
       $('reactionBar')?.classList.add('hidden');
+      applyPasscodeGateUi();
       resetBurnUi();
       renderGuessGame(state.guessData);
       initScratchCanvas(true);
@@ -547,7 +1026,13 @@
   function enterCreatorFromReceiver() {
     clearBurnTimer();
     resetBurnUi();
+    const prevChain = state.chainDepth || 1;
+    state.chainDepth = Math.min(15, prevChain + 1);
     state.isReceiverMode = false;
+    state.passcodeRequired = false;
+    state.passcodeUnlocked = true;
+    state.expectedPasscode = '';
+    state.passcodeHint = '';
     state.fontStyle = 'hand';
     state.paperTheme = 'cream';
     state.inkColor = 'espresso';
@@ -558,8 +1043,12 @@
     document.documentElement.classList.remove('receiver-boot');
     document.body?.classList?.remove('is-receiver-mode');
 
-    // Clean ?seal= from URL without reloading
-    if (window.history && window.history.replaceState && window.location.search.includes('seal=')) {
+    // Clean ?seal= or ?s= from URL without reloading
+    if (
+      window.history &&
+      window.history.replaceState &&
+      (window.location.search.includes('seal=') || window.location.search.includes('s='))
+    ) {
       window.history.replaceState({}, '', window.location.pathname);
     }
 
@@ -576,13 +1065,18 @@
     if ($('guessCorrectInput')) $('guessCorrectInput').value = '';
     if ($('guessDecoy1Input')) $('guessDecoy1Input').value = '';
     if ($('guessDecoy2Input')) $('guessDecoy2Input').value = '';
+    if ($('passcodeInput')) $('passcodeInput').value = '';
+    if ($('passcodeHintInput')) $('passcodeHintInput').value = '';
+    if ($('unlockCodeInput')) $('unlockCodeInput').value = '';
     if ($('burnTimerToggle')) $('burnTimerToggle').checked = false;
     $('reactionWhatsAppBtn')?.classList.add('hidden');
     document.querySelectorAll('.reaction-btn.reacted').forEach((b) => b.classList.remove('reacted'));
 
+    applyPasscodeGateUi();
     $('viewSwitcher')?.classList.remove('hidden');
     $('waxStampBadge')?.classList.remove('is-stamped');
     syncAddonButtonsActiveState();
+    syncChainBadgesUi();
     syncPreviewFromInputs(true);
     switchView('write');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -711,13 +1205,63 @@
       };
     };
 
+    const SCRATCH_TOOL_BRUSH = {
+      coin: { width: 50, grit: 3, sparks: 2 },
+      key: { width: 36, grit: 2, sparks: 1 },
+      wand: { width: 66, grit: 5, sparks: 5 }
+    };
+
+    const SPARK_PALETTES = {
+      silver: ['#FFFFFF', '#E2E8F0', '#CBD5E1', '#FDE68A'],
+      gold: ['#FEF08A', '#FBBF24', '#F59E0B', '#FFFFFF'],
+      rosegold: ['#FECDD3', '#F4A8B4', '#E8B4A8', '#FFF1F2'],
+      holo: ['#C084FC', '#38BDF8', '#F472B6', '#FDE047']
+    };
+
+    const spawnScratchSparks = (pos) => {
+      const sparksLayer = $('scratchSparksLayer');
+      if (!sparksLayer) return;
+      const tNow = performance.now();
+      if (tNow - state.lastSparkTime < 34) return;
+      state.lastSparkTime = tNow;
+
+      const toolCfg = SCRATCH_TOOL_BRUSH[state.scratchTool] || SCRATCH_TOOL_BRUSH.coin;
+      const colors = SPARK_PALETTES[state.foil] || SPARK_PALETTES.silver;
+      const boxW = parseFloat(canvas.dataset.logicalW || '340') || 340;
+      const boxH = parseFloat(canvas.dataset.logicalH || '204') || 204;
+      const leftPct = Math.max(2, Math.min(98, (pos.x / boxW) * 100));
+      const topPct = Math.max(4, Math.min(96, (pos.y / boxH) * 100));
+
+      while (sparksLayer.childElementCount > 24) {
+        sparksLayer.firstElementChild?.remove();
+      }
+
+      for (let i = 0; i < toolCfg.sparks; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'scratch-spark';
+        const sx = Math.round((Math.random() - 0.5) * (state.scratchTool === 'wand' ? 56 : 36));
+        const sy = Math.round((Math.random() - 0.65) * (state.scratchTool === 'wand' ? 52 : 34));
+        dot.style.left = `${leftPct.toFixed(1)}%`;
+        dot.style.top = `${topPct.toFixed(1)}%`;
+        dot.style.background = colors[i % colors.length];
+        dot.style.setProperty('--sx', `${sx}px`);
+        dot.style.setProperty('--sy', `${sy}px`);
+        sparksLayer.appendChild(dot);
+        setTimeout(() => dot.remove(), 560);
+      }
+    };
+
     const drawStroke = (pos) => {
-      if (!scratchCtx || state.hasRevealed) return;
+      if (!scratchCtx || state.hasRevealed || (state.passcodeRequired && !state.passcodeUnlocked)) return;
+      const toolCfg = SCRATCH_TOOL_BRUSH[state.scratchTool] || SCRATCH_TOOL_BRUSH.coin;
+      const brushW = toolCfg.width;
+      const radius = brushW * 0.5;
+
       scratchCtx.save();
       scratchCtx.globalCompositeOperation = 'destination-out';
       scratchCtx.lineCap = 'round';
       scratchCtx.lineJoin = 'round';
-      scratchCtx.lineWidth = 52;
+      scratchCtx.lineWidth = brushW;
       scratchCtx.strokeStyle = 'rgba(0,0,0,1)';
       scratchCtx.fillStyle = 'rgba(0,0,0,1)';
 
@@ -728,14 +1272,14 @@
         scratchCtx.stroke();
       } else {
         scratchCtx.beginPath();
-        scratchCtx.arc(pos.x, pos.y, 26, 0, Math.PI * 2);
+        scratchCtx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
         scratchCtx.fill();
       }
 
       // Subtle ragged edge grit along scratch rim
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < toolCfg.grit; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const dist = 20 + Math.random() * 14;
+        const dist = radius * 0.72 + Math.random() * 14;
         scratchCtx.beginPath();
         scratchCtx.arc(pos.x + Math.cos(angle) * dist, pos.y + Math.sin(angle) * dist, 3 + Math.random() * 4, 0, Math.PI * 2);
         scratchCtx.fill();
@@ -747,6 +1291,7 @@
       const moveDist = Math.hypot(dx, dy);
 
       state.lastPos = pos;
+      spawnScratchSparks(pos);
 
       const now = performance.now();
 
@@ -774,7 +1319,8 @@
     };
 
     canvas.addEventListener('mousedown', (e) => {
-      if (state.hasRevealed) return;
+      if (state.hasRevealed || (state.passcodeRequired && !state.passcodeUnlocked)) return;
+      unlockSoundOnInteraction();
       state.isDrawing = true;
       state.lastPos = null;
       drawStroke(getPos(e.clientX, e.clientY));
@@ -796,10 +1342,11 @@
     canvas.addEventListener(
       'touchstart',
       (e) => {
-        if (state.hasRevealed) return;
+        if (state.hasRevealed || (state.passcodeRequired && !state.passcodeUnlocked)) return;
         if (e.cancelable) e.preventDefault();
         const touch = e.touches[0];
         if (!touch) return;
+        unlockSoundOnInteraction();
         state.isDrawing = true;
         state.lastPos = null;
         drawStroke(getPos(touch.clientX, touch.clientY));
@@ -959,6 +1506,141 @@
     return state.audioCtx;
   }
 
+  function detectRevealSituation() {
+    const m = (state.mood || '').toLowerCase();
+    const bodyTxt = ($('revealedSecretText')?.textContent || $('secretTextarea')?.value || '').toLowerCase();
+    const clueTxt = ($('revealedClueText')?.textContent || $('clueInput')?.value || '').toLowerCase();
+    const combined = `${bodyTxt} ${clueTxt}`;
+
+    let key = 'crush';
+    if (/(sorry|maaf|galti|forgive|apolog|माफ़|गलती|🥺)/.test(combined)) {
+      key = 'apology';
+    } else if (/(birthday|bday|congrats|anniversary|janamdin|badhai|जन्मदिन|बधाई|🎂|🥳)/.test(combined)) {
+      key = 'celebration';
+    } else if (m.includes('midnight')) {
+      key = 'midnight';
+    } else if (m.includes('joke')) {
+      key = 'joke';
+    } else if (m.includes('dare')) {
+      key = 'dare';
+    } else if (m.includes('crush')) {
+      key = 'crush';
+    } else if (/(dare|challenge|हिम्मत|शर्त)/.test(combined)) {
+      key = 'dare';
+    } else if (/(haha|joke|meme|funny|🤣|😂)/.test(combined)) {
+      key = 'joke';
+    } else if (/(2 am|2am|midnight|night|रात|ख़याल|🌙)/.test(combined)) {
+      key = 'midnight';
+    }
+    state.currentSituation = key;
+    return key;
+  }
+
+  function syncMoodAudioUi() {
+    const key = detectRevealSituation();
+    const profile = SITUATION_PROFILES[key] || SITUATION_PROFILES.crush;
+    const burnSuffix = state.burnEnabled ? ' + Burn 🔥' : '';
+
+    const headerBtn = $('audioToggleBtn');
+    if (headerBtn) {
+      headerBtn.textContent = state.soundEnabled ? '🔊' : '🔇';
+      headerBtn.setAttribute('aria-pressed', state.soundEnabled ? 'true' : 'false');
+      headerBtn.classList.toggle('is-unmuted', state.soundEnabled);
+    }
+
+    const moodPill = $('moodAudioPillBtn');
+    const moodText = $('moodAudioPillText');
+    if (moodPill) {
+      moodPill.setAttribute('data-situation', key);
+      moodPill.setAttribute('aria-pressed', state.soundEnabled ? 'true' : 'false');
+      moodPill.classList.toggle('is-unmuted', state.soundEnabled);
+    }
+    if (moodText) {
+      moodText.textContent = state.soundEnabled
+        ? `🔊 ${profile.readyPrompt}${burnSuffix}`
+        : `🔇 Sound Off — ${profile.badgePrompt}${burnSuffix}`;
+    }
+  }
+
+  function setSoundEnabled(enabled, announce, fromToggle) {
+    state.soundEnabled = Boolean(enabled);
+    if (fromToggle) {
+      state.userExplicitlyMuted = !state.soundEnabled;
+    } else if (state.soundEnabled) {
+      state.userExplicitlyMuted = false;
+    }
+    syncMoodAudioUi();
+    if (state.soundEnabled) {
+      ensureAudioContext();
+      if (announce) {
+        playScratchAudio(0.45);
+        const profile = SITUATION_PROFILES[detectRevealSituation()] || SITUATION_PROFILES.crush;
+        showToast(`🔊 Sound ON — ${profile.label} ready for reveal!`);
+      }
+    } else if (announce) {
+      showToast('🔇 Sound effects muted');
+    }
+  }
+
+  function unlockSoundOnInteraction() {
+    if (!state.soundEnabled && !state.userExplicitlyMuted) {
+      setSoundEnabled(true, false, false);
+    } else if (state.soundEnabled) {
+      ensureAudioContext();
+    }
+  }
+
+  function playTone(ctx, { freq, endFreq, type = 'sine', start = ctx.currentTime, dur = 0.5, gainPeak = 0.06, filterFreq = 0 }) {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    if (endFreq && endFreq > 0) {
+      osc.frequency.exponentialRampToValueAtTime(endFreq, start + Math.min(dur * 0.75, 0.22));
+    }
+
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(gainPeak, start + Math.min(0.025, dur * 0.2));
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+    if (filterFreq > 0) {
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(filterFreq, start);
+      osc.connect(lp);
+      lp.connect(g);
+    } else {
+      osc.connect(g);
+    }
+    g.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur + 0.04);
+  }
+
+  function playNoiseBurst(ctx, { start = ctx.currentTime, dur = 0.16, filterType = 'bandpass', freq = 1400, endFreq = 0, q = 1.2, gainPeak = 0.07, offset = 0 }) {
+    if (!state.noiseBuffer) return;
+    const src = ctx.createBufferSource();
+    src.buffer = state.noiseBuffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = filterType;
+    filter.frequency.setValueAtTime(freq, start);
+    if (endFreq > 0) {
+      filter.frequency.exponentialRampToValueAtTime(endFreq, start + dur);
+    }
+    filter.Q.setValueAtTime(q, start);
+
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(gainPeak, start + Math.min(0.02, dur * 0.25));
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+    src.connect(filter);
+    filter.connect(g);
+    g.connect(ctx.destination);
+    src.start(start, offset, dur + 0.03);
+  }
+
   function playScratchAudio(speedFactor) {
     if (!state.soundEnabled) return;
     const now = performance.now();
@@ -967,70 +1649,157 @@
 
     const ctx = ensureAudioContext();
     if (!ctx || !state.noiseBuffer) return;
-
-    const t = ctx.currentTime;
-    const src = ctx.createBufferSource();
-    src.buffer = state.noiseBuffer;
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(1350 + speedFactor * 1150, t);
-    filter.Q.setValueAtTime(1.4, t);
-
-    const gain = ctx.createGain();
-    const peak = 0.06 + speedFactor * 0.08;
-    gain.gain.setValueAtTime(0.001, t);
-    gain.gain.exponentialRampToValueAtTime(peak, t + 0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
-
-    src.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-
     const offset = Math.random() * Math.max(0.1, state.noiseBuffer.duration - 0.12);
-    src.start(t, offset, 0.075);
+    playNoiseBurst(ctx, {
+      start: ctx.currentTime,
+      dur: 0.068,
+      filterType: 'bandpass',
+      freq: 1350 + speedFactor * 1150,
+      q: 1.4,
+      gainPeak: 0.06 + speedFactor * 0.08,
+      offset
+    });
   }
 
   function playUnsealChime() {
+    const situation = detectRevealSituation();
+    state.lastRevealSituation = situation;
+    if (!state.soundEnabled) return;
+
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+
+    // Soft paper & foil peel rustle shared across reveals
+    playNoiseBurst(ctx, { start: t0, dur: 0.22, filterType: 'highpass', freq: 1850, q: 0.8, gainPeak: 0.075 });
+
+    if (situation === 'crush') {
+      // Romantic Fmaj9 warm harp & music-box arpeggio + gentle heart-flutter chord
+      playTone(ctx, { freq: 174.61, type: 'sine', start: t0, dur: 1.9, gainPeak: 0.045 });
+      const notes = [349.23, 440.0, 523.25, 659.25, 783.99, 880.0, 1046.5];
+      notes.forEach((freq, idx) => {
+        const s = t0 + idx * 0.082;
+        playTone(ctx, { freq, type: idx % 2 === 0 ? 'sine' : 'triangle', start: s, dur: 1.15, gainPeak: 0.058 });
+        playTone(ctx, { freq: freq * 2, type: 'sine', start: s + 0.015, dur: 0.45, gainPeak: 0.015 });
+      });
+    } else if (situation === 'midnight') {
+      // Nocturnal Dmin9 dreamy lo-fi drone + crystalline raindrop chimes
+      playTone(ctx, { freq: 146.83, type: 'triangle', start: t0, dur: 2.1, gainPeak: 0.042, filterFreq: 380 });
+      playTone(ctx, { freq: 220.0, type: 'sine', start: t0 + 0.05, dur: 1.9, gainPeak: 0.032 });
+      const notes = [293.66, 440.0, 523.25, 659.25, 880.0, 1046.5];
+      notes.forEach((freq, idx) => {
+        playTone(ctx, { freq, type: 'sine', start: t0 + idx * 0.115, dur: 1.45, gainPeak: 0.048 });
+      });
+    } else if (situation === 'joke') {
+      // Playful cheeky bounce marimba riff + cartoon boing glide
+      const riff = [
+        { f: 392.0, d: 0.18, o: 0.02 },
+        { f: 493.88, d: 0.18, o: 0.1 },
+        { f: 587.33, d: 0.18, o: 0.18 },
+        { f: 659.25, d: 0.22, o: 0.26 },
+        { f: 783.99, d: 0.48, o: 0.36 }
+      ];
+      riff.forEach((n) => playTone(ctx, { freq: n.f, type: 'triangle', start: t0 + n.o, dur: n.d, gainPeak: 0.07 }));
+      playTone(ctx, { freq: 270, endFreq: 640, type: 'sine', start: t0 + 0.4, dur: 0.22, gainPeak: 0.065 });
+      playTone(ctx, { freq: 1046.5, type: 'sine', start: t0 + 0.46, dur: 0.42, gainPeak: 0.045 });
+    } else if (situation === 'dare') {
+      // Rapid accelerating snare brush drumroll -> triumphant brassy victory fanfare
+      const drumOffsets = [0.0, 0.08, 0.15, 0.21, 0.26, 0.305, 0.345];
+      drumOffsets.forEach((off, idx) => {
+        playNoiseBurst(ctx, {
+          start: t0 + off,
+          dur: 0.05,
+          filterType: 'bandpass',
+          freq: 950 + idx * 240,
+          q: 1.6,
+          gainPeak: 0.04 + idx * 0.008
+        });
+      });
+      const fanfare = [
+        { f: 523.25, o: 0.40, d: 0.16 },
+        { f: 523.25, o: 0.52, d: 0.16 },
+        { f: 783.99, o: 0.64, d: 0.24 },
+        { f: 1046.5, o: 0.80, d: 0.85 }
+      ];
+      fanfare.forEach((n) => {
+        playTone(ctx, { freq: n.f, type: 'sawtooth', start: t0 + n.o, dur: n.d, gainPeak: 0.036, filterFreq: 1900 });
+        playTone(ctx, { freq: n.f * 0.5, type: 'triangle', start: t0 + n.o, dur: n.d, gainPeak: 0.042 });
+      });
+    } else if (situation === 'apology') {
+      // Soft bittersweet F#m -> D -> A -> E warm heartfelt piano/bell melody
+      playTone(ctx, { freq: 185.0, type: 'sine', start: t0, dur: 2.0, gainPeak: 0.036 });
+      const notes = [369.99, 440.0, 554.37, 493.88, 587.33, 659.25];
+      notes.forEach((freq, idx) => {
+        playTone(ctx, { freq, type: 'sine', start: t0 + idx * 0.125, dur: 1.35, gainPeak: 0.05 });
+      });
+    } else if (situation === 'celebration') {
+      // Festive sparkling C-major upbeat celebration arpeggio + joyful shimmer chord
+      const partyNotes = [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98];
+      partyNotes.forEach((freq, idx) => {
+        const s = t0 + idx * 0.068;
+        playTone(ctx, { freq, type: idx % 2 === 0 ? 'triangle' : 'sine', start: s, dur: 0.85, gainPeak: 0.062 });
+      });
+      playTone(ctx, { freq: 523.25, type: 'sine', start: t0 + 0.42, dur: 1.1, gainPeak: 0.045 });
+      playTone(ctx, { freq: 1046.5, type: 'sine', start: t0 + 0.44, dur: 1.15, gainPeak: 0.04 });
+    }
+
+    // Extra situational spark if 60s Burn Self-Destruct mode is active
+    if (state.burnEnabled) {
+      playNoiseBurst(ctx, {
+        start: t0 + 0.38,
+        dur: 0.24,
+        filterType: 'bandpass',
+        freq: 3200,
+        endFreq: 900,
+        q: 2.2,
+        gainPeak: 0.055
+      });
+    }
+  }
+
+  function playBurnTickSfx(isUrgent) {
     if (!state.soundEnabled) return;
     const ctx = ensureAudioContext();
     if (!ctx) return;
+    const t = ctx.currentTime;
+    playTone(ctx, {
+      freq: isUrgent ? 1180 : 880,
+      type: 'triangle',
+      start: t,
+      dur: 0.035,
+      gainPeak: isUrgent ? 0.032 : 0.016
+    });
+  }
 
-    const t0 = ctx.currentTime;
-    // Soft paper rustle shimmer
-    if (state.noiseBuffer) {
-      const rustle = ctx.createBufferSource();
-      rustle.buffer = state.noiseBuffer;
-      const hp = ctx.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.setValueAtTime(1800, t0);
-      const rg = ctx.createGain();
-      rg.gain.setValueAtTime(0.001, t0);
-      rg.gain.exponentialRampToValueAtTime(0.08, t0 + 0.04);
-      rg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.24);
-      rustle.connect(hp);
-      hp.connect(rg);
-      rg.connect(ctx.destination);
-      rustle.start(t0, 0, 0.26);
+  function playEvaporateSfx() {
+    if (!state.soundEnabled) return;
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    playNoiseBurst(ctx, {
+      start: t,
+      dur: 0.72,
+      filterType: 'bandpass',
+      freq: 1900,
+      endFreq: 210,
+      q: 1.5,
+      gainPeak: 0.09
+    });
+    playTone(ctx, { freq: 392, endFreq: 146.83, type: 'sine', start: t + 0.05, dur: 0.55, gainPeak: 0.045 });
+  }
+
+  function playGuessSfx(isCorrect) {
+    if (!state.soundEnabled) return;
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    if (!isCorrect) {
+      playTone(ctx, { freq: 246.94, endFreq: 164.81, type: 'sawtooth', start: t, dur: 0.24, gainPeak: 0.04, filterFreq: 750 });
+      return;
     }
-
-    // Gentle warm pentatonic acoustic chime (C5 - E5 - G5 - C6)
-    const freqs = [523.25, 659.25, 783.99, 1046.5];
-    freqs.forEach((freq, idx) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      const start = t0 + idx * 0.06;
-      osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
-      osc.frequency.setValueAtTime(freq, start);
-
-      g.gain.setValueAtTime(0.0001, start);
-      g.gain.exponentialRampToValueAtTime(0.065, start + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, start + 0.85);
-
-      osc.connect(g);
-      g.connect(ctx.destination);
-      osc.start(start);
-      osc.stop(start + 0.9);
+    const notes = [523.25, 659.25, 783.99, 1046.5, 1318.51];
+    notes.forEach((f, idx) => {
+      playTone(ctx, { freq: f, type: 'triangle', start: t + idx * 0.065, dur: 0.45, gainPeak: 0.055 });
     });
   }
 
@@ -1080,6 +1849,7 @@
       remaining -= 1;
       if (remaining > 0) {
         renderTick(remaining);
+        playBurnTickSfx(remaining <= 10);
         return;
       }
 
@@ -1091,6 +1861,7 @@
 
   function evaporateSecretNote() {
     state.hasBurned = true;
+    playEvaporateSfx();
     const badge = $('burnCountdownBadge');
     const secretEl = $('revealedSecretText');
 
@@ -1161,6 +1932,7 @@
               navigator.vibrate(25);
             } catch (_) { }
           }
+          playGuessSfx(false);
           feedback.className = 'guess-feedback is-wrong';
           feedback.textContent = 'Wrong guess! 😜 Try another';
           return;
@@ -1174,7 +1946,7 @@
         feedback.className = 'guess-feedback is-correct';
         feedback.textContent = "Bingo! It's them! Tell them on WhatsApp ❤️";
         launchPaperConfetti();
-        playUnsealChime();
+        playGuessSfx(true);
       });
 
       grid.appendChild(btn);
@@ -1509,13 +2281,21 @@
     };
   }
 
-  function generateConfessionLink() {
-    const secretVal = ($('secretTextarea')?.value || '').trim();
-    if (!secretVal) {
-      showToast('✍️ Write a secret message first before sealing!');
-      $('secretTextarea')?.focus();
-      return;
+  function requireCreatorSecret() {
+    if (state.isReceiverMode) return true;
+    const textarea = $('secretTextarea');
+    const secretVal = (textarea?.value || '').trim();
+    if (secretVal) return true;
+    if ($('viewWrite')?.classList.contains('hidden')) {
+      switchView('write');
     }
+    showToast('✍️ Write your secret message first (or tap Random Idea / Hindi Quick Note)!');
+    textarea?.focus();
+    return false;
+  }
+
+  function generateConfessionLink() {
+    if (!requireCreatorSecret()) return;
 
     state.cardId = generateCardId();
     syncPreviewFromInputs(true);
@@ -1543,11 +2323,13 @@
   }
 
   function shareWhatsApp() {
+    if (!requireCreatorSecret()) return;
     const { text } = buildShareTextAndUrl();
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   }
 
   function shareTelegram() {
+    if (!requireCreatorSecret()) return;
     const { shortText, url } = buildShareTextAndUrl();
     window.open(
       `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shortText)}`,
@@ -1557,6 +2339,7 @@
   }
 
   function shareTwitter() {
+    if (!requireCreatorSecret()) return;
     const { shortText, url } = buildShareTextAndUrl();
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(shortText)}&url=${encodeURIComponent(url)}`,
@@ -1566,6 +2349,7 @@
   }
 
   function shareFacebook() {
+    if (!requireCreatorSecret()) return;
     const { url } = buildShareTextAndUrl();
     window.open(
       `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
@@ -1575,6 +2359,7 @@
   }
 
   async function shareNative() {
+    if (!requireCreatorSecret()) return;
     const { recipient, shortText, url } = buildShareTextAndUrl();
 
     if (navigator.share) {
@@ -1596,6 +2381,7 @@
   }
 
   async function copyLinkWithFeedback(buttonLabelEl, customToast) {
+    if (!requireCreatorSecret()) return;
     const { url } = getActiveCardSummary();
     await copyTextToClipboard(url);
 
@@ -1608,6 +2394,24 @@
     }
 
     showToast(customToast || '📋 Secret link copied to clipboard!');
+  }
+
+  async function copyViralCaption() {
+    if (!requireCreatorSecret()) return;
+    const { recipient, url } = buildShareTextAndUrl();
+    const foilWord = (FOIL_THEMES[state.foil] || FOIL_THEMES.silver).shareWord;
+    const who = recipient && recipient !== 'Someone' ? recipient : 'you';
+    const caption = `Someone sent ${who} a ${foilWord}-sealed secret note 💌✨ Scratch the foil before it disappears: ${url} #Unseal #SecretNote`;
+    await copyTextToClipboard(caption);
+    const labelEl = $('copyCaptionBtn')?.querySelector('span');
+    if (labelEl) {
+      const original = labelEl.textContent;
+      labelEl.textContent = '✅ Viral Caption + Link Copied!';
+      setTimeout(() => {
+        labelEl.textContent = original;
+      }, 2400);
+    }
+    showToast('💬 Viral Story / Status caption copied! Ready to paste on WhatsApp or IG.');
   }
 
   async function copyTextToClipboard(text) {
@@ -2085,21 +2889,13 @@
       }
     });
 
-    $('audioToggleBtn')?.addEventListener('click', () => {
-      state.soundEnabled = !state.soundEnabled;
-      const btn = $('audioToggleBtn');
-      if (btn) {
-        btn.textContent = state.soundEnabled ? '🔊' : '🔇';
-        btn.setAttribute('aria-pressed', state.soundEnabled ? 'true' : 'false');
-        btn.classList.toggle('is-unmuted', state.soundEnabled);
-      }
-      if (state.soundEnabled) {
-        ensureAudioContext();
-        playScratchAudio(0.45);
-        showToast('🔊 ASMR scratch & unseal sound effects ON');
-      } else {
-        showToast('🔇 Sound effects muted');
-      }
+    $('audioToggleBtn')?.addEventListener('click', () => setSoundEnabled(!state.soundEnabled, true, true));
+    $('moodAudioPillBtn')?.addEventListener('click', () => setSoundEnabled(!state.soundEnabled, true, true));
+    $('testMoodAudioBtn')?.addEventListener('click', () => {
+      setSoundEnabled(true, false, true);
+      playUnsealChime();
+      const profile = SITUATION_PROFILES[state.lastRevealSituation || detectRevealSituation()] || SITUATION_PROFILES.crush;
+      showToast(profile.toast);
     });
 
     $('tabWriteBtn')?.addEventListener('click', () => switchView('write'));
@@ -2185,7 +2981,29 @@
     $('guessCorrectInput')?.addEventListener('input', () => syncPreviewFromInputs(true));
     $('guessDecoy1Input')?.addEventListener('input', () => syncPreviewFromInputs(true));
     $('guessDecoy2Input')?.addEventListener('input', () => syncPreviewFromInputs(true));
+    $('passcodeInput')?.addEventListener('input', () => syncPreviewFromInputs(true));
+    $('passcodeHintInput')?.addEventListener('input', () => syncPreviewFromInputs(true));
     $('burnTimerToggle')?.addEventListener('change', () => syncPreviewFromInputs(true));
+
+    $('unlockSealBtn')?.addEventListener('click', attemptUnlockPasscode);
+    $('unlockCodeInput')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        attemptUnlockPasscode();
+      }
+    });
+
+    const scratchToolButtons = Array.from(document.querySelectorAll('#scratchToolGroup [data-tool]'));
+    scratchToolButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const chosenTool = btn.getAttribute('data-tool') || 'coin';
+        state.scratchTool = ['coin', 'key', 'wand'].includes(chosenTool) ? chosenTool : 'coin';
+        scratchToolButtons.forEach((b) => b.classList.toggle('active', b === btn));
+        if (scratchCanvas) {
+          scratchCanvas.classList.toggle('tool-wand', state.scratchTool === 'wand');
+        }
+      });
+    });
 
     $('clearComposerBtn')?.addEventListener('click', () => {
       if ($('recipientInput')) $('recipientInput').value = '';
@@ -2194,7 +3012,15 @@
       if ($('guessCorrectInput')) $('guessCorrectInput').value = '';
       if ($('guessDecoy1Input')) $('guessDecoy1Input').value = '';
       if ($('guessDecoy2Input')) $('guessDecoy2Input').value = '';
+      if ($('passcodeInput')) $('passcodeInput').value = '';
+      if ($('passcodeHintInput')) $('passcodeHintInput').value = '';
+      if ($('unlockCodeInput')) $('unlockCodeInput').value = '';
       if ($('burnTimerToggle')) $('burnTimerToggle').checked = false;
+      state.chainDepth = 1;
+      state.passcodeRequired = false;
+      state.passcodeUnlocked = true;
+      state.expectedPasscode = '';
+      state.passcodeHint = '';
       state.fontStyle = 'hand';
       state.paperTheme = 'cream';
       state.inkColor = 'espresso';
@@ -2202,6 +3028,8 @@
       state.emblem = 'quill';
       document.querySelectorAll('.quick-hindi-chip').forEach((c) => c.classList.remove('active'));
       state.cardId = generateCardId();
+      applyPasscodeGateUi();
+      syncChainBadgesUi();
       applyVisualThemeToDom();
       syncAddonButtonsActiveState();
       syncPreviewFromInputs(true);
@@ -2241,9 +3069,18 @@
       )
     );
 
-    $('quickRevealBtn')?.addEventListener('click', () => completeReveal(true));
+    $('quickRevealBtn')?.addEventListener('click', () => {
+      if (state.passcodeRequired && !state.passcodeUnlocked) {
+        attemptUnlockPasscode();
+        showToast('🔐 Enter the secret unlock code first!');
+        return;
+      }
+      unlockSoundOnInteraction();
+      completeReveal(true);
+    });
     $('downloadStoryBtn')?.addEventListener('click', downloadStoryCardPng);
     $('sealBackBtn')?.addEventListener('click', enterCreatorFromReceiver);
+    $('copyCaptionBtn')?.addEventListener('click', copyViralCaption);
     $('previewShareWhatsAppBtn')?.addEventListener('click', shareWhatsApp);
     $('previewShareTelegramBtn')?.addEventListener('click', shareTelegram);
     $('previewShareTwitterBtn')?.addEventListener('click', shareTwitter);
@@ -2277,7 +3114,7 @@
     });
 
     const params = new URLSearchParams(window.location.search);
-    const sealParam = params.get('seal');
+    const sealParam = params.get('seal') || params.get('s');
 
     if (sealParam) {
       try {
