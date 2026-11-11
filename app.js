@@ -1,2191 +1,2093 @@
-(() => {
+/* ==========================================================================
+   UNSEAL v8 — Flagship Full-Screen App Engine
+   - Zero-Server Client Encryption (U4 Compact + U3/U2/U1/?seal=/?s= Legacy)
+   - 12 Indian & Worldwide Auto/Manual Festival Themes
+   - 100 Unique Random Collector Mystery Gift Cards (20 Palettes × 5 Motifs)
+   - 5-Share WhatsApp Unlock + 1080×1920 High-Res PNG Export
+   - Auto Browser PWA Install Prompt + Orbital Install Animation
+   - Web Audio API ASMR Scratch & Chime + Haptic Feedback
+   ========================================================================== */
+
+(function () {
   'use strict';
 
-  const cfg = window.UNSEAL_CONFIG || {};
-  const KEY_STREAM_TAG = [85, 78, 83, 69, 65, 76, 51, 48];
+  // ==================== CONFIG & ANALYTICS / ADSENSE ====================
+  const CFG = window.UNSEAL_CONFIG || {};
+  const PRODUCTION_ORIGIN = (CFG.siteOrigin || 'https://unseal-cards.vercel.app').replace(/\/+$/, '');
+  const REQUIRED_SHARES = 5;
+  const SCRATCH_REVEAL_RATIO = 0.42;
+  const ALPHA_ID_LEN = 8;
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  const REVEAL_THRESHOLD = 0.45;
-  const MAX_SECRET_CHARS = 280;
-  const TARGET_SHARES = 5;
 
-  const U4_SINGLE_CHARS = "abcdefghijklmnopqrstuvwxyz .,!?'-:\n/0123456789"; // 0..45
-  const U4_PHRASES = [
-    'you', 'the ', 'and ', 'love', 'miss', 'crush', 'secret',
-    'sorry', 'night', 'smile', 'always', 'hai', 'dil', '❤️'
-  ]; // 47..60
-  const U4_EMOJIS = ['✨', '💌', '👀', '🥹', '😂', '🔥', '💕', '🌙']; // 61 + 3-bit index
-  const U2_MOODS = ['💌 Crush Confession', '🌙 Midnight Thought', '🤫 Inside Joke', '🎲 Wild Dare'];
+  function initAnalyticsAndAds() {
+    if (typeof document === 'undefined' || !document.head) return;
 
-  const MYSTERY_EDITIONS = {
-    gold: {
-      tier: 'tier-gold',
-      badge: '★ ROYAL GOLD RESERVE',
-      crest: '👑',
-      rarity: 'Top 4% Collector Pass',
-      accent: '#C9A96E',
-      light: '#F6E5BE',
-      bgStops: ['#403126', '#1F1A17', '#110E0D'],
-      fortunes: [
-        'Someone replays your last text longer than they admit ✨',
-        'A quiet admirer checks when you are online every night 👀',
-        'Your name brings an instant smile to someone’s screen 💌'
-      ]
-    },
-    diamond: {
-      tier: 'tier-diamond',
-      badge: '💎 CELESTIAL DIAMOND AURA',
-      crest: '💎',
-      rarity: 'Top 2% Rare Edition',
-      accent: '#93C5FD',
-      light: '#DBEAFE',
-      bgStops: ['#1E3A54', '#13202E', '#0B1119'],
-      fortunes: [
-        'Unexpected late-night confession energy is heading your way 🌙',
-        'Someone remembers a tiny detail about you from months ago ✨',
-        'Your vibe makes close friends trust you with their deepest secrets 💎'
-      ]
-    },
-    midnight: {
-      tier: 'tier-midnight',
-      badge: '🌙 MIDNIGHT CROWN EDITION',
-      crest: '🌙',
-      rarity: 'Top 5% Mystic Pass',
-      accent: '#D8B4FE',
-      light: '#F3E8FF',
-      bgStops: ['#382352', '#1C142B', '#0F0A17'],
-      fortunes: [
-        'Three words left unsaid around you are waiting for the right moment 🌙',
-        '2 AM honesty brings a plot twist into your week ✨',
-        'Someone secretly compares their favorite songs to your vibe 🎧'
-      ]
-    },
-    crimson: {
-      tier: 'tier-crimson',
-      badge: '🔥 CRIMSON VELVET CHARM',
-      crest: '♥',
-      rarity: 'Top 3% Signature Seal',
-      accent: '#FDA4AF',
-      light: '#FFE4E6',
-      bgStops: ['#522026', '#261114', '#14080A'],
-      fortunes: [
-        'Magnetic main-character energy — your next reply changes everything 🔥',
-        'Somebody secretly hopes you notice their hints this week 💌',
-        'Your presence turns ordinary chats into core memories ❤️'
-      ]
+    const gaId = CFG.ga4Id || '';
+    if (gaId && gaId !== 'G-XXXXXXXXXX' && /^G-[A-Z0-9]+$/i.test(gaId)) {
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', gaId, { anonymize_ip: true, page_path: location.pathname });
+
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
+      document.head.appendChild(s);
     }
-  };
 
-  const utf8Encoder = new TextEncoder();
-  const utf8Decoder = new TextDecoder();
+    const adsClient = CFG.adsenseClient || '';
+    if (adsClient && adsClient !== 'ca-pub-0000000000000000' && /^ca-pub-\d+$/.test(adsClient)) {
+      const adScript = document.createElement('script');
+      adScript.async = true;
+      adScript.crossOrigin = 'anonymous';
+      adScript.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(adsClient)}`;
+      document.head.appendChild(adScript);
+    }
+  }
 
-  const state = {
-    isReceiverMode: false,
-    cardId: generateAlphaId(8),
-    recipient: '',
-    senderName: '',
-    secret: '',
-    clue: '',
-    shareUrl: '',
-    soundEnabled: false,
-    userExplicitlyMuted: false,
-    audioCtx: null,
-    noiseBuffer: null,
-    lastSoundTime: 0,
-    lastHapticTime: 0,
-    isDrawing: false,
-    hasRevealed: false,
-    lastPos: null,
-    lastProgressCheck: 0,
-    popupTimer: null,
-    toastTimer: null,
-    deferredInstallPrompt: null,
-    installAnimTimer: null,
-    liveCountBase: 0,
-    liveCountTimer: null,
-    questSharePending: false,
-    questShareTimer: null
-  };
+  function trackEvent(eventName, params) {
+    try {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', eventName, params || {});
+      }
+    } catch (_) { /* no-op */ }
+  }
 
-  let scratchCanvas = null;
-  let scratchCtx = null;
-  let resizeObserver = null;
+  // ==================== 12 INDIAN & WORLDWIDE FESTIVAL THEMES ====================
+  const FESTIVAL_THEMES = [
+    {
+      id: 'diwali',
+      name: 'Diwali',
+      region: 'India · Festival of Lights',
+      emoji: '🪔',
+      ribbon: '🪔 Happy Diwali Edition · Festival of Lights · Tap to switch',
+      glyphs: ['🪔', '✨', '🎆', '✦', '💛'],
+      swatch: '#D18E1F',
+      confetti: ['#E88A1C', '#D9383A', '#F5D06B', '#B8294B'],
+      greeting: 'Shubh Deepavali 🪔'
+    },
+    {
+      id: 'holi',
+      name: 'Holi',
+      region: 'India · Festival of Colors',
+      emoji: '🎨',
+      ribbon: '🎨 Happy Holi Edition · Colors of Joy · Tap to switch',
+      glyphs: ['🎨', '🌸', '💜', '✨', '🌈'],
+      swatch: '#D6247A',
+      confetti: ['#D6247A', '#22B8CF', '#F59F00', '#7950F2'],
+      greeting: 'Happy Holi 🎨'
+    },
+    {
+      id: 'eid',
+      name: 'Eid Mubarak',
+      region: 'India & Global · Crescent Moon',
+      emoji: '🌙',
+      ribbon: '🌙 Eid Mubarak Edition · Crescent Glow · Tap to switch',
+      glyphs: ['🌙', '✨', '🕌', '✦', '💚'],
+      swatch: '#0E7A56',
+      confetti: ['#0E7A56', '#D4A853', '#FFFDF8', '#22C55E'],
+      greeting: 'Eid Mubarak 🌙'
+    },
+    {
+      id: 'navratri',
+      name: 'Navratri & Puja',
+      region: 'India · Garba & Festive Nights',
+      emoji: '💃',
+      ribbon: '🪔 Shubh Navratri & Durga Puja Edition · Tap to switch',
+      glyphs: ['🪔', '🌺', '✨', '🪘', '❤️'],
+      swatch: '#D9480F',
+      confetti: ['#D9480F', '#E6B800', '#C2185B', '#FFFDF8'],
+      greeting: 'Happy Navratri 🌺'
+    },
+    {
+      id: 'rakhi',
+      name: 'Raksha Bandhan',
+      region: 'India · Thread of Love',
+      emoji: '🧵',
+      ribbon: '🧵 Raksha Bandhan Edition · Bond Forever · Tap to switch',
+      glyphs: ['🧵', '✨', '💛', '🌺', '🎁'],
+      swatch: '#C2255C',
+      confetti: ['#C2255C', '#D4A853', '#F472B6', '#FFFDF8'],
+      greeting: 'Happy Rakhi 🧵'
+    },
+    {
+      id: 'pongal',
+      name: 'Pongal / Sankranti',
+      region: 'India · Harvest & Kites',
+      emoji: '🪁',
+      ribbon: '🪁 Happy Pongal & Makar Sankranti · Tap to switch',
+      glyphs: ['🪁', '☀️', '🌾', '✨', '💛'],
+      swatch: '#C2590B',
+      confetti: ['#C2590B', '#16A34A', '#EAB308', '#FFFDF8'],
+      greeting: 'Happy Sankranti 🪁'
+    },
+    {
+      id: 'newyear',
+      name: 'New Year',
+      region: 'Worldwide · Midnight Spark',
+      emoji: '🥂',
+      ribbon: '🥂 Happy New Year Edition · Fresh Wishes · Tap to switch',
+      glyphs: ['🥂', '🎆', '✨', '⭐', '🎊'],
+      swatch: '#5234C8',
+      confetti: ['#5234C8', '#D4A853', '#38BDF8', '#FFFDF8'],
+      greeting: 'Happy New Year 🥂'
+    },
+    {
+      id: 'valentine',
+      name: 'Valentine’s Week',
+      region: 'Worldwide · Love & Crushes',
+      emoji: '💘',
+      ribbon: '💘 Valentine Week Edition · Secret Confessions · Tap to switch',
+      glyphs: ['💘', '🌹', '♥', '✨', '💌'],
+      swatch: '#D01B46',
+      confetti: ['#D01B46', '#FB7185', '#D4A853', '#FFFDF8'],
+      greeting: 'With Love 💘'
+    },
+    {
+      id: 'cherry',
+      name: 'Spring Blossom',
+      region: 'Worldwide · Sakura Glow',
+      emoji: '🌸',
+      ribbon: '🌸 Spring Sakura Edition · Soft Petals · Tap to switch',
+      glyphs: ['🌸', '🌷', '✨', '🦋', '💗'],
+      swatch: '#C0386B',
+      confetti: ['#F472B6', '#FBCFE8', '#D4A853', '#FFFDF8'],
+      greeting: 'Spring Glow 🌸'
+    },
+    {
+      id: 'halloween',
+      name: 'Halloween',
+      region: 'Worldwide · Midnight Mystery',
+      emoji: '🎃',
+      ribbon: '🎃 Spooky Secret Edition · Trick or Unseal · Tap to switch',
+      glyphs: ['🎃', '🦇', '✨', '🕯️', '🌙'],
+      swatch: '#C2410C',
+      confetti: ['#EA580C', '#7E22CE', '#1F2937', '#FACC15'],
+      greeting: 'Spooky Secret 🎃'
+    },
+    {
+      id: 'christmas',
+      name: 'Christmas',
+      region: 'Worldwide · Winter Velvet',
+      emoji: '🎄',
+      ribbon: '🎄 Merry Christmas Edition · Winter Velvet · Tap to switch',
+      glyphs: ['🎄', '❄️', '✨', '🔔', '❤️'],
+      swatch: '#B81F28',
+      confetti: ['#B81F28', '#168048', '#D4A853', '#FFFDF8'],
+      greeting: 'Merry Christmas 🎄'
+    },
+    {
+      id: 'classic',
+      name: 'Classic Linen',
+      region: 'Timeless Signature Stationery',
+      emoji: '✉️',
+      ribbon: '✉️ Classic Signature Stationery · Tap to explore 12 Themes',
+      glyphs: ['✨', '✦', '♥', '✧', '💌'],
+      swatch: '#C8282B',
+      confetti: ['#C8282B', '#D4A853', '#1E1B18', '#F4E5B8'],
+      greeting: 'Sealed with Ink ✉️'
+    }
+  ];
 
-  const $ = (id) => document.getElementById(id);
+  function detectFestivalByDate(now) {
+    const d = now instanceof Date ? now : new Date();
+    const yr = d.getFullYear();
+    const mm = d.getMonth() + 1;
+    const dd = d.getDate();
+    const md = mm * 100 + dd;
 
-  // =========================================================================
-  // 0. Guarded GA4 Analytics & Safe Service Worker Boot
-  // =========================================================================
+    if (md >= 101 && md <= 107) return 'newyear';
+    if (md >= 112 && md <= 117) return 'pongal';
+    if (md >= 207 && md <= 216) return 'valentine';
 
-  function initAnalyticsIfConfigured() {
-    const gaId = String(cfg.ga4Id || '').trim();
-    if (!gaId || gaId === 'G-XXXXXXXXXX' || !/^G-[A-Z0-9]+$/i.test(gaId)) return;
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function () {
-      window.dataLayer.push(arguments);
+    // Exact 2026-2028 lunar approximations for Holi & Eid + spring cherry
+    if ((yr === 2026 && md >= 301 && md <= 306) || (yr === 2027 && md >= 320 && md <= 325) || (mm === 3 && dd <= 6)) return 'holi';
+    if ((yr === 2026 && ((md >= 318 && md <= 322) || (md >= 525 && md <= 529))) || (yr === 2027 && md >= 308 && md <= 312)) return 'eid';
+    if (md >= 325 && md <= 420) return 'cherry';
+    if (md >= 824 && md <= 831) return 'rakhi';
+    if (md >= 1010 && md <= 1022) return 'navratri';
+    if (md >= 1026 && md <= 1102) return 'halloween';
+    if (md >= 1103 && md <= 1116) return 'diwali';
+    if (md >= 1218 && md <= 1229) return 'christmas';
+    if (md >= 1230 && md <= 1231) return 'newyear';
+    return 'classic';
+  }
+
+  function getThemeById(id) {
+    return FESTIVAL_THEMES.find((t) => t.id === id) || FESTIVAL_THEMES[FESTIVAL_THEMES.length - 1];
+  }
+
+  // ==================== 100 UNIQUE PRE-DESIGNED COLLECTOR GIFT CARDS ====================
+  // 20 Luxury Palettes × 5 Procedural Geometric Artwork Engines = 100 Unique Cards (#001..#100)
+  const GIFT_PALETTES = [
+    { name: 'Royal Crimson Foil',     bg1: '#2C0B13', bg2: '#5B1628', gold: '#F4CE74', soft: 'rgba(244,206,116,0.22)', ink: '#FFF9ED' },
+    { name: 'Emerald Crescent Silk',  bg1: '#072419', bg2: '#0E4E37', gold: '#E8C568', soft: 'rgba(232,197,104,0.22)', ink: '#F3FFF9' },
+    { name: 'Midnight Sapphire',      bg1: '#0A1633', bg2: '#1C3670', gold: '#93C5FD', soft: 'rgba(147,197,253,0.22)', ink: '#F0F6FF' },
+    { name: 'Saffron Diya Velvet',    bg1: '#331405', bg2: '#7A300B', gold: '#FBBF24', soft: 'rgba(251,191,36,0.22)',  ink: '#FFF9EC' },
+    { name: 'Rose Quartz Satin',      bg1: '#3B1124', bg2: '#7D234A', gold: '#FBCFE8', soft: 'rgba(251,207,232,0.22)', ink: '#FFF4F9' },
+    { name: 'Obsidian Champagne',     bg1: '#141210', bg2: '#2D2721', gold: '#EED39B', soft: 'rgba(238,211,155,0.22)', ink: '#FFFDF7' },
+    { name: 'Amethyst Twilight',      bg1: '#1E0C38', bg2: '#4A1F82', gold: '#DDD6FE', soft: 'rgba(221,214,254,0.22)', ink: '#FAF5FF' },
+    { name: 'Peacock Teal Silk',      bg1: '#062329', bg2: '#0F5261', gold: '#5EEAD4', soft: 'rgba(94,234,212,0.22)',  ink: '#F0FDFA' },
+    { name: 'Garnet Imperial',        bg1: '#2E0909', bg2: '#6F1414', gold: '#FDE08D', soft: 'rgba(253,224,141,0.22)', ink: '#FFF5F5' },
+    { name: 'Antique Bronze Folio',   bg1: '#291B0E', bg2: '#5E3E1F', gold: '#FDE68A', soft: 'rgba(253,230,138,0.22)', ink: '#FFFDF5' },
+    { name: 'Gulal Magenta Glow',     bg1: '#3B072D', bg2: '#831862', gold: '#F9A8D4', soft: 'rgba(249,168,212,0.22)', ink: '#FFF5FC' },
+    { name: 'Cobalt Gold Leaf',       bg1: '#0D1B44', bg2: '#1E3A8A', gold: '#FACC15', soft: 'rgba(250,204,21,0.22)',  ink: '#F8FAFF' },
+    { name: 'Imperial Jade Brocade',  bg1: '#09261E', bg2: '#14543E', gold: '#A7F3D0', soft: 'rgba(167,243,208,0.22)', ink: '#F0FFF8' },
+    { name: 'Plum Nocturne Foil',     bg1: '#260E29', bg2: '#58215E', gold: '#F0ABFC', soft: 'rgba(240,171,252,0.22)', ink: '#FEF5FF' },
+    { name: 'Copper Sunset Ink',      bg1: '#36140A', bg2: '#7C2D12', gold: '#FDBA74', soft: 'rgba(253,186,116,0.22)', ink: '#FFF7ED' },
+    { name: 'Indigo Constellation',   bg1: '#0F172A', bg2: '#312E81', gold: '#C7D2FE', soft: 'rgba(199,210,254,0.22)', ink: '#F5F7FF' },
+    { name: 'Burgundy Wax Reserve',   bg1: '#290A18', bg2: '#641738', gold: '#F7D08A', soft: 'rgba(247,208,138,0.22)', ink: '#FFF6FA' },
+    { name: 'Marigold Toran Gold',    bg1: '#361E04', bg2: '#784208', gold: '#FDE047', soft: 'rgba(253,224,71,0.22)',  ink: '#FFFBEB' },
+    { name: 'Arctic Platinum Mist',   bg1: '#111827', bg2: '#334155', gold: '#E2E8F0', soft: 'rgba(226,232,240,0.22)', ink: '#F8FAFC' },
+    { name: 'Lotus Coral Reserve',    bg1: '#38121B', bg2: '#88273B', gold: '#FED7AA', soft: 'rgba(254,215,170,0.22)', ink: '#FFF5F6' }
+  ];
+
+  const GIFT_MOTIFS = [
+    { key: 'mandala',       title: 'Mandala Crown',       crest: '🪷' },
+    { key: 'sunburst',      title: 'Art Deco Sunburst',   crest: '☀️' },
+    { key: 'aurora',        title: 'Aurora Silk Wave',    crest: '🌊' },
+    { key: 'constellation', title: 'Celestial Star Map',  crest: '✨' },
+    { key: 'heritage',      title: 'Royal Heritage Arch', crest: '👑' }
+  ];
+
+  const GIFT_FORTUNES = [
+    'An unexpected message this week changes your whole mood ✨',
+    'Someone secretly replays your old conversations & smiles 💌',
+    'Main-character luck finds you before the weekend ends 🌟',
+    'A tiny daring step brings the exact answer you hoped for 🔥',
+    'Your warmth leaves quiet impressions nobody forgets 🫶',
+    'A late-night notification brings good news very soon 🌙',
+    'Pure magnet energy: people notice the room shift when you arrive 👑',
+    'Good vibes & honest friendships gather closely around you 🪷',
+    'A bold coincidence turns into your favorite memory soon 🎆',
+    'Someone is rooting for you silently—keep shining bright ☀️'
+  ];
+
+  function getCollectorDesign(index) {
+    const safeIdx = ((Math.floor(index) % 100) + 100) % 100;
+    const palette = GIFT_PALETTES[Math.floor(safeIdx / 5)];
+    const motif = GIFT_MOTIFS[safeIdx % 5];
+    const editionNum = safeIdx + 1;
+    const editionStr = String(editionNum).padStart(3, '0');
+    const aura = 89 + ((safeIdx * 7) % 11); // 89..99%
+    const rarity = safeIdx % 17 === 0 ? 'MYTHIC 1/1'
+      : safeIdx % 7 === 0 ? 'ULTRA RARE'
+      : safeIdx % 3 === 0 ? 'ROYAL FOIL'
+      : 'LIMITED EDITION';
+    const fortune = GIFT_FORTUNES[(safeIdx * 3) % GIFT_FORTUNES.length];
+
+    return {
+      index: safeIdx,
+      editionNum,
+      editionStr,
+      badge: `#${editionStr}/100`,
+      palette,
+      motif,
+      rarity,
+      aura,
+      title: `${motif.title} · ${palette.name}`,
+      fortune
     };
-    window.gtag('js', new Date());
-    window.gtag('config', gaId, { anonymize_ip: true, page_title: document.title });
-
-    const s = document.createElement('script');
-    s.async = true;
-    s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
-    document.head.appendChild(s);
   }
 
-  function trackEvent(eventName, params = {}) {
-    if (typeof window.gtag === 'function') {
-      try {
-        window.gtag('event', eventName, params);
-      } catch (_) { }
+  function renderCollectorSvgMarkup(design) {
+    const col = design.palette.gold;
+    const m = design.motif.key;
+    const w = 360;
+    const h = 220;
+    const cx = w / 2;
+    const cy = h / 2;
+
+    if (m === 'mandala') {
+      let spokes = '';
+      for (let i = 0; i < 12; i++) {
+        const ang = (i * Math.PI) / 6;
+        const x2 = (cx + Math.cos(ang) * 145).toFixed(1);
+        const y2 = (cy + Math.sin(ang) * 145).toFixed(1);
+        spokes += `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-opacity="0.18" stroke-width="1"/>`;
+      }
+      return `
+        <circle cx="${cx}" cy="${cy}" r="96" fill="none" stroke="${col}" stroke-opacity="0.22" stroke-width="1.2" stroke-dasharray="5 4"/>
+        <circle cx="${cx}" cy="${cy}" r="66" fill="none" stroke="${col}" stroke-opacity="0.28" stroke-width="1.2"/>
+        <circle cx="${cx}" cy="${cy}" r="36" fill="none" stroke="${col}" stroke-opacity="0.25" stroke-width="1"/>
+        ${spokes}
+        <rect x="10" y="10" width="${w - 20}" height="${h - 20}" rx="12" fill="none" stroke="${col}" stroke-opacity="0.25" stroke-width="1"/>
+      `;
     }
-  }
 
-  function registerServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
-    if (window.location.protocol !== 'https:' && window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
-      return;
+    if (m === 'sunburst') {
+      let rays = '';
+      for (let i = 0; i < 18; i++) {
+        const ang = (i * Math.PI) / 9;
+        const x2 = (cx + Math.cos(ang) * 210).toFixed(1);
+        const y2 = (cy + Math.sin(ang) * 210).toFixed(1);
+        rays += `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-opacity="0.16" stroke-width="2"/>`;
+      }
+      return `
+        ${rays}
+        <polygon points="${cx},18 334,${cy} ${cx},${h - 18} 26,${cy}" fill="none" stroke="${col}" stroke-opacity="0.26" stroke-width="1.2"/>
+        <rect x="12" y="12" width="${w - 24}" height="${h - 24}" rx="10" fill="none" stroke="${col}" stroke-opacity="0.22" stroke-width="1"/>
+      `;
     }
-    navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => { });
+
+    if (m === 'aurora') {
+      return `
+        <path d="M-10,165 C80,95 160,195 250,115 C300,72 340,120 380,85" fill="none" stroke="${col}" stroke-opacity="0.32" stroke-width="3"/>
+        <path d="M-10,120 C90,55 180,155 280,75 C325,40 350,80 380,52" fill="none" stroke="${col}" stroke-opacity="0.22" stroke-width="2"/>
+        <path d="M-10,190 C100,130 190,210 300,145 L380,115 L380,230 L-10,230 Z" fill="${col}" fill-opacity="0.08"/>
+        <rect x="10" y="10" width="${w - 20}" height="${h - 20}" rx="12" fill="none" stroke="${col}" stroke-opacity="0.22" stroke-width="1"/>
+      `;
+    }
+
+    if (m === 'constellation') {
+      const pts = [[46, 48], [108, 32], [176, 62], [244, 34], [312, 68], [286, 152], [202, 178], [88, 162]];
+      let lines = '';
+      let dots = '';
+      for (let i = 0; i < pts.length; i++) {
+        const [x, y] = pts[i];
+        dots += `<circle cx="${x}" cy="${y}" r="2.6" fill="${col}" fill-opacity="0.55"/>`;
+        if (i + 1 < pts.length) {
+          const [nx, ny] = pts[i + 1];
+          lines += `<line x1="${x}" y1="${y}" x2="${nx}" y2="${ny}" stroke="${col}" stroke-opacity="0.24" stroke-width="1" stroke-dasharray="3 3"/>`;
+        }
+      }
+      return `
+        ${lines}
+        ${dots}
+        <circle cx="${cx}" cy="${cy}" r="80" fill="none" stroke="${col}" stroke-opacity="0.14" stroke-width="1"/>
+        <rect x="10" y="10" width="${w - 20}" height="${h - 20}" rx="12" fill="none" stroke="${col}" stroke-opacity="0.22" stroke-width="1"/>
+      `;
+    }
+
+    // heritage arch
+    return `
+      <path d="M36,${h - 14} L36,88 Q36,24 ${cx},22 Q${w - 36},24 ${w - 36},88 L${w - 36},${h - 14}" fill="none" stroke="${col}" stroke-opacity="0.34" stroke-width="1.6"/>
+      <path d="M52,${h - 14} L52,92 Q52,40 ${cx},38 Q${w - 52},40 ${w - 52},92 L${w - 52},${h - 14}" fill="none" stroke="${col}" stroke-opacity="0.2" stroke-width="1"/>
+      <circle cx="30" cy="30" r="10" fill="none" stroke="${col}" stroke-opacity="0.3"/>
+      <circle cx="${w - 30}" cy="30" r="10" fill="none" stroke="${col}" stroke-opacity="0.3"/>
+      <rect x="10" y="10" width="${w - 20}" height="${h - 20}" rx="12" fill="none" stroke="${col}" stroke-opacity="0.25" stroke-width="1"/>
+    `;
   }
 
-  // =========================================================================
-  // 1. 8-Char Alpha ID & Ultra-Short U4 Codec (+ Full U3/U2/U1 Backcompat)
-  // =========================================================================
+  function drawCanvasCollectorMotif(ctx, W, H, design) {
+    const col = design.palette.gold;
+    const m = design.motif.key;
+    ctx.save();
+    ctx.strokeStyle = col;
+    ctx.fillStyle = col;
 
-  function generateAlphaId(len = 8) {
-    const out = [];
-    const rand = new Uint8Array(len);
-    if (window.crypto && window.crypto.getRandomValues) {
-      window.crypto.getRandomValues(rand);
+    if (m === 'mandala') {
+      const cx = W / 2;
+      const cy = 620;
+      ctx.globalAlpha = 0.16;
+      [180, 290, 410].forEach((r) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+      for (let i = 0; i < 16; i++) {
+        const a = (i * Math.PI) / 8;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * 440, cy + Math.sin(a) * 440);
+        ctx.stroke();
+      }
+    } else if (m === 'sunburst') {
+      const cx = W / 2;
+      const cy = 580;
+      ctx.globalAlpha = 0.13;
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 24; i++) {
+        const a = (i * Math.PI) / 12;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * 900, cy + Math.sin(a) * 900);
+        ctx.stroke();
+      }
+    } else if (m === 'aurora') {
+      ctx.globalAlpha = 0.16;
+      ctx.lineWidth = 6;
+      [420, 560, 1280].forEach((yBase, idx) => {
+        ctx.beginPath();
+        ctx.moveTo(0, yBase);
+        ctx.bezierCurveTo(W * 0.3, yBase - 140 + idx * 30, W * 0.7, yBase + 140, W, yBase - 60);
+        ctx.stroke();
+      });
+    } else if (m === 'constellation') {
+      ctx.globalAlpha = 0.28;
+      const pts = [[160, 290], [380, 240], [640, 340], [880, 260], [920, 1520], [560, 1620], [180, 1540]];
+      ctx.lineWidth = 2;
+      pts.forEach(([x, y], i) => {
+        ctx.beginPath();
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.fill();
+        if (i + 1 < pts.length) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(pts[i + 1][0], pts[i + 1][1]);
+          ctx.stroke();
+        }
+      });
     } else {
-      for (let i = 0; i < len; i++) rand[i] = Math.floor(Math.random() * 256);
+      ctx.globalAlpha = 0.22;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(96, H - 140);
+      ctx.lineTo(96, 360);
+      ctx.quadraticCurveTo(W / 2, 95, W - 96, 360);
+      ctx.lineTo(W - 96, H - 140);
+      ctx.stroke();
     }
-    for (let i = 0; i < len; i++) {
-      out.push(ALPHABET[rand[i] % ALPHABET.length]);
-    }
-    return out.join('');
+
+    ctx.restore();
   }
 
-  function makeNameSlug(name) {
-    const clean = String(name || '')
-      .normalize('NFKD')
-      .replace(/[^\x00-\x7F]/g, '')
-      .replace(/[^A-Za-z0-9]+/g, '')
-      .slice(0, 14);
-    return clean || 'Note';
+  // ==================== ULTRA-SHORT URL & TEXT CODEC ====================
+  // Preserves exact character fidelity (English, Hindi/Devanagari, Emojis, Newlines)
+  const MOOD_LIST = ['Auto', '💌 Crush', '🪔 Festive', '🌙 2 AM', '🎲 Dare', '🫶 Praise'];
+
+  function bytesToB64Url(bytes) {
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  function extractQueryMeta(searchStr) {
-    const cleaned = String(searchStr || '').replace(/^\?/, '').split('&')[0] || '';
-    const match = /^([A-Za-z0-9]+)-([A-Za-z]{8})$/.exec(cleaned);
-    if (match) {
-      return { slug: match[1], id: match[2] };
-    }
-    const idOnly = /-([A-Za-z]{8})$/.exec(cleaned);
-    return { slug: '', id: idOnly ? idOnly[1] : '' };
-  }
-
-  function bytesToBase64Url(bytes) {
-    let binary = '';
-    const chunk = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunk) {
-      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-    }
-    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
-
-  function base64UrlToBytes(token) {
-    let b64 = String(token || '').trim().replace(/-/g, '+').replace(/_/g, '/');
-    while (b64.length % 4 !== 0) b64 += '=';
-    const bin = atob(b64);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return bytes;
-  }
-
-  function xorTransform(inputBytes, salt0, salt1, tag = KEY_STREAM_TAG) {
-    const out = new Uint8Array(inputBytes.length);
-    for (let i = 0; i < inputBytes.length; i++) {
-      const k = tag[i % tag.length] ^ (i % 2 === 0 ? salt0 : salt1) ^ ((i * 13) & 0xff);
-      out[i] = inputBytes[i] ^ k;
-    }
+  function b64UrlToBytes(str) {
+    let pad = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (pad.length % 4) pad += '=';
+    const bin = atob(pad);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
     return out;
   }
 
-  class BitWriter {
-    constructor() {
-      this.bytes = [];
-      this.cur = 0;
-      this.bits = 0;
-    }
-    write(val, width) {
-      for (let i = width - 1; i >= 0; i--) {
-        this.cur = (this.cur << 1) | ((val >>> i) & 1);
-        this.bits++;
-        if (this.bits === 8) {
-          this.bytes.push(this.cur);
-          this.cur = 0;
-          this.bits = 0;
-        }
+  // 1-Byte Devanagari + UTF-8 Hybrid Byte Stream
+  // 0x00..0x7F -> ASCII; 0x80 -> next byte + 0x0900 (Devanagari); 0x81 + len + raw UTF-8 chunk
+  function packCompactText(str) {
+    const out = [];
+    const utf8 = new TextEncoder();
+    for (const ch of String(str || '')) {
+      const cp = ch.codePointAt(0);
+      if (cp <= 0x7F) {
+        out.push(cp);
+      } else if (cp >= 0x0900 && cp <= 0x097F) {
+        out.push(0x80, cp - 0x0900);
+      } else {
+        const raw = utf8.encode(ch);
+        out.push(0x80 + raw.length);
+        for (let i = 0; i < raw.length; i++) out.push(raw[i]);
       }
     }
-    finish() {
-      if (this.bits > 0) {
-        this.bytes.push(this.cur << (8 - this.bits));
-        this.cur = 0;
-        this.bits = 0;
-      }
-      return Uint8Array.from(this.bytes);
-    }
+    return new Uint8Array(out);
   }
 
-  class BitReader {
-    constructor(bytes) {
-      this.bytes = bytes;
-      this.bytePos = 0;
-      this.bitPos = 0;
+  function unpackCompactText(bytes) {
+    const utf8 = new TextDecoder();
+    let res = '';
+    let i = 0;
+    while (i < bytes.length) {
+      const b = bytes[i++];
+      if (b <= 0x7F) {
+        res += String.fromCharCode(b);
+      } else if (b === 0x80) {
+        const off = bytes[i++] || 0;
+        res += String.fromCodePoint(0x0900 + off);
+      } else {
+        const len = Math.min(4, b - 0x80);
+        const slice = bytes.slice(i, i + len);
+        i += len;
+        res += utf8.decode(slice);
+      }
     }
-    read(width) {
+    return res;
+  }
+
+  // 6-Bit Dictionary for Common English + Hinglish Characters (Fallback raw on 63)
+  const DICT6 = ' etaoinsrhldcumfpgwybvkxjqz.,!?\'-\n0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const DICT6_IDX = new Map();
+  for (let i = 0; i < 63; i++) DICT6_IDX.set(DICT6.charCodeAt(i), i);
+
+  function packSixBitStream(compactBytes) {
+    const bits = [];
+    const push6 = (v) => {
+      for (let b = 5; b >= 0; b--) bits.push((v >> b) & 1);
+    };
+    const push8 = (v) => {
+      for (let b = 7; b >= 0; b--) bits.push((v >> b) & 1);
+    };
+
+    for (let i = 0; i < compactBytes.length; i++) {
+      const byte = compactBytes[i];
+      const idx = DICT6_IDX.get(byte);
+      if (idx !== undefined) {
+        push6(idx);
+      } else {
+        push6(63);
+        push8(byte);
+      }
+    }
+    // End marker: code 63 followed by 0xFF (not emitted naturally for compact text unless explicit; handle via byte length!)
+    const padded = new Uint8Array(Math.ceil(bits.length / 8));
+    for (let i = 0; i < bits.length; i++) {
+      if (bits[i]) padded[i >> 3] |= (1 << (7 - (i & 7)));
+    }
+    return { bytes: padded, origLen: compactBytes.length };
+  }
+
+  function unpackSixBitStream(packedBytes, origCompactLen) {
+    let bitPos = 0;
+    const totalBits = packedBytes.length * 8;
+    const readBits = (n) => {
       let val = 0;
-      for (let i = 0; i < width; i++) {
-        if (this.bytePos >= this.bytes.length) throw new Error('BitReader EOF');
-        const bit = (this.bytes[this.bytePos] >>> (7 - this.bitPos)) & 1;
-        val = (val << 1) | bit;
-        this.bitPos++;
-        if (this.bitPos === 8) {
-          this.bitPos = 0;
-          this.bytePos++;
+      for (let k = 0; k < n; k++) {
+        val <<= 1;
+        if (bitPos < totalBits) {
+          const byte = packedBytes[bitPos >> 3];
+          if ((byte >> (7 - (bitPos & 7))) & 1) val |= 1;
         }
+        bitPos++;
       }
       return val;
-    }
-  }
-
-  function writeU4String(bw, rawStr) {
-    const s = String(rawStr || '').replace(/\0/g, '');
-    let i = 0;
-    while (i < s.length) {
-      let matchedPhrase = -1;
-      for (let p = 0; p < U4_PHRASES.length; p++) {
-        const phrase = U4_PHRASES[p];
-        if (s.startsWith(phrase, i)) {
-          matchedPhrase = p;
-          i += phrase.length;
-          break;
-        }
-      }
-      if (matchedPhrase !== -1) {
-        bw.write(47 + matchedPhrase, 6);
-        continue;
-      }
-
-      let matchedEmoji = -1;
-      for (let e = 0; e < U4_EMOJIS.length; e++) {
-        const emo = U4_EMOJIS[e];
-        if (s.startsWith(emo, i)) {
-          matchedEmoji = e;
-          i += emo.length;
-          break;
-        }
-      }
-      if (matchedEmoji !== -1) {
-        bw.write(61, 6);
-        bw.write(matchedEmoji, 3);
-        continue;
-      }
-
-      const cp = s.codePointAt(i);
-      const ch = String.fromCodePoint(cp);
-      i += ch.length;
-
-      const singleIdx = U4_SINGLE_CHARS.indexOf(ch);
-      if (singleIdx !== -1) {
-        bw.write(singleIdx, 6);
-      } else if (cp >= 65 && cp <= 90) {
-        bw.write(46, 6);
-        bw.write(cp - 65, 5);
-      } else if (cp >= 0x0900 && cp <= 0x097f) {
-        bw.write(62, 6);
-        bw.write(cp - 0x0900, 7);
-      } else {
-        const u8 = utf8Encoder.encode(ch);
-        for (let k = 0; k < u8.length; k++) {
-          if (k === 0) {
-            bw.write(63, 6);
-            bw.write(u8[0], 8);
-          } else {
-            bw.write(u8[k], 8);
-          }
-        }
-      }
-    }
-    bw.write(63, 6);
-    bw.write(0, 8);
-  }
-
-  function readU4String(br) {
-    let out = '';
-    while (true) {
-      const sym = br.read(6);
-      if (sym < 46) {
-        out += U4_SINGLE_CHARS[sym];
-      } else if (sym === 46) {
-        out += String.fromCharCode(65 + br.read(5));
-      } else if (sym <= 60) {
-        out += U4_PHRASES[sym - 47];
-      } else if (sym === 61) {
-        out += U4_EMOJIS[br.read(3)];
-      } else if (sym === 62) {
-        out += String.fromCodePoint(0x0900 + br.read(7));
-      } else {
-        const b0 = br.read(8);
-        if (b0 === 0) break;
-        if (b0 < 0x80) {
-          out += String.fromCharCode(b0);
-        } else {
-          let seqLen = 2;
-          if ((b0 & 0xf0) === 0xe0) seqLen = 3;
-          else if ((b0 & 0xf8) === 0xf0) seqLen = 4;
-          const seq = new Uint8Array(seqLen);
-          seq[0] = b0;
-          for (let k = 1; k < seqLen; k++) seq[k] = br.read(8);
-          out += utf8Decoder.decode(seq);
-        }
-      }
-    }
-    return out;
-  }
-
-  function writeVarint(arr, num) {
-    let v = Math.max(0, num | 0);
-    while (v >= 0x80) {
-      arr.push((v & 0x7f) | 0x80);
-      v >>>= 7;
-    }
-    arr.push(v);
-  }
-
-  function readVarint(bytes, cursor) {
-    let shift = 0;
-    let res = 0;
-    while (cursor.pos < bytes.length) {
-      const b = bytes[cursor.pos++];
-      res |= (b & 0x7f) << shift;
-      if ((b & 0x80) === 0) return res;
-      shift += 7;
-    }
-    throw new Error('Malformed varint');
-  }
-
-  function readCompactStr(bytes, cursor) {
-    const len = readVarint(bytes, cursor);
-    const end = cursor.pos + len;
-    if (end > bytes.length) throw new Error('Malformed compact string');
-    let out = '';
-    while (cursor.pos < end) {
-      const b = bytes[cursor.pos++];
-      if (b < 0x7f) {
-        out += String.fromCharCode(b);
-      } else if (b >= 0x80) {
-        out += String.fromCodePoint(0x0900 + (b & 0x7f));
-      } else {
-        const b1 = bytes[cursor.pos++];
-        if (b1 === undefined) break;
-        if (b1 < 0x80) {
-          out += String.fromCharCode(b1);
-        } else {
-          let seqLen = 2;
-          if ((b1 & 0xf0) === 0xe0) seqLen = 3;
-          else if ((b1 & 0xf8) === 0xf0) seqLen = 4;
-          const seq = new Uint8Array(seqLen);
-          seq[0] = b1;
-          for (let j = 1; j < seqLen; j++) seq[j] = bytes[cursor.pos++];
-          out += utf8Decoder.decode(seq);
-        }
-      }
-    }
-    return out;
-  }
-
-  function lz77Compress(input) {
-    const n = input.length;
-    const out = [];
-    let i = 0;
-    while (i < n) {
-      const ctrlPos = out.length;
-      out.push(0);
-      let ctrl = 0;
-      for (let bit = 0; bit < 8 && i < n; bit++) {
-        let bestLen = 0;
-        let bestDist = 0;
-        const winStart = Math.max(0, i - 2048);
-        const maxLen = Math.min(34, n - i);
-        if (maxLen >= 3) {
-          for (let j = i - 1; j >= winStart; j--) {
-            if (input[j] !== input[i]) continue;
-            let len = 1;
-            while (len < maxLen && input[j + len] === input[i + len]) len++;
-            if (len >= 3 && len > bestLen) {
-              bestLen = len;
-              bestDist = i - j;
-              if (bestLen === maxLen) break;
-            }
-          }
-        }
-        if (bestLen >= 3) {
-          ctrl |= 1 << bit;
-          const distMinus1 = bestDist - 1;
-          out.push((distMinus1 >> 3) & 0xff);
-          out.push(((distMinus1 & 7) << 5) | ((bestLen - 3) & 0x1f));
-          i += bestLen;
-        } else {
-          out.push(input[i++]);
-        }
-      }
-      out[ctrlPos] = ctrl;
-    }
-    return Uint8Array.from(out);
-  }
-
-  function lz77Decompress(input) {
-    const out = [];
-    let p = 0;
-    while (p < input.length) {
-      const ctrl = input[p++];
-      for (let bit = 0; bit < 8 && p < input.length; bit++) {
-        if ((ctrl & (1 << bit)) !== 0) {
-          const b0 = input[p++];
-          const b1 = input[p++];
-          if (b1 === undefined) throw new Error('Corrupted LZ77 stream');
-          const dist = ((b0 << 3) | (b1 >> 5)) + 1;
-          const matchLen = (b1 & 0x1f) + 3;
-          if (dist > out.length) throw new Error('Invalid LZ77 offset');
-          for (let k = 0; k < matchLen; k++) out.push(out[out.length - dist]);
-        } else {
-          out.push(input[p++]);
-        }
-      }
-    }
-    return Uint8Array.from(out);
-  }
-
-  // Ultra-short U4 Encoder: [0x55, 0x34, meta(salt5<<3 | useLz<<2 | hasClue<<1 | recMatchesSlug)]
-  function encodeU4Token(r, s, c) {
-    const rec = (r || '').trim() || 'You';
-    const slug = makeNameSlug(rec);
-    const recMatchesSlug = rec === slug || (rec === 'You' && slug === 'You');
-    const sec = (s || '').trim();
-    const clue = (c || '').trim();
-    const hasClue = Boolean(clue);
-
-    const bw = new BitWriter();
-    if (!recMatchesSlug) writeU4String(bw, rec);
-    writeU4String(bw, sec);
-    if (hasClue) writeU4String(bw, clue);
-
-    const rawBin = bw.finish();
-    const lzBin = rawBin.length >= 14 ? lz77Compress(rawBin) : rawBin;
-    const useLz = lzBin.length < rawBin.length;
-    const body = useLz ? lzBin : rawBin;
-
-    const saltBuf = new Uint8Array(1);
-    if (window.crypto && window.crypto.getRandomValues) {
-      window.crypto.getRandomValues(saltBuf);
-    } else {
-      saltBuf[0] = Math.floor(Math.random() * 256);
-    }
-    const salt5 = saltBuf[0] & 0x1f;
-    const salt1 = (salt5 * 41 + 23) & 0xff;
-    const cipher = xorTransform(body, salt5, salt1, KEY_STREAM_TAG);
-
-    const packet = new Uint8Array(3 + cipher.length);
-    packet[0] = 0x55; // 'U'
-    packet[1] = 0x34; // '4'
-    packet[2] = (salt5 << 3) | (useLz ? 4 : 0) | (hasClue ? 2 : 0) | (recMatchesSlug ? 1 : 0);
-    packet.set(cipher, 3);
-    return { slug, token: bytesToBase64Url(packet) };
-  }
-
-  function decodeU4Packet(raw, recHint) {
-    const meta = raw[2];
-    const salt5 = (meta >> 3) & 0x1f;
-    const useLz = (meta & 4) !== 0;
-    const hasClue = (meta & 2) !== 0;
-    const recMatchesSlug = (meta & 1) !== 0;
-    const salt1 = (salt5 * 41 + 23) & 0xff;
-    let plain = xorTransform(raw.subarray(3), salt5, salt1, KEY_STREAM_TAG);
-    if (useLz) plain = lz77Decompress(plain);
-
-    const br = new BitReader(plain);
-    const r = recMatchesSlug ? (recHint || 'You') : readU4String(br);
-    const s = readU4String(br);
-    const c = hasClue ? readU4String(br) : '';
-    return { r, s, c };
-  }
-
-  function decodeU3Packet(raw) {
-    const meta = raw[2];
-    const salt6 = (meta >> 2) & 0x3f;
-    const useLz = (meta & 2) !== 0;
-    const hasClue = (meta & 1) !== 0;
-    const salt1 = (salt6 * 41 + 23) & 0xff;
-    let plain = xorTransform(raw.subarray(3), salt6, salt1, KEY_STREAM_TAG);
-    if (useLz) plain = lz77Decompress(plain);
-
-    const cursor = { pos: 0 };
-    const r = readCompactStr(plain, cursor);
-    const s = readCompactStr(plain, cursor);
-    const c = hasClue ? readCompactStr(plain, cursor) : '';
-    return { r, s, c };
-  }
-
-  // Full compatibility decoder for U4 + U3 + U2/U1/JSON ?seal= and ?s= links
-  function decodeToken(token, queryMeta = { slug: '', id: '' }) {
-    const raw = base64UrlToBytes(token);
-    const fallbackId = queryMeta.id;
-    const recHint = queryMeta.slug && queryMeta.slug !== 'Note' ? queryMeta.slug : 'You';
-
-    if (raw.length > 3 && raw[0] === 0x55 && raw[1] === 0x34) {
-      const u4 = decodeU4Packet(raw, recHint);
-      if (!u4.s || !u4.s.trim()) throw new Error('Missing note text');
-      return {
-        r: (u4.r || 'You').trim().slice(0, 40),
-        s: u4.s.trim().slice(0, 320),
-        c: (u4.c || '').trim().slice(0, 120) || 'A quiet admirer',
-        id: fallbackId || generateAlphaId(8)
-      };
-    }
-
-    if (raw.length > 3 && raw[0] === 0x55 && raw[1] === 0x33) {
-      const u3 = decodeU3Packet(raw);
-      if (!u3.s || !u3.s.trim()) throw new Error('Missing note text');
-      return {
-        r: (u3.r || 'You').trim().slice(0, 40),
-        s: u3.s.trim().slice(0, 320),
-        c: (u3.c || '').trim().slice(0, 120) || 'A quiet admirer',
-        id: fallbackId || generateAlphaId(8)
-      };
-    }
-
-    const legacyTag = [85, 78, 83, 69, 65, 76, 50, 54];
-    if (raw.length > 4 && raw[0] === 0x55 && raw[1] === 0x32) {
-      const meta = raw[2];
-      const salt7 = (meta >> 1) & 0x7f;
-      const useLz = (meta & 1) === 1;
-      const salt1 = (salt7 * 37 + 19) & 0xff;
-      let plain = xorTransform(raw.subarray(3), salt7, salt1, legacyTag);
-      if (useLz) plain = lz77Decompress(plain);
-
-      const cursor = { pos: 0 };
-      const flags = plain[cursor.pos++];
-      cursor.pos += 2;
-      const p3 = plain[cursor.pos++];
-      let cardId = fallbackId || '';
-      if (flags & 64) {
-        const hi = plain[cursor.pos++];
-        const lo = plain[cursor.pos++];
-        cardId = `UNS-${String((hi << 8) | lo).padStart(4, '0')}`;
-      } else {
-        cardId = readCompactStr(plain, cursor);
-      }
-      const moodIdx = p3 & 15;
-      if (moodIdx === 15) readCompactStr(plain, cursor);
-      else void U2_MOODS[moodIdx];
-      const rec = flags & 128 ? readCompactStr(plain, cursor) : 'You';
-      const sec = readCompactStr(plain, cursor);
-      const clue = flags & 4 ? readCompactStr(plain, cursor) : 'A quiet admirer';
-      if (!sec || !sec.trim()) throw new Error('Missing note text');
-      return {
-        r: rec.trim().slice(0, 40) || 'You',
-        s: sec.trim().slice(0, 500),
-        c: clue.trim().slice(0, 140) || 'A quiet admirer',
-        id: cardId || generateAlphaId(8)
-      };
-    }
-
-    let jsonBytes = raw;
-    if (raw.length > 4 && raw[0] === 0x55 && raw[1] === 0x31) {
-      jsonBytes = xorTransform(raw.subarray(4), raw[2], raw[3], legacyTag);
-    }
-    const data = JSON.parse(utf8Decoder.decode(jsonBytes));
-    if (!data || typeof data.s !== 'string' || !data.s.trim()) {
-      throw new Error('Missing secret text');
-    }
-    return {
-      r: typeof data.r === 'string' && data.r.trim() ? data.r.trim().slice(0, 40) : 'You',
-      s: data.s.trim().slice(0, 500),
-      c: typeof data.c === 'string' && data.c.trim() ? data.c.trim().slice(0, 140) : 'A quiet admirer',
-      id: typeof data.id === 'string' && data.id.trim() ? data.id.trim().slice(0, 16) : fallbackId || generateAlphaId(8)
     };
+
+    const out = [];
+    while (out.length < origCompactLen && bitPos + 6 <= totalBits) {
+      const sym = readBits(6);
+      if (sym < 63) {
+        out.push(DICT6.charCodeAt(sym));
+      } else {
+        if (bitPos + 8 > totalBits) break;
+        out.push(readBits(8));
+      }
+    }
+    return new Uint8Array(out);
+  }
+
+  function safeRandAlphaId(len) {
+    const chars = [];
+    const arr = new Uint8Array(len);
+    if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+      window.crypto.getRandomValues(arr);
+    } else {
+      for (let i = 0; i < len; i++) arr[i] = Math.floor(Math.random() * 256);
+    }
+    for (let i = 0; i < len; i++) {
+      chars.push(ALPHABET[arr[i] % ALPHABET.length]);
+    }
+    return chars.join('');
+  }
+
+  function sanitizeRecSlug(name) {
+    const ascii = String(name || 'You')
+      .normalize('NFKD')
+      .replace(/[^\x00-\x7F]/g, '')
+      .replace(/[^A-Za-z0-9]/g, '');
+    return (ascii || 'You').slice(0, 14);
+  }
+
+  function isValidCardId(id) {
+    return /^[A-Za-z]{8}$/.test(String(id || ''));
+  }
+
+  // Encode v8 ultra-short fragment: "4" + b64url([flags, rLen, lenHi, lenLo, recBytes..., body...])
+  function encodePayloadV4(payload) {
+    const cleanRec = Array.from(String(payload.r || 'You')).slice(0, 32).join('');
+    const rCompact = packCompactText(cleanRec);
+    const sCompact = packCompactText(payload.s || '');
+    const cCompact = packCompactText(payload.c || '');
+    const joined = new Uint8Array(sCompact.length + 1 + cCompact.length);
+    joined.set(sCompact, 0);
+    joined[sCompact.length] = 0xFF; // UTF-8 & packCompactText never emit 0xFF
+    joined.set(cCompact, sCompact.length + 1);
+
+    const six = packSixBitStream(joined);
+    const useSix = six.bytes.length < joined.length;
+    const body = useSix ? six.bytes : joined;
+
+    const moodIdx = Math.max(0, Math.min(5, MOOD_LIST.indexOf(payload.m || 'Auto')));
+    const rLen = Math.min(255, rCompact.length);
+    const lenHi = (joined.length >> 8) & 0xFF;
+    const lenLo = joined.length & 0xFF;
+    const flags = (useSix ? 0x01 : 0x00) | ((moodIdx & 0x07) << 1);
+
+    const frame = new Uint8Array(4 + rLen + body.length);
+    frame[0] = flags;
+    frame[1] = rLen;
+    frame[2] = lenHi;
+    frame[3] = lenLo;
+    frame.set(rCompact.slice(0, rLen), 4);
+    frame.set(body, 4 + rLen);
+    return '4' + bytesToB64Url(frame);
+  }
+
+  function decodePayloadV4(hashToken, slugRec, slugId) {
+    const b64 = hashToken.slice(1);
+    const frame = b64UrlToBytes(b64);
+    if (frame.length < 4) return null;
+
+    const flags = frame[0];
+    const useSix = (flags & 0x01) === 1;
+    const moodIdx = (flags >> 1) & 0x07;
+    const rLen = frame[1];
+    const joinedLen = (frame[2] << 8) | frame[3];
+
+    const rBytes = frame.slice(4, 4 + rLen);
+    const body = frame.slice(4 + rLen);
+    const decodedJoined = useSix ? unpackSixBitStream(body, joinedLen) : body;
+
+    const sepIdx = decodedJoined.indexOf(0xFF);
+    const sBytes = sepIdx >= 0 ? decodedJoined.slice(0, sepIdx) : decodedJoined;
+    const cBytes = sepIdx >= 0 ? decodedJoined.slice(sepIdx + 1) : new Uint8Array(0);
+
+    const rec = unpackCompactText(rBytes) || slugRec || 'You';
+    const sec = unpackCompactText(sBytes);
+    const clue = unpackCompactText(cBytes);
+    if (!sec) return null;
+
+    return {
+      r: rec,
+      s: sec,
+      c: clue,
+      m: MOOD_LIST[moodIdx] || 'Auto',
+      id: isValidCardId(slugId) ? slugId : safeRandAlphaId(ALPHA_ID_LEN)
+    };
+  }
+
+  function decodeLegacyJson(token, fallbackId) {
+    try {
+      let pad = token.replace(/-/g, '+').replace(/_/g, '/');
+      while (pad.length % 4) pad += '=';
+      const bytes = b64UrlToBytes(pad);
+      const raw = new TextDecoder().decode(bytes);
+      const obj = JSON.parse(raw);
+      if (!obj || !obj.s) return null;
+      return {
+        r: obj.r || 'You',
+        s: String(obj.s),
+        c: obj.c || '',
+        m: obj.m || 'Auto',
+        id: isValidCardId(obj.id) ? obj.id : (fallbackId || safeRandAlphaId(ALPHA_ID_LEN))
+      };
+    } catch (_) {
+      return null;
+    }
   }
 
   function getBasePageUrl() {
-    if (window.location.protocol === 'file:') {
-      return cfg.siteOrigin ? `${cfg.siteOrigin}/` : 'https://unseal.cards/';
+    const loc = window.location || {};
+    if (loc.protocol === 'file:') return `${PRODUCTION_ORIGIN}/`;
+    if (loc.origin && loc.origin !== 'null') {
+      const cleanPath = (loc.pathname || '/').replace(/index\.html$/i, '');
+      return `${loc.origin}${cleanPath.endsWith('/') ? cleanPath : cleanPath + '/'}`;
     }
-    return `${window.location.origin}${window.location.pathname}`;
+    return `${PRODUCTION_ORIGIN}/`;
   }
 
-  function buildShortCardUrl(recipient, secret, clue, id) {
-    const { slug, token } = encodeU4Token(recipient, secret, clue);
-    return `${getBasePageUrl()}?${slug}-${id}#${token}`;
+  function buildShareUrl(payload) {
+    const recSlug = sanitizeRecSlug(payload.r);
+    const id = isValidCardId(payload.id) ? payload.id : safeRandAlphaId(ALPHA_ID_LEN);
+    payload.id = id;
+    const frag = encodePayloadV4(payload);
+    return `${getBasePageUrl()}?${recSlug}-${id}#${frag}`;
   }
 
-  // =========================================================================
-  // 2. Web Audio Synthesizer (Scratch Friction + Adaptive Music & Vault Fanfare)
-  // =========================================================================
+  function parseIncomingLink() {
+    const search = (window.location && window.location.search) || '';
+    const hash = ((window.location && window.location.hash) || '').replace(/^#/, '');
 
-  function ensureAudioContext() {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return null;
-    if (!state.audioCtx) {
-      try {
-        state.audioCtx = new Ctx();
-      } catch (_) {
-        return null;
+    // Check legacy ?seal= or ?s=
+    if (search) {
+      const sp = new URLSearchParams(search);
+      const seal = sp.get('seal') || sp.get('s');
+      if (seal) {
+        const leg = decodeLegacyJson(seal);
+        if (leg) return leg;
       }
     }
-    if (state.audioCtx.state === 'suspended') {
-      state.audioCtx.resume().catch(() => { });
+
+    // Parse ?Name-8LetterId
+    let slugRec = 'You';
+    let slugId = '';
+    const qMatch = search.match(/^\?([A-Za-z0-9]+)-([A-Za-z]{8})(?:&|$)/);
+    if (qMatch) {
+      slugRec = qMatch[1];
+      slugId = qMatch[2];
     }
-    if (!state.noiseBuffer && state.audioCtx) {
-      const sr = state.audioCtx.sampleRate;
-      const len = Math.floor(sr * 0.25);
-      const buffer = state.audioCtx.createBuffer(1, len, sr);
-      const data = buffer.getChannelData(0);
-      let b0 = 0;
-      for (let i = 0; i < len; i++) {
-        const w = Math.random() * 2 - 1;
-        b0 = 0.92 * b0 + w * 0.08;
-        data[i] = w * 0.4 + b0 * 0.6;
+
+    if (hash) {
+      if (hash.startsWith('4')) {
+        try {
+          const decoded = decodePayloadV4(hash, slugRec, slugId);
+          if (decoded) return decoded;
+        } catch (_) { /* try fallback */ }
       }
-      state.noiseBuffer = buffer;
+      if (hash.startsWith('U3') || hash.startsWith('U2') || hash.startsWith('U1') || hash.startsWith('U4')) {
+        const legHash = decodeLegacyJson(hash.slice(2), slugId);
+        if (legHash) return legHash;
+      }
     }
-    return state.audioCtx;
+    return null;
   }
 
-  function updateSoundUi() {
-    const btn = $('audioToggleBtn');
-    const icon = $('audioToggleIcon');
-    if (!btn) return;
-    btn.classList.toggle('is-unmuted', state.soundEnabled);
-    btn.setAttribute('aria-pressed', state.soundEnabled ? 'true' : 'false');
-    if (icon) icon.textContent = state.soundEnabled ? '🔊' : '🔇';
-  }
+  // ==================== WEB AUDIO ASMR & SOUND EFFECTS ====================
+  const AudioFX = {
+    enabled: false,
+    ctx: null,
+    lastScratchMs: 0,
+    ensureCtx() {
+      if (!this.ctx && typeof window !== 'undefined') {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) this.ctx = new AC();
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      return this.ctx;
+    },
+    playScratchGrain() {
+      if (!this.enabled) return;
+      const now = performance.now();
+      if (now - this.lastScratchMs < 55) return;
+      this.lastScratchMs = now;
+      const ctx = this.ensureCtx();
+      if (!ctx) return;
 
-  function setSoundEnabled(enabled, explicit = false) {
-    state.soundEnabled = Boolean(enabled);
-    if (explicit) state.userExplicitlyMuted = !state.soundEnabled;
-    if (state.soundEnabled) ensureAudioContext();
-    updateSoundUi();
-  }
-
-  function unlockAudioOnGesture() {
-    if (!state.userExplicitlyMuted && !state.soundEnabled) {
-      setSoundEnabled(true, false);
-    } else if (state.soundEnabled) {
-      ensureAudioContext();
-    }
-  }
-
-  function playScratchSound(speedFactor) {
-    if (!state.soundEnabled) return;
-    const now = performance.now();
-    if (now - state.lastSoundTime < 46) return;
-    state.lastSoundTime = now;
-
-    const ctx = ensureAudioContext();
-    if (!ctx || !state.noiseBuffer) return;
-    try {
-      const t = ctx.currentTime;
+      const dur = 0.045;
+      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) * 0.25;
+      }
       const src = ctx.createBufferSource();
-      src.buffer = state.noiseBuffer;
-
+      src.buffer = buf;
       const filter = ctx.createBiquadFilter();
       filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(1400 + speedFactor * 950, t);
-      filter.Q.setValueAtTime(1.4, t);
-
+      filter.frequency.value = 1800 + Math.random() * 900;
+      filter.Q.value = 1.6;
       const gain = ctx.createGain();
-      const peak = Math.min(0.08, 0.025 + speedFactor * 0.045);
-      gain.gain.setValueAtTime(0.001, t);
-      gain.gain.linearRampToValueAtTime(peak, t + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0005, t + 0.075);
-
+      gain.gain.value = 0.22;
       src.connect(filter);
       filter.connect(gain);
       gain.connect(ctx.destination);
-      src.start(t, Math.random() * 0.14, 0.08);
-    } catch (_) { }
-  }
-
-  function playTone(ctx, freq, start, dur, type = 'sine', peak = 0.05) {
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, start);
-    g.gain.setValueAtTime(0.0001, start);
-    g.gain.linearRampToValueAtTime(peak, start + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-    osc.connect(g);
-    g.connect(ctx.destination);
-    osc.start(start);
-    osc.stop(start + dur + 0.03);
-  }
-
-  function detectVibe(secretText, clueText) {
-    const txt = `${secretText || ''} ${clueText || ''}`.toLowerCase();
-    if (/(sorry|maaf|galti|forgive|माफ़|गलती|🥺)/.test(txt)) return 'apology';
-    if (/(birthday|bday|congrats|anniversary|janamdin|जन्मदिन|बधाई|🎂|🥳)/.test(txt)) return 'celebration';
-    if (/(dare|challenge|truth|himmat|हिम्मत|शर्त)/.test(txt)) return 'dare';
-    if (/(haha|joke|meme|funny|😂|🤣)/.test(txt)) return 'joke';
-    if (/(night|midnight|2am|2 am|neend|रात|🌙)/.test(txt)) return 'midnight';
-    return 'crush';
-  }
-
-  function playRevealChime() {
-    if (!state.soundEnabled) return;
-    const ctx = ensureAudioContext();
-    if (!ctx) return;
-    try {
-      const vibe = detectVibe(state.secret, state.clue);
-      const t0 = ctx.currentTime;
-      const maps = {
-        crush: [349.23, 440.0, 523.25, 659.25, 783.99, 1046.5],
-        apology: [369.99, 440.0, 493.88, 554.37, 659.25],
-        celebration: [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98],
-        dare: [440.0, 523.25, 659.25, 880.0, 1046.5],
-        joke: [392.0, 493.88, 587.33, 783.99, 1046.5],
-        midnight: [293.66, 440.0, 523.25, 659.25, 880.0]
-      };
-      const notes = maps[vibe] || maps.crush;
-      notes.forEach((f, idx) => {
-        playTone(ctx, f, t0 + idx * 0.085, 1.05, idx % 2 === 0 ? 'sine' : 'triangle', 0.052);
+      src.start();
+    },
+    playChime() {
+      if (!this.enabled) return;
+      const ctx = this.ensureCtx();
+      if (!ctx) return;
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const t = ctx.currentTime + idx * 0.085;
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.exponentialRampToValueAtTime(0.14, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.58);
       });
-    } catch (_) { }
-  }
-
-  function playVaultUnlockFanfare() {
-    if (!state.soundEnabled) return;
-    const ctx = ensureAudioContext();
-    if (!ctx) return;
-    try {
-      const t0 = ctx.currentTime;
-      [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => {
-        playTone(ctx, f, t0 + i * 0.075, 0.9, 'triangle', 0.055);
-      });
-    } catch (_) { }
-  }
-
-  // =========================================================================
-  // 3. Mystery Collector Vault Engine (Sender + Receiver 5-Share Unlock)
-  // =========================================================================
-
-  function hashString(str) {
-    let h = 2166136261;
-    for (let i = 0; i < str.length; i++) {
-      h ^= str.charCodeAt(i);
-      h = Math.imul(h, 16777619);
+    },
+    playPop() {
+      if (!this.enabled) return;
+      const ctx = this.ensureCtx();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const t = ctx.currentTime;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(420, t);
+      osc.frequency.exponentialRampToValueAtTime(760, t + 0.08);
+      gain.gain.setValueAtTime(0.09, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.11);
     }
-    return h >>> 0;
-  }
+  };
 
-  function getMysteryEditionFor(role) {
-    const seed = hashString(`${state.cardId || 'Unseal'}:${role}`);
-    const keys = Object.keys(MYSTERY_EDITIONS);
-    const key = keys[seed % keys.length];
-    const ed = MYSTERY_EDITIONS[key];
-    const auraScore = 91 + (seed % 9); // 91% - 99%
-    const fortune = ed.fortunes[(seed >>> 3) % ed.fortunes.length];
-    return { key, ...ed, auraScore, fortune };
-  }
-
-  function getQuestStorageKey(role) {
-    return `unseal_v7_vault_${role}_${state.cardId}`;
-  }
-
-  function getShareCount(role) {
+  function safeVibrate(pattern) {
     try {
-      const v = parseInt(localStorage.getItem(getQuestStorageKey(role)) || '0', 10);
-      return Number.isFinite(v) ? Math.min(TARGET_SHARES, Math.max(0, v)) : 0;
-    } catch (_) {
-      return 0;
+      if (navigator && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(pattern);
+      }
+    } catch (_) { /* ignored */ }
+  }
+
+  // ==================== APP STATE & DOM CACHE ====================
+  function $(id) { return document.getElementById(id); }
+
+  const state = {
+    mode: 'write', // 'write' | 'ready' | 'preview' | 'receiver'
+    mood: 'Auto',
+    festival: getThemeById(detectFestivalByDate()),
+    activePayload: null,
+    currentUrl: '',
+    revealed: false,
+    deferredPrompt: null,
+    lastHapticMs: 0,
+    moveTick: 0
+  };
+
+  // Safe localStorage helpers
+  function lsGet(k) {
+    try { return window.localStorage ? window.localStorage.getItem(k) : null; } catch (_) { return null; }
+  }
+
+  function lsSet(k, v) {
+    try { if (window.localStorage) window.localStorage.setItem(k, String(v)); } catch (_) { /* no-op */ }
+  }
+
+  function lsRemove(k) {
+    try { if (window.localStorage && typeof window.localStorage.removeItem === 'function') window.localStorage.removeItem(k); } catch (_) { /* no-op */ }
+  }
+
+  function getRolledDesignIndex(cardId, role) {
+    const key = `unseal_v8_design_${role}_${cardId}`;
+    const saved = lsGet(key);
+    if (saved !== null && /^\d+$/.test(saved)) {
+      return Number(saved) % 100;
     }
+
+    let picked = Math.floor(Math.random() * 100);
+    // Avoid giving receiver identical edition number if previewed on same device as sender
+    if (role === 'receiver') {
+      const senderSaved = lsGet(`unseal_v8_design_sender_${cardId}`);
+      if (senderSaved !== null && Number(senderSaved) === picked) {
+        picked = (picked + 13) % 100;
+      }
+    }
+    lsSet(key, String(picked));
+    return picked;
   }
 
-  function setShareCount(role, count) {
-    const clamped = Math.min(TARGET_SHARES, Math.max(0, count | 0));
-    try {
-      localStorage.setItem(getQuestStorageKey(role), String(clamped));
-    } catch (_) { }
-    return clamped;
+  function getShareCount(cardId, role) {
+    const key = `unseal_v8_shares_${role}_${cardId}`;
+    const raw = lsGet(key);
+    return Math.max(0, Math.min(REQUIRED_SHARES, parseInt(raw || '0', 10) || 0));
   }
 
-  function syncWaxSlots(containerEl, count) {
-    if (!containerEl) return;
-    containerEl.querySelectorAll('.wax-slot').forEach((slot) => {
-      const idx = parseInt(slot.getAttribute('data-slot') || '0', 10);
-      const cracked = idx <= count;
-      slot.classList.toggle('is-cracked', cracked);
-      slot.textContent = cracked ? '♥' : String(idx);
+  function incrementShareCount(cardId, role) {
+    const cur = getShareCount(cardId, role);
+    const next = Math.min(REQUIRED_SHARES, cur + 1);
+    lsSet(`unseal_v8_shares_${role}_${cardId}`, String(next));
+    return next;
+  }
+
+  // ==================== FESTIVAL THEME MANAGEMENT ====================
+  function applyFestivalTheme(themeId, isManual) {
+    const theme = getThemeById(themeId);
+    state.festival = theme;
+
+    if (document.documentElement && typeof document.documentElement.setAttribute === 'function') {
+      document.documentElement.setAttribute('data-festival', theme.id);
+    }
+
+    if (isManual) lsSet('unseal_v8_festival_override', theme.id);
+
+    const festEmoji = $('festivalEmoji');
+    const festShort = $('festivalShortLabel');
+    const ribbonText = $('festivalRibbonText');
+    if (festEmoji) festEmoji.textContent = theme.emoji;
+    if (festShort) festShort.textContent = theme.name.split(' ')[0];
+    if (ribbonText) ribbonText.textContent = theme.ribbon;
+
+    const sparkNodes = document.querySelectorAll ? document.querySelectorAll('#ambientSparkles .spark-dot') : [];
+    for (let i = 0; i < sparkNodes.length; i++) {
+      const g = theme.glyphs[i % theme.glyphs.length];
+      if (typeof sparkNodes[i].setAttribute === 'function') {
+        sparkNodes[i].setAttribute('data-glyph', g);
+      }
+    }
+
+    renderFestivalModalGrid();
+  }
+
+  function renderFestivalModalGrid() {
+    const grid = $('festivalThemeGrid');
+    const autoNameEl = $('autoFestivalDetectedName');
+    const autoTheme = getThemeById(detectFestivalByDate());
+    if (autoNameEl) autoNameEl.textContent = `${autoTheme.emoji} ${autoTheme.name}`;
+    if (!grid) return;
+
+    const parts = FESTIVAL_THEMES.map((t) => {
+      const activeCls = state.festival && state.festival.id === t.id ? ' active' : '';
+      return `<button type="button" class="festival-option-btn${activeCls}" data-fest-id="${t.id}">
+        <div class="fest-opt-top">
+          <span>${t.emoji}</span>
+          <span class="fest-opt-swatch" style="background:${t.swatch};"></span>
+        </div>
+        <span class="fest-opt-name">${t.name}</span>
+        <span class="fest-opt-region">${t.region}</span>
+      </button>`;
     });
+    grid.innerHTML = parts.join('');
   }
 
-  function renderVaultUi(role, justUnlocked = false) {
-    const count = getShareCount(role);
-    const unlocked = count >= TARGET_SHARES;
-    const pct = Math.round((count / TARGET_SHARES) * 100);
-    const ed = getMysteryEditionFor(role);
+  // ==================== CONFETTI ENGINE (FESTIVAL-AWARE) ====================
+  function burstConfetti(count) {
+    if (typeof document === 'undefined' || !document.body) return;
+    const colors = (state.festival && state.festival.confetti) || ['#C8282B', '#D4A853', '#1E1B18', '#FFFFFF'];
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:200;';
+    document.body.appendChild(canvas);
 
-    const rec = (state.recipient || '').trim();
-    const snd = (state.senderName || '').trim();
-    const recValid = rec && rec !== 'You' ? rec : '';
+    const ctx = canvas.getContext ? canvas.getContext('2d') : null;
+    if (!ctx) { canvas.remove(); return; }
 
-    if (role === 'sender') {
-      const pill = $('senderQuestPill');
-      const fill = $('senderProgressFill');
-      const card = $('senderGiftMiniCard');
-      const tierEl = $('senderGiftTierLabel');
-      const passEl = $('senderGiftPassId');
-      const crestEl = $('senderGiftCrest');
-      const mainEl = $('senderGiftMainText');
-      const subEl = $('senderGiftSubText');
-      const rarityEl = $('senderGiftRarityChip');
-      const veilTitle = $('senderVaultVeilTitle');
-      const questBtn = $('senderQuestWhatsAppBtn');
-      const questBtnText = $('senderQuestBtnText');
-      const unlockedBtns = $('senderGiftUnlockedBtns');
+    canvas.width = window.innerWidth || 400;
+    canvas.height = window.innerHeight || 700;
 
-      syncWaxSlots($('senderWaxTrack'), count);
-      if (fill) fill.style.width = `${pct}%`;
-      if (passEl) passEl.textContent = `#${state.cardId}`;
-
-      if (pill) {
-        pill.textContent = unlocked ? 'Unlocked ✨ (5/5)' : `${count} / 5 Shared`;
-        pill.classList.toggle('unlocked', unlocked);
-      }
-
-      if (card) {
-        card.className = `gift-mini-card ${ed.tier}${unlocked ? '' : ' is-locked-vault'}${justUnlocked ? ' is-just-unlocked' : ''}`;
-      }
-
-      if (unlocked) {
-        if (tierEl) tierEl.textContent = ed.badge;
-        if (crestEl) crestEl.textContent = ed.crest;
-        if (mainEl) {
-          if (snd && recValid) mainEl.textContent = `${snd} × ${recValid} • ${ed.auraScore}% Aura ✨`;
-          else if (snd) mainEl.textContent = `${snd}’s 2026 Mystery Pass • ${ed.auraScore}%`;
-          else if (recValid) mainEl.textContent = `Secret Pass for ${recValid} • ${ed.auraScore}%`;
-          else mainEl.textContent = `2026 Secret Keeper Pass • ${ed.auraScore}%`;
-        }
-        if (subEl) subEl.textContent = ed.fortune;
-        if (rarityEl) rarityEl.textContent = ed.rarity;
-        questBtn?.classList.add('hidden');
-        unlockedBtns?.classList.remove('hidden');
-      } else {
-        const left = TARGET_SHARES - count;
-        if (tierEl) tierEl.textContent = 'UNSEAL • MYSTERY VAULT';
-        if (crestEl) crestEl.textContent = '🎁';
-        if (mainEl) mainEl.textContent = '2026 Collector Gift Card Inside';
-        if (subEl) subEl.textContent = 'Aura Score, Rare Edition & Fortune Prophecy';
-        if (rarityEl) rarityEl.textContent = `${left} WhatsApp share${left === 1 ? '' : 's'} left`;
-        if (veilTitle) veilTitle.textContent = `${left} WhatsApp Share${left === 1 ? '' : 's'} Left to Unlock`;
-        if (questBtnText) {
-          questBtnText.textContent =
-            count === 0
-              ? '💚 Share on WhatsApp to Crack Seal 1/5 →'
-              : `💚 Share with Next Friend on WhatsApp (${count}/5) →`;
-        }
-        questBtn?.classList.remove('hidden');
-        unlockedBtns?.classList.add('hidden');
-      }
-      return;
-    }
-
-    // Receiver inline vault + popup modal
-    const rPill = $('receiverQuestPill');
-    const rFill = $('receiverProgressFill');
-    const rCard = $('receiverGiftMiniCard');
-    const rTier = $('receiverGiftTierLabel');
-    const rPass = $('receiverGiftPassId');
-    const rCrest = $('receiverGiftCrest');
-    const rMain = $('receiverGiftMainText');
-    const rSub = $('receiverGiftSubText');
-    const rRarity = $('receiverGiftRarityChip');
-    const rVeilTitle = $('receiverVaultVeilTitle');
-    const rQuestBtn = $('receiverQuestWhatsAppBtn');
-    const rQuestBtnText = $('receiverQuestBtnText');
-    const rUnlockedBtns = $('receiverGiftUnlockedBtns');
-
-    syncWaxSlots($('receiverWaxTrack'), count);
-    syncWaxSlots($('modalWaxTrack'), count);
-    if (rFill) rFill.style.width = `${pct}%`;
-    if (rPass) rPass.textContent = `#${state.cardId}`;
-
-    if (rPill) {
-      rPill.textContent = unlocked ? 'Unlocked ✨ (5/5)' : `${count} / 5 Shared`;
-      rPill.classList.toggle('unlocked', unlocked);
-    }
-
-    if (rCard) {
-      rCard.className = `gift-mini-card ${ed.tier}${unlocked ? '' : ' is-locked-vault'}${justUnlocked ? ' is-just-unlocked' : ''}`;
-    }
-
-    if (unlocked) {
-      if (rTier) rTier.textContent = ed.badge;
-      if (rCrest) rCrest.textContent = ed.crest;
-      if (rMain) {
-        rMain.textContent = recValid
-          ? `${recValid}’s ${ed.auraScore}% Mystery Pass ✨`
-          : `Unsealed ${ed.auraScore}% Mystery Pass ✨`;
-      }
-      if (rSub) rSub.textContent = ed.fortune;
-      if (rRarity) rRarity.textContent = ed.rarity;
-      rQuestBtn?.classList.add('hidden');
-      rUnlockedBtns?.classList.remove('hidden');
-    } else {
-      const left = TARGET_SHARES - count;
-      if (rTier) rTier.textContent = 'UNSEAL • MYSTERY VAULT';
-      if (rCrest) rCrest.textContent = '🎁';
-      if (rMain) rMain.textContent = recValid ? `${recValid}’s Mystery Gift Box` : 'Your 2026 Mystery Gift Box';
-      if (rSub) rSub.textContent = 'Surprise Aura Score & Fortune locked inside';
-      if (rRarity) rRarity.textContent = `${left} WhatsApp share${left === 1 ? '' : 's'} left`;
-      if (rVeilTitle) rVeilTitle.textContent = `${left} WhatsApp Share${left === 1 ? '' : 's'} Left to Crack Open`;
-      if (rQuestBtnText) {
-        rQuestBtnText.textContent = `💚 Share on WhatsApp to Unlock (${count}/5) →`;
-      }
-      rQuestBtn?.classList.remove('hidden');
-      rUnlockedBtns?.classList.add('hidden');
-    }
-
-    // Sync Celebration Modal elements
-    const mName = $('popupGiftNameLine');
-    const mProg = $('popupQuestProgressCopy');
-    const mWaText = $('modalWhatsAppBtnText');
-    const mClaimText = $('modalClaimBtnText');
-    const mIcon = $('popupGiftIcon');
-
-    if (unlocked) {
-      if (mIcon) mIcon.textContent = ed.crest;
-      if (mName) mName.textContent = `${ed.badge} Unlocked (${ed.auraScore}% Aura)!`;
-      if (mProg) mProg.textContent = ed.fortune;
-      if (mWaText) mWaText.textContent = '💚 Invite More Friends on WhatsApp';
-      if (mClaimText) mClaimText.textContent = '🎁 Download 9:16 Gift Card';
-    } else {
-      const left = TARGET_SHARES - count;
-      if (mIcon) mIcon.textContent = '🎁';
-      if (mName) {
-        mName.textContent = recValid
-          ? `${recValid}’s 2026 Mystery Gift Box (${count}/5)`
-          : `Mystery Collector Gift Card (${count}/5)`;
-      }
-      if (mProg) {
-        mProg.textContent = `Share with ${left} more friend${left === 1 ? '' : 's'} on WhatsApp to reveal your surprise card!`;
-      }
-      if (mWaText) mWaText.textContent = `💚 Share on WhatsApp (${count}/5 Done)`;
-      if (mClaimText) mClaimText.textContent = `🔒 Locked (${count}/5 Shares)`;
-    }
-  }
-
-  function advanceQuestShare(role, sourceAction = 'whatsapp') {
-    const prev = getShareCount(role);
-    if (prev >= TARGET_SHARES) {
-      renderVaultUi(role, false);
-      return;
-    }
-
-    const next = setShareCount(role, prev + 1);
-    const unlockedNow = prev < TARGET_SHARES && next >= TARGET_SHARES;
-    renderVaultUi(role, unlockedNow);
-
-    trackEvent('gift_vault_progress', { role, step: next, source: sourceAction });
-
-    if (unlockedNow) {
-      trackEvent('gift_card_unlocked', { role, card_id: state.cardId });
-      playVaultUnlockFanfare();
-      burstPaperConfetti();
-      if (navigator.vibrate) {
-        try {
-          navigator.vibrate([70, 40, 120]);
-        } catch (_) { }
-      }
-      showToast('🎉 5/5 Wax Seals Cracked! Your 2026 Mystery Gift Card is UNLOCKED!');
-    } else {
-      showToast(`✅ Wax Seal ${next}/5 cracked! Invite ${TARGET_SHARES - next} more friend(s) on WhatsApp.`);
-    }
-  }
-
-  function scheduleQuestShareConfirm(role, delayMs = 850) {
-    if (getShareCount(role) >= TARGET_SHARES) return;
-    clearTimeout(state.questShareTimer);
-    state.questSharePending = role;
-    showToast('⏳ Confirming WhatsApp share to crack next seal...');
-    state.questShareTimer = setTimeout(() => {
-      if (state.questSharePending === role) {
-        state.questSharePending = false;
-        advanceQuestShare(role, 'whatsapp_quest');
-      }
-    }, delayMs);
-  }
-
-  // =========================================================================
-  // 4. Writer Flow, Live WhatsApp Preview Card & View Switching
-  // =========================================================================
-
-  function updateCharCounter() {
-    const len = ($('secretTextarea')?.value || '').length;
-    const el = $('secretCharCount');
-    if (el) el.textContent = `${len} / ${MAX_SECRET_CHARS}`;
-  }
-
-  function syncWhatsAppPreviewBubble() {
-    const rec = state.recipient && state.recipient !== 'You' ? state.recipient : 'You';
-    const waTitle = $('waPreviewTitle');
-    const waSendText = $('whatsappSendBtnText');
-    if (waTitle) {
-      waTitle.textContent = `💌 For ${rec} — Tap & Scratch to Unseal Your Secret Note`;
-    }
-    if (waSendText) {
-      waSendText.textContent =
-        rec !== 'You' ? `💚 Send Secret to ${rec} on WhatsApp` : '💚 Send Secret on WhatsApp';
-    }
-  }
-
-  function handleSealAndCreateLink() {
-    const secretVal = ($('secretTextarea')?.value || '').trim();
-    if (!secretVal) {
-      showToast('✍️ Write a secret message first!');
-      $('secretTextarea')?.focus();
-      return;
-    }
-
-    const recipientVal = ($('recipientInput')?.value || '').trim().slice(0, 32) || 'You';
-    const senderVal = ($('senderNameInput')?.value || '').trim().slice(0, 24);
-    const clueVal = ($('clueInput')?.value || '').trim().slice(0, 80);
-
-    state.recipient = recipientVal;
-    state.senderName = senderVal;
-    state.secret = secretVal.slice(0, MAX_SECRET_CHARS);
-    state.clue = clueVal || 'A quiet admirer';
-    state.cardId = generateAlphaId(8);
-    state.shareUrl = buildShortCardUrl(state.recipient, state.secret, clueVal, state.cardId);
-
-    const readyHeadline = $('readyHeadline');
-    if (readyHeadline) readyHeadline.textContent = `Sealed for ${state.recipient} ✨`;
-    if ($('readyCardIdBadge')) $('readyCardIdBadge').textContent = `#${state.cardId}`;
-    if ($('previewUrlText')) $('previewUrlText').textContent = state.shareUrl;
-
-    syncWhatsAppPreviewBubble();
-    renderVaultUi('sender', false);
-
-    $('composerCard')?.classList.add('hidden');
-    $('senderReadyCard')?.classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    trackEvent('seal_created', { len: state.secret.length });
-    showToast('✨ Sealed! Short trusted link & Mystery Vault ready.');
-  }
-
-  function showComposerEdit() {
-    $('senderReadyCard')?.classList.add('hidden');
-    $('composerCard')?.classList.remove('hidden');
-  }
-
-  function resetToFreshComposer() {
-    clearTimeout(state.popupTimer);
-    state.isReceiverMode = false;
-    state.hasRevealed = false;
-    state.cardId = generateAlphaId(8);
-    state.recipient = '';
-    state.senderName = '';
-    state.secret = '';
-    state.clue = '';
-    state.shareUrl = '';
-
-    document.documentElement.classList.remove('receiver-boot');
-    if (window.history && window.history.replaceState && (window.location.search || window.location.hash)) {
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-
-    document.title = 'Unseal — Secret Scratch Note Maker & Mystery Status Gift Card App';
-    if ($('recipientInput')) $('recipientInput').value = '';
-    if ($('senderNameInput')) $('senderNameInput').value = '';
-    if ($('secretTextarea')) $('secretTextarea').value = '';
-    if ($('clueInput')) $('clueInput').value = '';
-    updateCharCounter();
-
-    $('revealShareModal')?.classList.add('hidden');
-    $('viewPreview')?.classList.add('hidden');
-    $('viewWrite')?.classList.remove('hidden');
-    $('senderReadyCard')?.classList.add('hidden');
-    $('composerCard')?.classList.remove('hidden');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => $('recipientInput')?.focus(), 250);
-  }
-
-  function openScratchView({ fromSenderPreview }) {
-    $('viewWrite')?.classList.add('hidden');
-    $('viewPreview')?.classList.remove('hidden');
-    $('previewTopBar')?.classList.toggle('hidden', !fromSenderPreview);
-
-    if ($('receiverCardId')) $('receiverCardId').textContent = `#${state.cardId}`;
-    if ($('postcardHeading')) $('postcardHeading').textContent = `For ${state.recipient}, someone left you a sealed note.`;
-    if ($('revealedSecretText')) $('revealedSecretText').textContent = state.secret;
-    if ($('revealedClueText')) $('revealedClueText').textContent = `"${state.clue || 'A quiet admirer'}"`;
-
-    const statusPill = $('scratchStatusPill');
-    if (statusPill) {
-      statusPill.textContent = '🪙 Rub foil gently to unseal';
-      statusPill.classList.remove('is-done');
-    }
-
-    $('waxStampBadge')?.classList.remove('is-stamped');
-    $('quickRevealBtn')?.classList.remove('hidden');
-    $('postRevealActions')?.classList.add('hidden');
-    $('revealShareModal')?.classList.add('hidden');
-    state.hasRevealed = false;
-    state.isDrawing = false;
-    state.lastPos = null;
-
-    initScratchCanvas();
-  }
-
-  // =========================================================================
-  // 5. HTML5 Metallic Champagne Gold Scratch Foil + Confetti + Reveal
-  // =========================================================================
-
-  function paintChampagneFoil(ctx, width, height) {
-    const grad = ctx.createLinearGradient(0, 0, width, height);
-    grad.addColorStop(0, '#E8DFCF');
-    grad.addColorStop(0.28, '#D2B57E');
-    grad.addColorStop(0.5, '#F9F3E6');
-    grad.addColorStop(0.75, '#C4A265');
-    grad.addColorStop(1, '#E6DEC9');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, width, height);
-
-    ctx.save();
-    for (let i = 0; i < 42; i++) {
-      ctx.strokeStyle = i % 2 === 0 ? 'rgba(255, 255, 255, 0.22)' : 'rgba(120, 92, 48, 0.08)';
-      ctx.lineWidth = 1;
-      const y = (height / 42) * i;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y + (i % 3 === 0 ? 4 : -4));
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(56, 42, 24, 0.65)';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = '600 13px "DM Sans", sans-serif';
-    ctx.fillText('✨ SCRATCH TO UNSEAL ✨', width / 2, height / 2 - 11);
-    ctx.font = '500 11px "DM Sans", sans-serif';
-    ctx.fillStyle = 'rgba(56, 42, 24, 0.48)';
-    ctx.fillText('Rub gently with your finger or mouse', width / 2, height / 2 + 12);
-    ctx.restore();
-  }
-
-  function initScratchCanvas() {
-    scratchCanvas = $('scratchCanvas');
-    const box = $('scratchBox');
-    if (!scratchCanvas || !box) return;
-
-    scratchCanvas.classList.remove('foil-faded');
-    const logicalW = Math.max(250, Math.round(box.clientWidth || 340));
-    const logicalH = Math.max(195, Math.round(box.clientHeight || 220));
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    scratchCanvas.width = Math.round(logicalW * dpr);
-    scratchCanvas.height = Math.round(logicalH * dpr);
-    scratchCanvas.dataset.logicalW = String(logicalW);
-    scratchCanvas.dataset.logicalH = String(logicalH);
-
-    scratchCtx = scratchCanvas.getContext('2d', { willReadFrequently: true });
-    if (!scratchCtx) return;
-
-    scratchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    scratchCtx.globalCompositeOperation = 'source-over';
-    paintChampagneFoil(scratchCtx, logicalW, logicalH);
-
-    if (resizeObserver) resizeObserver.disconnect();
-    if ('ResizeObserver' in window) {
-      resizeObserver = new ResizeObserver(() => {
-        if (state.hasRevealed || !scratchCanvas || !box) return;
-        const newW = Math.round(box.clientWidth || 0);
-        const curW = parseInt(scratchCanvas.dataset.logicalW || '0', 10);
-        if (newW > 200 && Math.abs(newW - curW) > 12) {
-          initScratchCanvas();
-        }
-      });
-      resizeObserver.observe(box);
-    }
-  }
-
-  function evaluateScratchProgress() {
-    if (!scratchCanvas || !scratchCtx || state.hasRevealed) return;
-    const w = scratchCanvas.width;
-    const h = scratchCanvas.height;
-    if (!w || !h) return;
-
-    const pixels = scratchCtx.getImageData(0, 0, w, h).data;
-    let cleared = 0;
-    let sampled = 0;
-    const stride = 24;
-    for (let i = 3; i < pixels.length; i += stride * 4) {
-      sampled++;
-      if (pixels[i] < 128) cleared++;
-    }
-
-    const ratio = sampled ? cleared / sampled : 0;
-    const pct = Math.min(100, Math.round(ratio * 100));
-    const pill = $('scratchStatusPill');
-    if (pill && !state.hasRevealed && pct > 0) {
-      pill.textContent = `🪙 Scratched ${pct}% • Keep rubbing`;
-    }
-
-    if (ratio >= REVEAL_THRESHOLD) {
-      completeReveal(false);
-    }
-  }
-
-  function burstPaperConfetti() {
-    const colors = ['#D9383A', '#C9A96E', '#F59E0B', '#1C1917', '#FDE68A'];
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:85;overflow:hidden;';
-    document.body.appendChild(wrap);
-
-    for (let i = 0; i < 36; i++) {
-      const piece = document.createElement('span');
-      const startX = 15 + Math.random() * 70;
-      const drift = (Math.random() - 0.5) * 180;
-      const delay = Math.random() * 0.18;
-      const dur = 1.25 + Math.random() * 0.7;
-      piece.style.cssText = `
-        position:absolute;
-        left:${startX}%;
-        top:34%;
-        width:${6 + Math.random() * 5}px;
-        height:${9 + Math.random() * 6}px;
-        border-radius:2px;
-        background:${colors[i % colors.length]};
-        opacity:0.95;
-        transform:translate(-50%,-50%) rotate(0deg);
-        transition:transform ${dur}s cubic-bezier(0.22,0.8,0.2,1) ${delay}s, opacity ${dur}s ease ${delay}s;
-      `;
-      wrap.appendChild(piece);
-      requestAnimationFrame(() => {
-        piece.style.transform = `translate(${drift}px, ${180 + Math.random() * 260}px) rotate(${360 + Math.random() * 360}deg)`;
-        piece.style.opacity = '0';
+    const pieces = [];
+    const total = count || 58;
+    for (let i = 0; i < total; i++) {
+      pieces.push({
+        x: canvas.width * (0.2 + Math.random() * 0.6),
+        y: canvas.height * 0.42,
+        vx: (Math.random() - 0.5) * 14,
+        vy: -Math.random() * 14 - 3,
+        size: 6 + Math.random() * 6,
+        color: colors[i % colors.length],
+        rot: Math.random() * Math.PI,
+        vrot: (Math.random() - 0.5) * 0.25
       });
     }
-    setTimeout(() => wrap.remove(), 2300);
-  }
 
-  function completeReveal(instant) {
-    if (state.hasRevealed) return;
-    state.hasRevealed = true;
-    state.isDrawing = false;
-
-    if (scratchCanvas) {
-      scratchCanvas.classList.add('foil-faded');
-      if (instant && scratchCtx) {
-        scratchCtx.clearRect(0, 0, scratchCanvas.width, scratchCanvas.height);
-      }
-    }
-
-    const pill = $('scratchStatusPill');
-    if (pill) {
-      pill.textContent = '✨ Unsealed!';
-      pill.classList.add('is-done');
-    }
-
-    $('waxStampBadge')?.classList.add('is-stamped');
-    $('quickRevealBtn')?.classList.add('hidden');
-    $('postRevealActions')?.classList.remove('hidden');
-
-    renderVaultUi('receiver', false);
-
-    if (navigator.vibrate) {
-      try {
-        navigator.vibrate([80, 40, 120]);
-      } catch (_) { }
-    }
-
-    playRevealChime();
-    burstPaperConfetti();
-    trackEvent('card_unsealed', { card_id: state.cardId });
-
-    clearTimeout(state.popupTimer);
-    state.popupTimer = setTimeout(() => {
-      renderVaultUi('receiver', false);
-      $('revealShareModal')?.classList.remove('hidden');
-    }, 1350);
-  }
-
-  function bindScratchPointerHandlers() {
-    const canvas = $('scratchCanvas');
-    if (!canvas) return;
-
-    const getLocalPos = (clientX, clientY) => {
-      const rect = canvas.getBoundingClientRect();
-      const logicalW = parseFloat(canvas.dataset.logicalW || String(rect.width)) || rect.width;
-      const logicalH = parseFloat(canvas.dataset.logicalH || String(rect.height)) || rect.height;
-      return {
-        x: ((clientX - rect.left) / (rect.width || 1)) * logicalW,
-        y: ((clientY - rect.top) / (rect.height || 1)) * logicalH
-      };
-    };
-
-    const drawStroke = (pos) => {
-      if (!scratchCtx || state.hasRevealed) return;
-      scratchCtx.save();
-      scratchCtx.globalCompositeOperation = 'destination-out';
-      scratchCtx.lineCap = 'round';
-      scratchCtx.lineJoin = 'round';
-      scratchCtx.lineWidth = 48;
-      scratchCtx.strokeStyle = 'rgba(0,0,0,1)';
-      scratchCtx.fillStyle = 'rgba(0,0,0,1)';
-
-      if (state.lastPos) {
-        scratchCtx.beginPath();
-        scratchCtx.moveTo(state.lastPos.x, state.lastPos.y);
-        scratchCtx.lineTo(pos.x, pos.y);
-        scratchCtx.stroke();
+    let frame = 0;
+    const tick = () => {
+      frame++;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.42;
+        p.rot += p.vrot;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size * 0.55);
+        ctx.restore();
+      });
+      if (frame < 88) {
+        window.requestAnimationFrame(tick);
       } else {
-        scratchCtx.beginPath();
-        scratchCtx.arc(pos.x, pos.y, 24, 0, Math.PI * 2);
-        scratchCtx.fill();
-      }
-      scratchCtx.restore();
-
-      const moveDist = state.lastPos ? Math.hypot(pos.x - state.lastPos.x, pos.y - state.lastPos.y) : 0;
-      state.lastPos = pos;
-
-      const now = performance.now();
-      if (now - state.lastHapticTime >= 50) {
-        state.lastHapticTime = now;
-        if (navigator.vibrate) {
-          try {
-            navigator.vibrate(8);
-          } catch (_) { }
-        }
-      }
-
-      if (moveDist > 1.5 || now - state.lastSoundTime > 90) {
-        playScratchSound(Math.min(1, moveDist / 28));
-      }
-
-      if (now - state.lastProgressCheck > 85) {
-        state.lastProgressCheck = now;
-        evaluateScratchProgress();
+        canvas.remove();
       }
     };
-
-    canvas.addEventListener('mousedown', (e) => {
-      if (state.hasRevealed) return;
-      unlockAudioOnGesture();
-      state.isDrawing = true;
-      state.lastPos = null;
-      drawStroke(getLocalPos(e.clientX, e.clientY));
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (!state.isDrawing || state.hasRevealed) return;
-      drawStroke(getLocalPos(e.clientX, e.clientY));
-    });
-
-    window.addEventListener('mouseup', () => {
-      if (!state.isDrawing) return;
-      state.isDrawing = false;
-      state.lastPos = null;
-      evaluateScratchProgress();
-    });
-
-    canvas.addEventListener(
-      'touchstart',
-      (e) => {
-        if (state.hasRevealed) return;
-        if (e.cancelable) e.preventDefault();
-        const t = e.touches[0];
-        if (!t) return;
-        unlockAudioOnGesture();
-        state.isDrawing = true;
-        state.lastPos = null;
-        drawStroke(getLocalPos(t.clientX, t.clientY));
-      },
-      { passive: false }
-    );
-
-    canvas.addEventListener(
-      'touchmove',
-      (e) => {
-        if (!state.isDrawing || state.hasRevealed) return;
-        if (e.cancelable) e.preventDefault();
-        const t = e.touches[0];
-        if (!t) return;
-        drawStroke(getLocalPos(t.clientX, t.clientY));
-      },
-      { passive: false }
-    );
-
-    canvas.addEventListener(
-      'touchend',
-      () => {
-        if (!state.isDrawing) return;
-        state.isDrawing = false;
-        state.lastPos = null;
-        evaluateScratchProgress();
-      },
-      { passive: true }
-    );
+    window.requestAnimationFrame(tick);
   }
 
-  // =========================================================================
-  // 6. Native 1080x1920 9:16 PNG Generator (Collector Mystery Gift + Note)
-  // =========================================================================
+  // ==================== 100-DESIGN COLLECTOR VAULT RENDERING ====================
+  function renderVaultForRole(role) {
+    const p = state.activePayload;
+    if (!p) return;
 
-  function wrapLines(ctx, text, maxWidth, maxLines = 12) {
-    const words = String(text || '').split(/\s+/).filter(Boolean);
-    const lines = [];
+    const cardId = p.id || 'Unseal01';
+    const shares = getShareCount(cardId, role);
+    const unlocked = shares >= REQUIRED_SHARES;
+    const designIdx = getRolledDesignIndex(cardId, role);
+    const design = getCollectorDesign(designIdx);
+
+    const isSender = role === 'sender';
+    const prefix = isSender ? 'sender' : 'receiver';
+
+    const titleEl = $(`${prefix}GiftTitle`);
+    const pillEl = $(`${prefix}QuestPill`);
+    const progressEl = $(`${prefix}ProgressFill`);
+    const trackEl = $(`${prefix}WaxTrack`);
+    const miniCardEl = $(`${prefix}GiftMiniCard`);
+    const svgEl = $(`${prefix}GiftSvgPattern`);
+    const tierEl = $(`${prefix}GiftTierLabel`);
+    const passIdEl = $(`${prefix}GiftPassId`);
+    const crestEl = $(`${prefix}GiftCrest`);
+    const mainTextEl = $(`${prefix}GiftMainText`);
+    const subTextEl = $(`${prefix}GiftSubText`);
+    const rarityEl = $(`${prefix}GiftRarityChip`);
+    const veilEl = $(`${prefix}VaultVeil`);
+    const veilTitleEl = $(`${prefix}VaultVeilTitle`);
+    const veilSubEl = $(`${prefix}VaultVeilSub`);
+    const waBtnEl = $(`${prefix}QuestWhatsAppBtn`);
+    const waBtnTextEl = $(`${prefix}QuestBtnText`);
+    const unlockedRowEl = $(`${prefix}GiftUnlockedBtns`);
+
+    const pct = Math.round((shares / REQUIRED_SHARES) * 100);
+    if (pillEl) pillEl.textContent = unlocked ? `Unlocked 5/5 ✨` : `${shares} / ${REQUIRED_SHARES} Shared`;
+    if (progressEl && progressEl.style) progressEl.style.width = `${pct}%`;
+
+    if (trackEl && typeof trackEl.querySelectorAll === 'function') {
+      const slots = trackEl.querySelectorAll('.wax-slot');
+      for (let i = 0; i < slots.length; i++) {
+        slots[i].classList.toggle('is-cracked', i < shares);
+        slots[i].textContent = i < shares ? '✓' : String(i + 1);
+      }
+    }
+
+    if (miniCardEl && miniCardEl.style) {
+      miniCardEl.style.setProperty('--gift-bg', `linear-gradient(135deg, ${design.palette.bg1} 0%, ${design.palette.bg2} 100%)`);
+      miniCardEl.style.setProperty('--gift-ink', design.palette.ink);
+      miniCardEl.classList.toggle('is-locked-vault', !unlocked);
+    }
+
+    if (svgEl) {
+      svgEl.innerHTML = renderCollectorSvgMarkup(design);
+    }
+
+    if (titleEl) {
+      titleEl.textContent = unlocked
+        ? `🎁 UNLOCKED: EDITION ${design.badge}`
+        : `🎁 YOUR RANDOM MYSTERY GIFT (${design.badge})`;
+    }
+    if (tierEl) tierEl.textContent = `${design.rarity} · ${state.festival.name.toUpperCase()}`;
+    if (passIdEl) passIdEl.textContent = `#${cardId}`;
+    if (crestEl) crestEl.textContent = design.motif.crest;
+
+    const ownerName = isSender ? (p.from || 'Sender') : (p.r || 'Special One');
+    if (mainTextEl) {
+      mainTextEl.textContent = unlocked
+        ? `${ownerName} · ${design.motif.title}`
+        : `Edition ${design.badge} Sealed`;
+    }
+    if (subTextEl) {
+      subTextEl.textContent = unlocked
+        ? `Aura ${design.aura}% · ${design.fortune}`
+        : `${design.palette.name} + Fortune inside`;
+    }
+    if (rarityEl) rarityEl.textContent = `${design.badge} Collector`;
+
+    if (veilEl) veilEl.classList.toggle('hidden', unlocked);
+    if (!unlocked && veilTitleEl) {
+      const left = REQUIRED_SHARES - shares;
+      veilTitleEl.textContent = `${left} More WhatsApp Share${left === 1 ? '' : 's'} to Crack Open`;
+    }
+    if (!unlocked && veilSubEl) {
+      veilSubEl.textContent = `You rolled Edition ${design.badge} (${design.palette.name}) — unlock for 9:16 Story PNG!`;
+    }
+
+    if (waBtnEl) waBtnEl.classList.toggle('hidden', unlocked);
+    if (waBtnTextEl && !unlocked) {
+      waBtnTextEl.textContent = `💚 Share on WhatsApp to Crack Seal ${shares + 1}/5 →`;
+    }
+    if (unlockedRowEl) unlockedRowEl.classList.toggle('hidden', !unlocked);
+
+    syncRevealPopupVault();
+  }
+
+  function syncRevealPopupVault() {
+    const p = state.activePayload;
+    if (!p) return;
+    const cardId = p.id || 'Unseal01';
+    const role = state.mode === 'ready' ? 'sender' : 'receiver';
+    const shares = getShareCount(cardId, role);
+    const unlocked = shares >= REQUIRED_SHARES;
+    const design = getCollectorDesign(getRolledDesignIndex(cardId, role));
+
+    const iconEl = $('popupGiftIcon');
+    const nameLineEl = $('popupGiftNameLine');
+    const copyEl = $('popupQuestProgressCopy');
+    const modalTrack = $('modalWaxTrack');
+    const waTextEl = $('modalWhatsAppBtnText');
+    const claimTextEl = $('modalClaimBtnText');
+
+    if (iconEl) iconEl.textContent = unlocked ? design.motif.crest : '🎁';
+    if (nameLineEl) {
+      nameLineEl.textContent = unlocked
+        ? `Unlocked: ${design.badge} ${design.title}`
+        : `Edition ${design.badge} Ready Inside Vault`;
+    }
+    if (copyEl) {
+      copyEl.textContent = unlocked
+        ? `5 / 5 shares completed! Aura ${design.aura}% Story Card ready.`
+        : `Progress: ${shares} / ${REQUIRED_SHARES} WhatsApp shares completed`;
+    }
+    if (modalTrack && typeof modalTrack.querySelectorAll === 'function') {
+      const slots = modalTrack.querySelectorAll('.wax-slot');
+      for (let i = 0; i < slots.length; i++) {
+        slots[i].classList.toggle('is-cracked', i < shares);
+        slots[i].textContent = i < shares ? '✓' : String(i + 1);
+      }
+    }
+    if (waTextEl) {
+      waTextEl.textContent = unlocked
+        ? `💚 Share Again on WhatsApp (Unlocked!)`
+        : `💚 Share on WhatsApp to Unlock (${shares}/5)`;
+    }
+    if (claimTextEl) {
+      claimTextEl.textContent = unlocked ? '🎁 Download 9:16 Gift Card' : `🔒 9:16 Gift Card (${shares}/5)`;
+    }
+  }
+
+  // ==================== 1080×1920 STORY PNG EXPORTS ====================
+  function wrapCanvasText(ctx, text, x, y, maxW, lineHeight) {
+    const words = String(text || '').split(/\s+/);
     let line = '';
-    for (const word of words) {
-      const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width > maxWidth && line) {
-        lines.push(line);
-        line = word;
-        if (lines.length >= maxLines) break;
+    let curY = y;
+    for (let i = 0; i < words.length; i++) {
+      const test = line ? `${line} ${words[i]}` : words[i];
+      if (ctx.measureText(test).width > maxW && line) {
+        ctx.fillText(line, x, curY);
+        line = words[i];
+        curY += lineHeight;
       } else {
         line = test;
       }
     }
-    if (line && lines.length < maxLines) lines.push(line);
-    return lines;
+    if (line) ctx.fillText(line, x, curY);
+    return curY + lineHeight;
   }
 
-  function drawRoundedRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  }
-
-  async function renderCardPngBlob(mode = 'gift', role = 'sender') {
-    if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
+  async function generateGiftCardPng(role, shareNative) {
+    const p = state.activePayload;
+    if (!p) return;
+    const cardId = p.id || 'Unseal01';
+    const shares = getShareCount(cardId, role);
+    if (shares < REQUIRED_SHARES) {
+      triggerWhatsAppQuestShare(role);
+      return;
     }
 
+    const design = getCollectorDesign(getRolledDesignIndex(cardId, role));
+    const owner = role === 'sender' ? (p.from || 'Mystery Sender') : (p.r || 'Special One');
     const canvas = document.createElement('canvas');
     canvas.width = 1080;
     canvas.height = 1920;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    if (mode === 'gift') {
-      const ed = getMysteryEditionFor(role);
-      const bg = ctx.createRadialGradient(840, 260, 80, 540, 960, 1280);
-      bg.addColorStop(0, ed.bgStops[0]);
-      bg.addColorStop(0.55, ed.bgStops[1]);
-      bg.addColorStop(1, ed.bgStops[2]);
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, 1080, 1920);
+    // Rich Background Gradient
+    const grad = ctx.createLinearGradient(0, 0, 1080, 1920);
+    grad.addColorStop(0, design.palette.bg1);
+    grad.addColorStop(1, design.palette.bg2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1080, 1920);
 
-      // Subtle star dust
-      ctx.fillStyle = 'rgba(246, 229, 190, 0.2)';
-      for (let i = 0; i < 45; i++) {
-        ctx.beginPath();
-        ctx.arc(((i * 211) % 980) + 50, ((i * 389) % 1800) + 60, (i % 3) + 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    // Draw Collector Procedural Geometric Motif
+    drawCanvasCollectorMotif(ctx, 1080, 1920, design);
 
-      // Main Collector Gift Frame
-      drawRoundedRect(ctx, 84, 210, 912, 1410, 48);
-      ctx.fillStyle = 'rgba(20, 17, 16, 0.88)';
-      ctx.fill();
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = ed.accent;
-      ctx.stroke();
+    // Double Metallic Border
+    ctx.strokeStyle = design.palette.gold;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(48, 48, 1080 - 96, 1920 - 96);
+    ctx.globalAlpha = 0.4;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(66, 66, 1080 - 132, 1920 - 132);
+    ctx.globalAlpha = 1;
 
-      drawRoundedRect(ctx, 112, 238, 856, 1354, 36);
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = design.palette.gold;
+    ctx.font = '700 34px "DM Sans", sans-serif';
+    ctx.fillText(`UNSEAL COLLECTOR EDITION · ${design.badge}`, 540, 190);
 
-      ctx.fillStyle = ed.light;
-      ctx.font = '700 26px "DM Sans", sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(ed.badge, 156, 325);
-      ctx.textAlign = 'right';
-      ctx.fillText(`#${state.cardId}`, 924, 325);
+    ctx.font = '700 28px "DM Sans", sans-serif';
+    ctx.fillStyle = design.palette.ink;
+    ctx.fillText(`${state.festival.emoji} ${state.festival.name.toUpperCase()} EDITION · ${design.rarity}`, 540, 250);
 
-      // Crest Circle
-      ctx.beginPath();
-      ctx.arc(540, 515, 84, 0, Math.PI * 2);
-      ctx.fillStyle = '#D9383A';
-      ctx.fill();
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = ed.light;
-      ctx.stroke();
+    // Crest Emblem Circle
+    ctx.beginPath();
+    ctx.arc(540, 520, 150, 0, Math.PI * 2);
+    ctx.fillStyle = design.palette.soft;
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = design.palette.gold;
+    ctx.stroke();
 
-      ctx.fillStyle = '#FFFDF9';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = '700 66px Georgia, serif';
-      ctx.fillText(ed.crest, 540, 520);
+    ctx.font = '130px sans-serif';
+    ctx.fillStyle = design.palette.ink;
+    ctx.fillText(design.motif.crest, 540, 568);
 
-      const rec = state.recipient && state.recipient !== 'You' ? state.recipient : '';
-      const snd = state.senderName || '';
-      let mainTitle = '2026 Secret Collector Pass';
-      if (role === 'receiver') {
-        mainTitle = rec ? `${rec}’s 2026 Mystery Pass` : 'My 2026 Mystery Pass';
-      } else if (snd && rec) {
-        mainTitle = `${snd} × ${rec} Secret Pass`;
-      } else if (snd) {
-        mainTitle = `${snd}’s VIP Secret Pass`;
-      } else if (rec) {
-        mainTitle = `Secret Pass for ${rec}`;
-      }
+    // Owner Name
+    ctx.font = 'italic 700 84px "Playfair Display", Georgia, serif';
+    ctx.fillStyle = design.palette.ink;
+    wrapCanvasText(ctx, owner, 540, 820, 860, 98);
 
-      ctx.fillStyle = '#FFFDF9';
-      ctx.font = 'italic 700 66px "Playfair Display", Georgia, serif';
-      const titleLines = wrapLines(ctx, mainTitle, 760, 3);
-      let curY = 710;
-      titleLines.forEach((ln) => {
-        ctx.fillText(ln, 540, curY);
-        curY += 84;
-      });
+    // Palette & Motif Title
+    ctx.font = '700 38px "DM Sans", sans-serif';
+    ctx.fillStyle = design.palette.gold;
+    ctx.fillText(design.title, 540, 990);
 
-      // Aura Match Score Pill
-      drawRoundedRect(ctx, 210, curY + 26, 660, 78, 39);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = ed.accent;
-      ctx.stroke();
-      ctx.fillStyle = ed.light;
-      ctx.font = '700 28px "DM Sans", sans-serif';
-      ctx.fillText(`SECRET VIBE AURA: ${ed.auraScore}% • ${ed.rarity.toUpperCase()}`, 540, curY + 66);
+    // Aura Score Pill
+    ctx.fillStyle = design.palette.soft;
+    ctx.beginPath();
+    ctx.roundRect(290, 1055, 500, 88, 44);
+    ctx.fill();
+    ctx.strokeStyle = design.palette.gold;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = design.palette.ink;
+    ctx.font = '700 36px "DM Sans", sans-serif';
+    ctx.fillText(`✨ Vibe Aura Score: ${design.aura}%`, 540, 1112);
 
-      // Fortune Box
-      const fy = curY + 148;
-      drawRoundedRect(ctx, 148, fy, 784, 240, 28);
-      ctx.fillStyle = 'rgba(255, 253, 249, 0.06)';
-      ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
-      ctx.stroke();
+    // Fortune Prophecy
+    ctx.font = 'italic 54px "Caveat", cursive, sans-serif';
+    ctx.fillStyle = design.palette.ink;
+    wrapCanvasText(ctx, `"${design.fortune}"`, 540, 1280, 840, 74);
 
-      ctx.fillStyle = '#D6CFC5';
-      ctx.font = '700 20px "DM Sans", sans-serif';
-      ctx.fillText('2026 MYSTERY FORTUNE', 540, fy + 48);
+    // Footer Watermark (no spoilers!)
+    ctx.font = '700 32px "DM Sans", sans-serif';
+    ctx.fillStyle = design.palette.gold;
+    ctx.fillText(`Card Pass #${cardId} · Scratch yours free at`, 540, 1690);
+    ctx.font = '700 40px "Playfair Display", Georgia, serif';
+    ctx.fillStyle = design.palette.ink;
+    ctx.fillText('unseal-cards.vercel.app', 540, 1755);
 
-      ctx.fillStyle = '#FFFDF9';
-      ctx.font = '600 42px "Caveat", "Kalam", "Noto Sans Devanagari", cursive';
-      const fLines = wrapLines(ctx, `“${ed.fortune}”`, 700, 3);
-      let fLineY = fy + 112;
-      fLines.forEach((l) => {
-        ctx.fillText(l, 540, fLineY);
-        fLineY += 54;
-      });
-
-      ctx.fillStyle = ed.light;
-      ctx.font = '600 38px "Caveat", cursive';
-      const callout =
-        role === 'receiver'
-          ? 'Your turn — drop a secret note in my chat 👀💌'
-          : 'Someone just received a secret scratch note 👀💌';
-      ctx.fillText(callout, 540, 1395);
-
-      ctx.fillStyle = ed.accent;
-      ctx.font = 'italic 700 58px "Playfair Display", Georgia, serif';
-      ctx.fillText('Unseal', 540, 1485);
-      ctx.fillStyle = '#C7BFB5';
-      ctx.font = '500 27px "DM Sans", sans-serif';
-      ctx.fillText('Scratch & unlock yours free at unseal.cards', 540, 1545);
-    } else {
-      // Revealed Note 9:16 Warm Linen Postcard
-      ctx.fillStyle = '#FAF6F0';
-      ctx.fillRect(0, 0, 1080, 1920);
-
-      ctx.fillStyle = '#E6DDD0';
-      for (let x = 24; x < 1080; x += 36) {
-        for (let y = 24; y < 1920; y += 36) {
-          ctx.fillRect(x, y, 2, 2);
-        }
-      }
-
-      drawRoundedRect(ctx, 76, 210, 928, 1400, 44);
-      ctx.fillStyle = '#FFFCF7';
-      ctx.fill();
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = '#C9A96E';
-      ctx.stroke();
-
-      ctx.fillStyle = '#D9383A';
-      ctx.font = '700 24px "DM Sans", sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText('UNSEALED SECRET POSTCARD', 136, 300);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#78716C';
-      ctx.fillText(`#${state.cardId}`, 944, 300);
-
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#1C1917';
-      ctx.font = 'italic 700 54px "Playfair Display", Georgia, serif';
-      const headLines = wrapLines(ctx, `For ${state.recipient || 'You'}, someone left you a sealed note.`, 808, 3);
-      let hy = 385;
-      headLines.forEach((l) => {
-        ctx.fillText(l, 136, hy);
-        hy += 68;
-      });
-
-      drawRoundedRect(ctx, 136, hy + 25, 808, 690, 28);
-      ctx.fillStyle = '#FFFDF8';
-      ctx.fill();
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = '#E5DDD0';
-      ctx.stroke();
-
-      ctx.fillStyle = '#2A1618';
-      ctx.font = '600 58px "Caveat", "Kalam", "Noto Sans Devanagari", cursive';
-      const noteLines = wrapLines(ctx, state.secret, 720, 8);
-      let ny = hy + 115;
-      noteLines.forEach((l) => {
-        ctx.fillText(l, 180, ny);
-        ny += 74;
-      });
-
-      drawRoundedRect(ctx, 136, hy + 750, 808, 170, 24);
-      ctx.fillStyle = '#F6EFE3';
-      ctx.fill();
-
-      ctx.fillStyle = '#78716C';
-      ctx.font = '700 22px "DM Sans", sans-serif';
-      ctx.fillText('CLUE FROM SENDER', 174, hy + 802);
-      ctx.fillStyle = '#1C1917';
-      ctx.font = '600 44px "Caveat", "Kalam", "Noto Sans Devanagari", cursive';
-      ctx.fillText(`"${state.clue || 'A quiet admirer'}"`, 174, hy + 868);
-
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#1C1917';
-      ctx.font = 'italic 700 56px "Playfair Display", Georgia, serif';
-      ctx.fillText('Unseal', 540, 1740);
-      ctx.fillStyle = '#57534E';
-      ctx.font = '500 28px "DM Sans", sans-serif';
-      ctx.fillText('Scratch & create yours free at unseal.cards', 540, 1805);
-    }
-
-    return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    exportCanvasImage(canvas, `unseal-gift-${design.editionStr}-${cardId}.png`, shareNative,
+      `Unlocked Edition ${design.badge} (${design.title}) on unseal-cards.vercel.app!`);
   }
 
-  async function downloadPngCard(mode = 'gift', role = 'sender') {
-    if (mode === 'gift' && getShareCount(role) < TARGET_SHARES) {
-      showToast(`🔒 Share with ${TARGET_SHARES - getShareCount(role)} more friend(s) on WhatsApp to unlock!`);
-      return;
-    }
-    showToast('🎨 Rendering 9:16 Status card...');
-    const blob = await renderCardPngBlob(mode, role);
-    if (!blob) {
-      showToast('⚠️ Could not generate image on this browser.');
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = mode === 'gift' ? `unseal-gift-${role}-${state.cardId}.png` : `unseal-note-${state.cardId}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 4000);
-    trackEvent('gift_card_downloaded', { mode, role });
-    showToast('🎁 9:16 Story PNG saved! Post on WhatsApp Status or IG Story.');
+  function generateRevealedNotePng() {
+    const p = state.activePayload;
+    if (!p) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = '#FAF6F0';
+    ctx.fillRect(0, 0, 1080, 1920);
+
+    // Inner Smooth Velvet Parchment Card (Zero book lines)
+    ctx.fillStyle = '#FFFDF9';
+    ctx.beginPath();
+    ctx.roundRect(88, 280, 904, 1340, 44);
+    ctx.fill();
+    ctx.strokeStyle = '#DFC99B';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#C8282B';
+    ctx.font = '700 32px "DM Sans", sans-serif';
+    ctx.fillText(`FOR ${(p.r || 'YOU').toUpperCase()} · UNSEALED SECRET`, 540, 410);
+
+    ctx.fillStyle = '#1E1B18';
+    ctx.font = '72px "Caveat", "Kalam", cursive, sans-serif';
+    wrapCanvasText(ctx, p.s || '', 540, 620, 760, 96);
+
+    ctx.fillStyle = '#665E55';
+    ctx.font = '600 34px "DM Sans", sans-serif';
+    wrapCanvasText(ctx, `Clue: "${p.c || 'A quiet admirer'}"`, 540, 1370, 780, 48);
+
+    ctx.fillStyle = '#C8282B';
+    ctx.font = 'italic 700 44px "Playfair Display", Georgia, serif';
+    ctx.fillText('unseal-cards.vercel.app', 540, 1520);
+
+    exportCanvasImage(canvas, `unseal-note-${p.id || 'card'}.png`, false, '');
   }
 
-  async function shareGiftImage(role = 'sender') {
-    if (getShareCount(role) < TARGET_SHARES) {
-      shareQuestInviteWhatsApp(role);
-      return;
-    }
-    showToast('🎨 Preparing your Collector Gift Card...');
-    const blob = await renderCardPngBlob('gift', role);
-    if (!blob) return;
-
-    const file = new File([blob], `unseal-gift-${role}-${state.cardId}.png`, { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'My 2026 Unseal Mystery Gift Card 🎁',
-          text: `Just cracked my 2026 Mystery Pass! Scratch & unlock yours free: ${getBasePageUrl()}`
-        });
-        showToast('🎁 Shared your Mystery Gift Card!');
-        return;
-      } catch (err) {
-        if (err && err.name === 'AbortError') return;
-      }
-    }
-
-    await downloadPngCard('gift', role);
-  }
-
-  // =========================================================================
-  // 7. WhatsApp & Social Sharing (Secret Delivery + 5-Friend Vault Invites)
-  // =========================================================================
-
-  function showToast(msg) {
-    let el = $('app-toast');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'app-toast';
-      el.className = 'app-toast';
-      el.setAttribute('role', 'status');
-      el.setAttribute('aria-live', 'polite');
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(state.toastTimer);
-    state.toastTimer = setTimeout(() => el.classList.remove('show'), 3300);
-  }
-
-  async function copyText(str) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      try {
-        await navigator.clipboard.writeText(str);
-        return true;
-      } catch (_) { }
-    }
-    const ta = document.createElement('textarea');
-    ta.value = str;
-    ta.setAttribute('readonly', '');
-    ta.style.cssText = 'position:fixed;left:-9999px;';
-    document.body.appendChild(ta);
-    ta.select();
+  function exportCanvasImage(canvas, filename, tryShare, shareText) {
     try {
-      document.execCommand('copy');
-    } catch (_) { }
-    ta.remove();
-    return true;
-  }
-
-  function shareSealedWhatsApp() {
-    if (!state.shareUrl) return;
-    const who = state.recipient && state.recipient !== 'You' ? state.recipient : 'friend';
-    const text = `Hey ${who}! 💌 Someone sealed a secret scratch note for you. Rub the gold foil & check your 2026 Mystery Gift Card:\n${state.shareUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
-    trackEvent('whatsapp_share', { kind: 'sealed_note' });
-    scheduleQuestShareConfirm('sender', 800);
-  }
-
-  function shareQuestInviteWhatsApp(role) {
-    const homeUrl = getBasePageUrl();
-    const who = state.recipient && state.recipient !== 'You' ? state.recipient : 'yaar';
-    const msg =
-      role === 'sender'
-        ? `Yaar ek crazy gold-foil secret note & 2026 Mystery Gift Card challenge try kar 😳💌 Apna card unseal kar: ${homeUrl}`
-        : `Hey ${who}! Someone just sent me a secret scratch-off note on Unseal ✨ Try rubbing the foil & claim your 2026 Mystery Gift Card: ${homeUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
-    trackEvent('whatsapp_share', { kind: 'quest_invite', role });
-    scheduleQuestShareConfirm(role, 850);
-  }
-
-  function shareSealedTelegram() {
-    if (!state.shareUrl) return;
-    const who = state.recipient && state.recipient !== 'You' ? state.recipient : 'you';
-    const msg = `💌 Someone sealed a secret scratch note for ${who}. Rub the gold foil to unseal!`;
-    window.open(
-      `https://t.me/share/url?url=${encodeURIComponent(state.shareUrl)}&text=${encodeURIComponent(msg)}`,
-      '_blank',
-      'noopener,noreferrer'
-    );
-    scheduleQuestShareConfirm('sender', 900);
-  }
-
-  async function shareSealedNative() {
-    if (!state.shareUrl) return;
-    const who = state.recipient && state.recipient !== 'You' ? state.recipient : 'you';
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Secret Note for ${who} — Unseal`,
-          text: `Hey ${who}! 💌 Rub the gold foil to unseal your secret note:`,
-          url: state.shareUrl
-        });
-        advanceQuestShare('sender', 'native_share');
-        return;
-      } catch (err) {
-        if (err && err.name === 'AbortError') return;
-      }
-    }
-    await copyText(state.shareUrl);
-    showToast('📋 Short link copied! Paste anywhere on WhatsApp or IG.');
-  }
-
-  async function inviteFriendNative(role) {
-    const homeUrl = getBasePageUrl();
-    const text = 'Send an anonymous gold-foil secret note & crack open your 2026 Mystery Gift Card 💌🎁';
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Unseal — Secret Scratch Notes', text, url: homeUrl });
-        advanceQuestShare(role, 'native_invite');
-        return;
-      } catch (err) {
-        if (err && err.name === 'AbortError') return;
-      }
-    }
-    await copyText(`${text} ${homeUrl}`);
-    showToast('📋 Invite copied! Share with friends on WhatsApp to advance.');
-  }
-
-  // =========================================================================
-  // 8. Unique PWA Install Animation, Service Worker & Fullscreen Control
-  // =========================================================================
-
-  function setInstallOverlayProgress(pct, badge, title, status, showIosSteps = false) {
-    const bar = $('pwaInstallProgressBar');
-    if (bar) bar.style.width = `${pct}%`;
-    if ($('pwaInstallBadge') && badge) $('pwaInstallBadge').textContent = badge;
-    if ($('pwaInstallTitle') && title) $('pwaInstallTitle').textContent = title;
-    if ($('pwaInstallStatusText') && status) $('pwaInstallStatusText').textContent = status;
-    $('iosInstallStepsBox')?.classList.toggle('hidden', !showIosSteps);
-  }
-
-  async function triggerPwaInstallWithAnimation() {
-    const overlay = $('pwaInstallOverlay');
-    if (!overlay) return;
-    clearTimeout(state.installAnimTimer);
-
-    trackEvent('pwa_install_clicked', { has_native_prompt: Boolean(state.deferredInstallPrompt) });
-    overlay.classList.remove('hidden');
-    setInstallOverlayProgress(
-      24,
-      '📲 INSTALLING UNSEAL PWA',
-      'Sealing Unseal onto your Home Screen…',
-      'Preparing offline scratch foil, Hindi calligraphy fonts & 9:16 Mystery Gift studio.',
-      false
-    );
-
-    if (state.soundEnabled) playRevealChime();
-
-    state.installAnimTimer = setTimeout(async () => {
-      setInstallOverlayProgress(
-        68,
-        '✨ CONFIGURING APP ICON',
-        'Locking Offline Secret Vault…',
-        'Adding full-screen adaptive launch & 1-tap access from your phone screen.',
-        false
-      );
-
-      if (state.deferredInstallPrompt) {
-        try {
-          const promptEvt = state.deferredInstallPrompt;
-          state.deferredInstallPrompt = null;
-          await promptEvt.prompt();
-          const choice = await promptEvt.userChoice;
-          if (choice && choice.outcome === 'accepted') {
-            setInstallOverlayProgress(
-              100,
-              '🎉 INSTALLED!',
-              'Unseal App Sealed on Home Screen!',
-              'Launch Unseal anytime directly like a native phone app.',
-              false
-            );
-            burstPaperConfetti();
-            trackEvent('pwa_installed', { method: 'prompt_accepted' });
-            setTimeout(() => overlay.classList.add('hidden'), 1800);
-          } else {
-            overlay.classList.add('hidden');
-            showToast('📲 You can install Unseal anytime from the header!');
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        if (tryShare && navigator.share && navigator.canShare) {
+          const file = new File([blob], filename, { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({ files: [file], title: 'Unseal Collector Card', text: shareText });
+              return;
+            } catch (_) { /* fall through to download */ }
           }
-          return;
-        } catch (_) { }
-      }
-
-      // iOS Safari or browser without native beforeinstallprompt
-      setInstallOverlayProgress(
-        100,
-        '📲 ALMOST THERE — 2 QUICK TAPS',
-        'Pin Unseal App to Home Screen',
-        'Your browser blocks automatic 1-click install dialogs—follow these 2 taps below:',
-        true
-      );
-    }, 850);
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      }, 'image/png');
+    } catch (_) { /* no-op */ }
   }
 
-  function bindPwaAndFullscreen() {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      state.deferredInstallPrompt = e;
-      $('installAppBtn')?.classList.remove('hidden');
-    });
+  // ==================== WHATSAPP / SOCIAL SHARING ====================
+  function triggerWhatsAppQuestShare(role) {
+    const p = state.activePayload || {};
+    const cardId = p.id || safeRandAlphaId(ALPHA_ID_LEN);
+    const shareUrl = `${PRODUCTION_ORIGIN}/?Ref-${safeRandAlphaId(ALPHA_ID_LEN)}`;
+    const message = role === 'sender' && state.currentUrl
+      ? `🤫 Psst ${p.r || ''}! Scratch off this gold foil to read my secret note (${state.festival.greeting}):\n${state.currentUrl}`
+      : `🎁 I just scratched a secret postcard on Unseal! Send your friends a scratch note & crack open 1 of 100 random Collector Cards free:\n${shareUrl}`;
 
-    window.addEventListener('appinstalled', () => {
-      state.deferredInstallPrompt = null;
-      document.documentElement.classList.add('is-pwa');
-      $('pwaInstallOverlay')?.classList.add('hidden');
-      burstPaperConfetti();
-      trackEvent('pwa_installed', { method: 'browser_event' });
-      showToast('🎉 Unseal installed! Open it anytime from your Home Screen.');
-    });
+    const waHref = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    if (typeof window.open === 'function') {
+      window.open(waHref, '_blank', 'noopener,noreferrer');
+    }
 
-    $('installAppBtn')?.addEventListener('click', triggerPwaInstallWithAnimation);
-    $('footerInstallAppBtn')?.addEventListener('click', triggerPwaInstallWithAnimation);
-    $('closeInstallOverlayBtn')?.addEventListener('click', () => {
-      clearTimeout(state.installAnimTimer);
-      $('pwaInstallOverlay')?.classList.add('hidden');
-    });
-    $('pwaInstallOverlay')?.addEventListener('click', (e) => {
-      if (e.target === $('pwaInstallOverlay')) {
-        clearTimeout(state.installAnimTimer);
-        $('pwaInstallOverlay').classList.add('hidden');
+    const updated = incrementShareCount(cardId, role);
+    AudioFX.playPop();
+    safeVibrate(22);
+    renderVaultForRole(role);
+
+    if (updated >= REQUIRED_SHARES) {
+      AudioFX.playChime();
+      burstConfetti(72);
+      safeVibrate([60, 40, 120]);
+    }
+    trackEvent('whatsapp_quest_share', { role, step: updated });
+  }
+
+  // ==================== SCRATCH CANVAS ENGINE ====================
+  const ScratchEngine = {
+    canvas: null,
+    ctx: null,
+    w: 0,
+    h: 0,
+    drawing: false,
+    strokeCount: 0,
+
+    init(forceReset) {
+      const canvas = $('scratchCanvas');
+      const box = $('scratchBox');
+      if (!canvas || !box) return;
+      this.canvas = canvas;
+
+      const ctx = canvas.getContext ? canvas.getContext('2d', { willReadFrequently: true }) : null;
+      if (!ctx) return;
+      this.ctx = ctx;
+
+      const rect = box.getBoundingClientRect ? box.getBoundingClientRect() : { width: 420, height: 220 };
+      const w = Math.max(260, Math.round(rect.width || 420));
+      const h = Math.max(210, Math.round(rect.height || 220));
+      this.w = w;
+      this.h = h;
+      canvas.width = w;
+      canvas.height = h;
+      canvas.style.opacity = '1';
+      canvas.style.pointerEvents = 'auto';
+
+      if (forceReset) {
+        state.revealed = false;
+        const actions = $('postRevealActions');
+        if (actions) actions.classList.add('hidden');
+        const pill = $('scratchStatusPill');
+        if (pill) pill.textContent = '🪙 Rub foil gently to unseal';
+        const qBtn = $('quickRevealBtn');
+        if (qBtn) qBtn.classList.remove('hidden');
       }
-    });
 
-    const fsBtn = $('fullscreenToggleBtn');
-    if (fsBtn) {
-      const canFs = Boolean(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
-      if (!canFs) {
-        fsBtn.classList.add('hidden');
-      } else {
-        fsBtn.addEventListener('click', async () => {
-          try {
-            if (!document.fullscreenElement) {
-              await document.documentElement.requestFullscreen();
-              fsBtn.setAttribute('aria-pressed', 'true');
-            } else if (document.exitFullscreen) {
-              await document.exitFullscreen();
-              fsBtn.setAttribute('aria-pressed', 'false');
-            }
-          } catch (_) { }
-        });
+      // Draw champagne brushed gold foil
+      ctx.globalCompositeOperation = 'source-over';
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#E8CA82');
+      g.addColorStop(0.32, '#F7E5B4');
+      g.addColorStop(0.65, '#CE9F43');
+      g.addColorStop(1, '#F1D48E');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+
+      // Brushed metal hairline textures
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
+      ctx.lineWidth = 1;
+      for (let y = 4; y < h; y += 7) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y + 6);
+        ctx.stroke();
       }
+
+      // Foil Stamp Prompt
+      ctx.fillStyle = 'rgba(84, 54, 12, 0.85)';
+      ctx.textAlign = 'center';
+      ctx.font = '700 18px "DM Sans", sans-serif';
+      ctx.fillText('✨ SCRATCH METALLIC FOIL ✨', w / 2, h / 2 - 6);
+      ctx.font = '500 13px "DM Sans", sans-serif';
+      ctx.fillStyle = 'rgba(84, 54, 12, 0.72)';
+      ctx.fillText('Rub here with your finger or cursor', w / 2, h / 2 + 18);
+    },
+
+    scratchAt(clientX, clientY) {
+      if (!this.ctx || !this.canvas || state.revealed) return;
+      const rect = this.canvas.getBoundingClientRect();
+      const x = ((clientX - rect.left) / (rect.width || 1)) * this.w;
+      const y = ((clientY - rect.top) / (rect.height || 1)) * this.h;
+
+      this.ctx.save();
+      this.ctx.globalCompositeOperation = 'destination-out';
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, 25, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
+
+      const now = performance.now();
+      if (now - state.lastHapticMs >= 50) {
+        state.lastHapticMs = now;
+        safeVibrate(8);
+      }
+      AudioFX.playScratchGrain();
+
+      this.strokeCount++;
+      if (this.strokeCount % 6 === 0) {
+        this.checkProgress();
+      }
+    },
+
+    checkProgress() {
+      if (!this.ctx || state.revealed) return;
+      try {
+        const data = this.ctx.getImageData(0, 0, this.w, this.h).data;
+        let cleared = 0;
+        let sampled = 0;
+        for (let i = 3; i < data.length; i += 64) {
+          sampled++;
+          if (data[i] < 128) cleared++;
+        }
+        const ratio = sampled ? cleared / sampled : 0;
+        const pct = Math.min(100, Math.round((ratio / SCRATCH_REVEAL_RATIO) * 100));
+        const pill = $('scratchStatusPill');
+        if (pill && !state.revealed) {
+          pill.textContent = ratio > 0.04 ? `🪙 Scratching… ${pct}% unsealed` : '🪙 Rub foil gently to unseal';
+        }
+        if (ratio >= SCRATCH_REVEAL_RATIO) {
+          this.completeReveal();
+        }
+      } catch (_) { /* ignore */ }
+    },
+
+    completeReveal() {
+      if (state.revealed) return;
+      state.revealed = true;
+      if (this.canvas && this.canvas.style) {
+        this.canvas.style.opacity = '0';
+        this.canvas.style.pointerEvents = 'none';
+      }
+
+      const pill = $('scratchStatusPill');
+      if (pill) pill.textContent = '✨ Secret Unsealed!';
+      const qBtn = $('quickRevealBtn');
+      if (qBtn) qBtn.classList.add('hidden');
+
+      const actions = $('postRevealActions');
+      if (actions) actions.classList.remove('hidden');
+
+      renderVaultForRole('receiver');
+      AudioFX.playChime();
+      safeVibrate([70, 35, 110]);
+      burstConfetti(64);
+      trackEvent('note_unsealed', { mood: state.activePayload ? state.activePayload.m : 'Auto' });
+
+      // Gentle Viral Mystery Gift Modal Popup shortly after unseal (only in real receiver view)
+      if (state.mode === 'receiver') {
+        setTimeout(() => {
+          const modal = $('revealShareModal');
+          if (modal && state.mode === 'receiver') {
+            syncRevealPopupVault();
+            modal.classList.remove('hidden');
+          }
+        }, 1050);
+      }
+    }
+  };
+
+  // ==================== VIEW ROUTER & HYDRATION ====================
+  function showView(viewName) {
+    state.mode = viewName;
+    const vw = $('viewWrite');
+    const vp = $('viewPreview');
+    const cc = $('composerCard');
+    const rc = $('senderReadyCard');
+    const pt = $('previewTopBar');
+
+    if (viewName === 'write') {
+      if (vw) vw.classList.remove('hidden');
+      if (vp) vp.classList.add('hidden');
+      if (cc) cc.classList.remove('hidden');
+      if (rc) rc.classList.add('hidden');
+    } else if (viewName === 'ready') {
+      if (vw) vw.classList.remove('hidden');
+      if (vp) vp.classList.add('hidden');
+      if (cc) cc.classList.add('hidden');
+      if (rc) rc.classList.remove('hidden');
+      renderVaultForRole('sender');
+    } else if (viewName === 'preview' || viewName === 'receiver') {
+      if (vw) vw.classList.add('hidden');
+      if (vp) vp.classList.remove('hidden');
+      if (pt) pt.classList.toggle('hidden', viewName !== 'preview');
+      hydrateReceiverCard();
+      ScratchEngine.init(true);
     }
   }
 
-  // =========================================================================
-  // 9. Live Activity Counter, Idea Chips, Legal Modals & Boot
-  // =========================================================================
+  function hydrateReceiverCard() {
+    const p = state.activePayload;
+    if (!p) return;
 
+    const kicker = $('receiverMoodKicker');
+    const idEl = $('receiverCardId');
+    const heading = $('postcardHeading');
+    const secretEl = $('revealedSecretText');
+    const clueEl = $('revealedClueText');
+    const waxBadge = $('waxStampBadge');
+
+    if (kicker) {
+      kicker.textContent = p.m && p.m !== 'Auto'
+        ? `${p.m.toUpperCase()} · SECRET POSTCARD`
+        : `${state.festival.emoji} ${state.festival.name.toUpperCase()} · SECRET POSTCARD`;
+    }
+    if (idEl) idEl.textContent = `#${p.id || 'Unseal01'}`;
+    if (heading) heading.textContent = `For ${p.r || 'You'}, someone sealed a secret note.`;
+    if (secretEl) secretEl.textContent = p.s || '';
+    if (clueEl) clueEl.textContent = p.c ? `"${p.c}"` : '"A quiet admirer"';
+    if (waxBadge) waxBadge.textContent = p.m && p.m !== 'Auto' ? Array.from(p.m)[0] : '♥';
+
+    renderVaultForRole('receiver');
+  }
+
+  function hydrateReadyCard() {
+    const p = state.activePayload;
+    if (!p) return;
+
+    const hl = $('readyHeadline');
+    const idBadge = $('readyCardIdBadge');
+    const urlText = $('previewUrlText');
+    const waTitle = $('waPreviewTitle');
+
+    if (hl) hl.textContent = `Sealed for ${p.r || 'Someone'} ✨`;
+    if (idBadge) idBadge.textContent = `#${p.id}`;
+    if (urlText) urlText.textContent = state.currentUrl;
+    if (waTitle) waTitle.textContent = `💌 For ${p.r || 'You'} — Tap & Scratch to Unseal Your Secret Note`;
+  }
+
+  // ==================== PWA INSTALL PROMPT + UNIQUE ORBITAL OVERLAY ====================
+  function isStandalonePwa() {
+    if (typeof window === 'undefined') return false;
+    return Boolean(
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      window.navigator.standalone === true
+    );
+  }
+
+  function refreshInstallBannerVisibility() {
+    const banner = $('browserInstallBanner');
+    if (!banner) return;
+    const standalone = isStandalonePwa();
+    if (standalone && document.documentElement) {
+      document.documentElement.classList.add('is-pwa');
+    }
+    const dismissed = lsGet('unseal_v8_bib_dismissed') === '1';
+    if (standalone || dismissed) {
+      banner.classList.add('hidden');
+    } else {
+      banner.classList.remove('hidden');
+    }
+  }
+
+  function openInstallAnimationModal() {
+    const overlay = $('pwaInstallOverlay');
+    const bar = $('pwaInstallProgressBar');
+    const title = $('pwaInstallTitle');
+    const status = $('pwaInstallStatusText');
+    const iosBox = $('iosInstallStepsBox');
+    if (!overlay) return;
+
+    overlay.classList.remove('hidden');
+    if (bar && bar.style) bar.style.width = '18%';
+    if (iosBox) iosBox.classList.add('hidden');
+    if (title) title.textContent = 'Sealing Unseal onto your Home Screen…';
+
+    setTimeout(() => { if (bar && bar.style) bar.style.width = '68%'; }, 220);
+
+    if (state.deferredPrompt && typeof state.deferredPrompt.prompt === 'function') {
+      if (status) status.textContent = 'Tap "Install" in your browser dialog to add Unseal to your Home Screen.';
+      state.deferredPrompt.prompt();
+      state.deferredPrompt.userChoice.then((choice) => {
+        if (choice && choice.outcome === 'accepted') {
+          if (bar && bar.style) bar.style.width = '100%';
+          if (title) title.textContent = '🎉 Unseal App Installed!';
+          if (status) status.textContent = 'Welcome to offline fullscreen secret notes + 100 Gift Cards.';
+          burstConfetti(50);
+          AudioFX.playChime();
+          const b = $('browserInstallBanner');
+          if (b) b.classList.add('hidden');
+        } else {
+          overlay.classList.add('hidden');
+        }
+        state.deferredPrompt = null;
+      }).catch(() => {
+        if (iosBox) iosBox.classList.remove('hidden');
+      });
+    } else {
+      setTimeout(() => {
+        if (bar && bar.style) bar.style.width = '100%';
+        if (title) title.textContent = '📲 Add Unseal to Your Home Screen';
+        if (status) status.textContent = 'Install Unseal as a fullscreen phone app in two quick taps:';
+        if (iosBox) iosBox.classList.remove('hidden');
+      }, 450);
+    }
+  }
+
+  // ==================== LIVE UNSEALED COUNTER ====================
   function initLiveCounter() {
     const el = $('liveCounterCount');
     if (!el) return;
-    const hr = new Date().getHours();
-    state.liveCountBase = 4820 + hr * 21 + Math.floor(Math.random() * 25);
-    el.textContent = state.liveCountBase.toLocaleString('en-US');
-
-    state.liveCountTimer = setInterval(() => {
-      state.liveCountBase += 1 + Math.floor(Math.random() * 3);
-      el.textContent = state.liveCountBase.toLocaleString('en-US');
-    }, 48000);
+    const h = new Date().getHours();
+    let count = 4810 + h * 19 + Math.floor(Math.random() * 24);
+    el.textContent = count.toLocaleString('en-US');
+    setInterval(() => {
+      count += 1 + Math.floor(Math.random() * 3);
+      el.textContent = count.toLocaleString('en-US');
+    }, 38000);
   }
 
-  function bindIdeaChips() {
-    document.querySelectorAll('.idea-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        if (state.isReceiverMode) resetToFreshComposer();
-        const rec = chip.getAttribute('data-rec') || '';
-        const msg = chip.getAttribute('data-msg') || '';
-        const clue = chip.getAttribute('data-clue') || '';
-        if ($('recipientInput')) $('recipientInput').value = rec;
-        if ($('secretTextarea')) $('secretTextarea').value = msg;
-        if ($('clueInput')) $('clueInput').value = clue;
-        updateCharCounter();
-        $('senderReadyCard')?.classList.add('hidden');
-        $('composerCard')?.classList.remove('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        showToast('✨ Template loaded! Personalize & hit Seal Note.');
+  // ==================== EVENT BINDING ====================
+  function bindEvents() {
+    // 1. Composer Actions
+    const sealBtn = $('sealCardBtn');
+    const recInput = $('recipientInput');
+    const senderInput = $('senderNameInput');
+    const secretBox = $('secretTextarea');
+    const clueInput = $('clueInput');
+    const charCount = $('secretCharCount');
+    const clearBtn = $('clearComposerBtn');
+
+    if (secretBox && charCount) {
+      secretBox.addEventListener('input', () => {
+        charCount.textContent = `${secretBox.value.length} / 280`;
       });
-    });
-  }
-
-  function bindLegalModals() {
-    const modal = $('legalModal');
-    const closeBtn = $('closeLegalModalBtn');
-    const tabs = document.querySelectorAll('[data-legal-tab]');
-    const panels = document.querySelectorAll('[data-legal-panel]');
-
-    const openLegal = (tab) => {
-      tabs.forEach((t) => t.classList.toggle('active', t.getAttribute('data-legal-tab') === tab));
-      panels.forEach((p) => p.classList.toggle('hidden', p.getAttribute('data-legal-panel') !== tab));
-      modal?.classList.remove('hidden');
-    };
-
-    document.querySelectorAll('[data-open-legal]').forEach((el) => {
-      el.addEventListener('click', (e) => {
-        e.preventDefault();
-        openLegal(el.getAttribute('data-open-legal') || 'privacy');
-      });
-    });
-
-    tabs.forEach((t) => t.addEventListener('click', () => openLegal(t.getAttribute('data-legal-tab'))));
-    closeBtn?.addEventListener('click', () => modal?.classList.add('hidden'));
-    modal?.addEventListener('click', (e) => {
-      if (e.target === modal) modal.classList.add('hidden');
-    });
-
-    $('abuseReportForm')?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const reason = $('reportReason')?.value || 'Report';
-      const details = ($('reportDetails')?.value || '').trim();
-      window.location.href = `mailto:support@unseal.cards?subject=${encodeURIComponent(`[Unseal] ${reason}`)}&body=${encodeURIComponent(details)}`;
-      showToast('✉️ Email draft prepared for support@unseal.cards');
-    });
-  }
-
-  function bindAllEvents() {
-    $('brandResetLink')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      resetToFreshComposer();
-    });
-
-    $('audioToggleBtn')?.addEventListener('click', () => {
-      setSoundEnabled(!state.soundEnabled, true);
-      showToast(state.soundEnabled ? '🔊 Sound ON' : '🔇 Sound muted');
-    });
-
-    $('secretTextarea')?.addEventListener('input', updateCharCounter);
-    $('clearComposerBtn')?.addEventListener('click', () => {
-      if ($('secretTextarea')) $('secretTextarea').value = '';
-      if ($('clueInput')) $('clueInput').value = '';
-      updateCharCounter();
-      $('secretTextarea')?.focus();
-    });
-
-    $('sealCardBtn')?.addEventListener('click', handleSealAndCreateLink);
-    $('editSealedBtn')?.addEventListener('click', showComposerEdit);
-    $('writeNewBtn')?.addEventListener('click', resetToFreshComposer);
-
-    $('copyUrlBtn')?.addEventListener('click', async () => {
-      if (!state.shareUrl) return;
-      await copyText(state.shareUrl);
-      showToast('🔒 Short link copied! Send it & unlock your Mystery Gift Vault.');
-    });
-
-    $('whatsappShareBtn')?.addEventListener('click', shareSealedWhatsApp);
-    $('senderQuestWhatsAppBtn')?.addEventListener('click', () => shareQuestInviteWhatsApp('sender'));
-    $('shareTelegramBtn')?.addEventListener('click', shareSealedTelegram);
-    $('nativeShareBtn')?.addEventListener('click', shareSealedNative);
-    $('copyIgBtn')?.addEventListener('click', async () => {
-      if (!state.shareUrl) return;
-      await copyText(state.shareUrl);
-      const label = $('copyIgBtnText');
-      if (label) {
-        const orig = label.textContent;
-        label.textContent = '✅ Link Copied for IG!';
-        setTimeout(() => { label.textContent = orig; }, 2200);
-      }
-      showToast('📸 Link copied! Paste into Instagram Story sticker or DM.');
-    });
-
-    $('downloadGiftCardBtn')?.addEventListener('click', () => downloadPngCard('gift', 'sender'));
-    $('shareGiftImageBtn')?.addEventListener('click', () => shareGiftImage('sender'));
-
-    $('testScratchBtn')?.addEventListener('click', () => {
-      openScratchView({ fromSenderPreview: true });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    $('backToReadyBtn')?.addEventListener('click', () => {
-      clearTimeout(state.popupTimer);
-      $('viewPreview')?.classList.add('hidden');
-      $('viewWrite')?.classList.remove('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    $('quickRevealBtn')?.addEventListener('click', () => {
-      unlockAudioOnGesture();
-      completeReveal(true);
-    });
-
-    // Receiver Gift Vault + Actions
-    $('receiverQuestWhatsAppBtn')?.addEventListener('click', () => shareQuestInviteWhatsApp('receiver'));
-    $('receiverGiftBtn')?.addEventListener('click', () => downloadPngCard('gift', 'receiver'));
-    $('receiverShareGiftImageBtn')?.addEventListener('click', () => shareGiftImage('receiver'));
-    $('downloadRevealedCardBtn')?.addEventListener('click', () => downloadPngCard('revealed', 'receiver'));
-    $('sealBackBtn')?.addEventListener('click', resetToFreshComposer);
-    $('openShareModalBtn')?.addEventListener('click', () => {
-      renderVaultUi('receiver', false);
-      $('revealShareModal')?.classList.remove('hidden');
-    });
-
-    // Celebration Popup Modal
-    const revealModal = $('revealShareModal');
-    $('closeRevealModalBtn')?.addEventListener('click', () => revealModal?.classList.add('hidden'));
-    revealModal?.addEventListener('click', (e) => {
-      if (e.target === revealModal) revealModal.classList.add('hidden');
-    });
-    $('modalShareWhatsAppBtn')?.addEventListener('click', () => shareQuestInviteWhatsApp('receiver'));
-    $('modalShareNativeBtn')?.addEventListener('click', () => inviteFriendNative('receiver'));
-    $('modalClaimGiftBtn')?.addEventListener('click', () => {
-      if (getShareCount('receiver') >= TARGET_SHARES) {
-        downloadPngCard('gift', 'receiver');
-      } else {
-        shareQuestInviteWhatsApp('receiver');
-      }
-    });
-    $('modalReplyBtn')?.addEventListener('click', resetToFreshComposer);
-
-    // Faster confirmation when user switches back from WhatsApp on phone
-    window.addEventListener('focus', () => {
-      if (state.questSharePending) {
-        const pendingRole = state.questSharePending;
-        clearTimeout(state.questShareTimer);
-        state.questSharePending = false;
-        advanceQuestShare(pendingRole, 'whatsapp_focus_return');
-      }
-    });
-
-    bindScratchPointerHandlers();
-    bindPwaAndFullscreen();
-    bindIdeaChips();
-    bindLegalModals();
-  }
-
-  function init() {
-    initAnalyticsIfConfigured();
-    registerServiceWorker();
-    updateSoundUi();
-    updateCharCounter();
-    initLiveCounter();
-    bindAllEvents();
-
-    const params = new URLSearchParams(window.location.search);
-    const legacySeal = params.get('seal') || params.get('s');
-    const hashToken = (window.location.hash || '').replace(/^#/, '');
-    const qMeta = extractQueryMeta(window.location.search);
-    const activeToken = legacySeal || (hashToken.length > 6 ? hashToken : '');
-
-    if (activeToken) {
-      try {
-        const decoded = decodeToken(activeToken, qMeta);
-        state.isReceiverMode = true;
-        state.recipient = decoded.r;
-        state.secret = decoded.s;
-        state.clue = decoded.c;
-        state.cardId = decoded.id;
-        state.senderName = '';
-        document.title = `For ${decoded.r} — Scratch to Unseal Your Secret Note | Unseal`;
-        openScratchView({ fromSenderPreview: false });
-        return;
-      } catch (_) {
-        document.documentElement.classList.remove('receiver-boot');
-        showToast('⚠️ This secret note link seems incomplete. Write a fresh card below!');
-      }
     }
 
-    document.documentElement.classList.remove('receiver-boot');
+    if (clearBtn && secretBox) {
+      clearBtn.addEventListener('click', () => {
+        secretBox.value = '';
+        if (clueInput) clueInput.value = '';
+        if (charCount) charCount.textContent = '0 / 280';
+        secretBox.focus();
+      });
+    }
+
+    // Mood chips
+    const moodBtns = document.querySelectorAll ? document.querySelectorAll('#moodSelectorRow .mood-chip') : [];
+    for (let i = 0; i < moodBtns.length; i++) {
+      moodBtns[i].addEventListener('click', (e) => {
+        const target = e.currentTarget;
+        state.mood = target.dataset.mood || 'Auto';
+        for (let j = 0; j < moodBtns.length; j++) moodBtns[j].classList.remove('active');
+        target.classList.add('active');
+        AudioFX.playPop();
+      });
+    }
+
+    // Idea chips prefill cleanly
+    const ideaChips = document.querySelectorAll ? document.querySelectorAll('#ideasChipsGrid .idea-chip') : [];
+    for (let i = 0; i < ideaChips.length; i++) {
+      ideaChips[i].addEventListener('click', (e) => {
+        const chip = e.currentTarget;
+        if (recInput) recInput.value = chip.dataset.rec || 'Crush';
+        if (secretBox) {
+          secretBox.value = chip.dataset.msg || '';
+          if (charCount) charCount.textContent = `${secretBox.value.length} / 280`;
+        }
+        if (clueInput) clueInput.value = chip.dataset.clue || '';
+        showView('write');
+        if (secretBox && typeof secretBox.scrollIntoView === 'function') {
+          secretBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        AudioFX.playPop();
+      });
+    }
+
+    // Seal Card
+    if (sealBtn) {
+      sealBtn.addEventListener('click', () => {
+        const sVal = secretBox ? secretBox.value.trim() : '';
+        if (!sVal) {
+          if (secretBox) secretBox.focus();
+          return;
+        }
+        const rVal = (recInput && recInput.value.trim()) || 'You';
+        const fromVal = (senderInput && senderInput.value.trim()) || '';
+        const cVal = (clueInput && clueInput.value.trim()) || '';
+
+        const payload = {
+          r: rVal,
+          s: sVal,
+          c: cVal,
+          m: state.mood || 'Auto',
+          from: fromVal,
+          id: safeRandAlphaId(ALPHA_ID_LEN)
+        };
+
+        state.activePayload = payload;
+        state.currentUrl = buildShareUrl(payload);
+        hydrateReadyCard();
+        showView('ready');
+        AudioFX.playChime();
+        safeVibrate(30);
+        trackEvent('card_sealed', { has_clue: Boolean(cVal), festival: state.festival.id });
+      });
+    }
+
+    // 2. Ready View Actions
+    const editBtn = $('editSealedBtn');
+    const copyBtn = $('copyUrlBtn');
+    const waShareBtn = $('whatsappShareBtn');
+    const igBtn = $('copyIgBtn');
+    const tgBtn = $('shareTelegramBtn');
+    const nativeBtn = $('nativeShareBtn');
+    const testScratchBtn = $('testScratchBtn');
+    const writeNewBtn = $('writeNewBtn');
+    const senderQuestBtn = $('senderQuestWhatsAppBtn');
+    const dlGiftBtn = $('downloadGiftCardBtn');
+    const shareGiftImgBtn = $('shareGiftImageBtn');
+
+    if (editBtn) editBtn.addEventListener('click', () => showView('write'));
+    if (writeNewBtn) {
+      writeNewBtn.addEventListener('click', () => {
+        if (secretBox) secretBox.value = '';
+        if (clueInput) clueInput.value = '';
+        if (recInput) recInput.value = '';
+        if (charCount) charCount.textContent = '0 / 280';
+        showView('write');
+      });
+    }
+    if (testScratchBtn) testScratchBtn.addEventListener('click', () => showView('preview'));
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        try {
+          if (navigator.clipboard) await navigator.clipboard.writeText(state.currentUrl);
+          copyBtn.textContent = 'Copied ✓';
+          setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1800);
+          AudioFX.playPop();
+        } catch (_) { /* ignore */ }
+      });
+    }
+
+    if (waShareBtn) waShareBtn.addEventListener('click', () => triggerWhatsAppQuestShare('sender'));
+    if (senderQuestBtn) senderQuestBtn.addEventListener('click', () => triggerWhatsAppQuestShare('sender'));
+
+    if (igBtn) {
+      igBtn.addEventListener('click', async () => {
+        const msg = `🤫 I sealed a secret scratch note for you — rub the gold foil here:\n${state.currentUrl}`;
+        try {
+          if (navigator.clipboard) await navigator.clipboard.writeText(msg);
+          const span = $('copyIgBtnText');
+          if (span) span.textContent = '📸 Copied Link + Caption ✓';
+          setTimeout(() => { if (span) span.textContent = '📸 Copy for IG Story / DM'; }, 2000);
+          AudioFX.playPop();
+        } catch (_) { /* ignore */ }
+      });
+    }
+
+    if (tgBtn) {
+      tgBtn.addEventListener('click', () => {
+        const msg = `🤫 Scratch off my secret note on Unseal!`;
+        const href = `https://t.me/share/url?url=${encodeURIComponent(state.currentUrl)}&text=${encodeURIComponent(msg)}`;
+        window.open(href, '_blank', 'noopener,noreferrer');
+      });
+    }
+
+    if (nativeBtn) {
+      nativeBtn.addEventListener('click', async () => {
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: 'Unseal Secret Note', text: 'Rub the gold foil to read my secret!', url: state.currentUrl });
+          } catch (_) { /* user cancelled */ }
+        } else if (copyBtn) {
+          copyBtn.click();
+        }
+      });
+    }
+
+    if (dlGiftBtn) dlGiftBtn.addEventListener('click', () => generateGiftCardPng('sender', false));
+    if (shareGiftImgBtn) shareGiftImgBtn.addEventListener('click', () => generateGiftCardPng('sender', true));
+
+    // 3. Receiver Scratch Card + Interactions
+    const backReadyBtn = $('backToReadyBtn');
+    const quickRevealBtn = $('quickRevealBtn');
+    const scratchCanvas = $('scratchCanvas');
+    const receiverQuestBtn = $('receiverQuestWhatsAppBtn');
+    const receiverGiftBtn = $('receiverGiftBtn');
+    const receiverShareGiftBtn = $('receiverShareGiftImageBtn');
+    const dlRevealedBtn = $('downloadRevealedCardBtn');
+    const sealBackBtn = $('sealBackBtn');
+    const openShareModalBtn = $('openShareModalBtn');
+
+    if (backReadyBtn) backReadyBtn.addEventListener('click', () => showView('ready'));
+    if (quickRevealBtn) quickRevealBtn.addEventListener('click', () => ScratchEngine.completeReveal());
+    if (receiverQuestBtn) receiverQuestBtn.addEventListener('click', () => triggerWhatsAppQuestShare('receiver'));
+    if (receiverGiftBtn) receiverGiftBtn.addEventListener('click', () => generateGiftCardPng('receiver', false));
+    if (receiverShareGiftBtn) receiverShareGiftBtn.addEventListener('click', () => generateGiftCardPng('receiver', true));
+    if (dlRevealedBtn) dlRevealedBtn.addEventListener('click', () => generateRevealedNotePng());
+    if (sealBackBtn) {
+      sealBackBtn.addEventListener('click', () => {
+        if (secretBox) secretBox.value = '';
+        showView('write');
+      });
+    }
+    if (openShareModalBtn) {
+      openShareModalBtn.addEventListener('click', () => {
+        syncRevealPopupVault();
+        const modal = $('revealShareModal');
+        if (modal) modal.classList.remove('hidden');
+      });
+    }
+
+    // One-tap Receiver Reactions
+    const reactPills = document.querySelectorAll ? document.querySelectorAll('#receiverReactionsRow .react-pill') : [];
+    for (let i = 0; i < reactPills.length; i++) {
+      reactPills[i].addEventListener('click', (e) => {
+        for (let j = 0; j < reactPills.length; j++) reactPills[j].classList.remove('is-reacted');
+        e.currentTarget.classList.add('is-reacted');
+        AudioFX.playPop();
+        safeVibrate(20);
+      });
+    }
+
+    if (scratchCanvas) {
+      scratchCanvas.addEventListener('pointerdown', (e) => {
+        ScratchEngine.drawing = true;
+        ScratchEngine.scratchAt(e.clientX, e.clientY);
+      });
+      scratchCanvas.addEventListener('pointermove', (e) => {
+        if (ScratchEngine.drawing) ScratchEngine.scratchAt(e.clientX, e.clientY);
+      });
+      window.addEventListener('pointerup', () => {
+        if (ScratchEngine.drawing) {
+          ScratchEngine.drawing = false;
+          ScratchEngine.checkProgress();
+        }
+      });
+      scratchCanvas.addEventListener('touchstart', (e) => {
+        ScratchEngine.drawing = true;
+        if (e.touches && e.touches[0]) ScratchEngine.scratchAt(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+      scratchCanvas.addEventListener('touchmove', (e) => {
+        if (ScratchEngine.drawing && e.touches && e.touches[0]) {
+          ScratchEngine.scratchAt(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+      scratchCanvas.addEventListener('touchend', () => {
+        ScratchEngine.drawing = false;
+        ScratchEngine.checkProgress();
+      }, { passive: true });
+
+      let resizeTimer = 0;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          if ((state.mode === 'preview' || state.mode === 'receiver') && !state.revealed) {
+            ScratchEngine.init(false);
+          }
+        }, 180);
+      });
+    }
+
+    // 4. Reveal Modal Popup Actions
+    const closeModalBtn = $('closeRevealModalBtn');
+    const modalShareWaBtn = $('modalShareWhatsAppBtn');
+    const modalClaimBtn = $('modalClaimGiftBtn');
+    const modalShareNativeBtn = $('modalShareNativeBtn');
+    const modalReplyBtn = $('modalReplyBtn');
+
+    if (closeModalBtn) closeModalBtn.addEventListener('click', () => $('revealShareModal')?.classList.add('hidden'));
+    if (modalShareWaBtn) {
+      modalShareWaBtn.addEventListener('click', () => {
+        const role = state.mode === 'ready' ? 'sender' : 'receiver';
+        triggerWhatsAppQuestShare(role);
+      });
+    }
+    if (modalClaimBtn) {
+      modalClaimBtn.addEventListener('click', () => {
+        const role = state.mode === 'ready' ? 'sender' : 'receiver';
+        generateGiftCardPng(role, false);
+      });
+    }
+    if (modalShareNativeBtn && nativeBtn) {
+      modalShareNativeBtn.addEventListener('click', () => {
+        if (navigator.share) {
+          navigator.share({
+            title: 'Unseal Mystery Gift Vault',
+            text: 'Crack 1 of 100 random Collector Cards on Unseal!',
+            url: `${PRODUCTION_ORIGIN}/`
+          }).catch(() => {});
+        }
+      });
+    }
+    if (modalReplyBtn) {
+      modalReplyBtn.addEventListener('click', () => {
+        $('revealShareModal')?.classList.add('hidden');
+        showView('write');
+      });
+    }
+
+    // 5. Festival Theme Switcher Modal
+    const festBtn = $('festivalThemeBtn');
+    const festRibbonBtn = $('festivalRibbonBtn');
+    const festModal = $('festivalModal');
+    const closeFestBtn = $('closeFestivalModalBtn');
+    const festAutoBtn = $('festivalAutoBtn');
+    const festGrid = $('festivalThemeGrid');
+
+    const openFest = () => {
+      renderFestivalModalGrid();
+      if (festModal) festModal.classList.remove('hidden');
+    };
+    if (festBtn) festBtn.addEventListener('click', openFest);
+    if (festRibbonBtn) festRibbonBtn.addEventListener('click', openFest);
+    if (closeFestBtn) closeFestBtn.addEventListener('click', () => festModal?.classList.add('hidden'));
+    if (festAutoBtn) {
+      festAutoBtn.addEventListener('click', () => {
+        lsRemove('unseal_v8_festival_override');
+        applyFestivalTheme(detectFestivalByDate(), false);
+        festModal?.classList.add('hidden');
+        AudioFX.playPop();
+      });
+    }
+    if (festGrid) {
+      festGrid.addEventListener('click', (e) => {
+        const btn = e.target && e.target.closest ? e.target.closest('.festival-option-btn') : null;
+        if (!btn) return;
+        applyFestivalTheme(btn.dataset.festId, true);
+        AudioFX.playPop();
+        burstConfetti(32);
+        festModal?.classList.add('hidden');
+      });
+    }
+
+    // 6. Header Audio, Fullscreen & Auto PWA Install Triggers
+    const audioBtn = $('audioToggleBtn');
+    const audioIcon = $('audioToggleIcon');
+    if (audioBtn) {
+      audioBtn.addEventListener('click', () => {
+        AudioFX.enabled = !AudioFX.enabled;
+        audioBtn.setAttribute('aria-pressed', String(AudioFX.enabled));
+        if (audioIcon) audioIcon.textContent = AudioFX.enabled ? '🔊' : '🔇';
+        if (AudioFX.enabled) AudioFX.playChime();
+      });
+    }
+
+    const fsBtn = $('fullscreenToggleBtn');
+    const fsIcon = $('fullscreenIcon');
+    if (fsBtn) {
+      fsBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement && document.documentElement && typeof document.documentElement.requestFullscreen === 'function') {
+          document.documentElement.requestFullscreen().then(() => {
+            fsBtn.setAttribute('aria-pressed', 'true');
+            if (fsIcon) fsIcon.textContent = '🗗';
+          }).catch(() => {});
+        } else if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+          document.exitFullscreen().catch(() => {});
+          fsBtn.setAttribute('aria-pressed', 'false');
+          if (fsIcon) fsIcon.textContent = '⛶';
+        }
+      });
+    }
+
+    const bibInstall = $('bibInstallBtn');
+    const bibDismiss = $('bibDismissBtn');
+    const hdrInstall = $('installAppBtn');
+    const ftrInstall = $('footerInstallAppBtn');
+    const closeInstall = $('closeInstallOverlayBtn');
+
+    if (bibInstall) bibInstall.addEventListener('click', openInstallAnimationModal);
+    if (hdrInstall) hdrInstall.addEventListener('click', openInstallAnimationModal);
+    if (ftrInstall) ftrInstall.addEventListener('click', openInstallAnimationModal);
+    if (bibDismiss) {
+      bibDismiss.addEventListener('click', () => {
+        lsSet('unseal_v8_bib_dismissed', '1');
+        $('browserInstallBanner')?.classList.add('hidden');
+      });
+    }
+    if (closeInstall) closeInstall.addEventListener('click', () => $('pwaInstallOverlay')?.classList.add('hidden'));
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      state.deferredPrompt = e;
+      refreshInstallBannerVisibility();
+    });
+
+    // 7. Legal Compliance Modal & Mailto Form
+    const legalModal = $('legalModal');
+    const closeLegal = $('closeLegalModalBtn');
+    const legalLinks = document.querySelectorAll ? document.querySelectorAll('[data-open-legal]') : [];
+    const legalTabs = document.querySelectorAll ? document.querySelectorAll('.legal-tab-btn') : [];
+    const legalPanels = document.querySelectorAll ? document.querySelectorAll('.legal-panel') : [];
+
+    const switchLegalTab = (tabName) => {
+      for (let i = 0; i < legalTabs.length; i++) {
+        legalTabs[i].classList.toggle('active', legalTabs[i].dataset.legalTab === tabName);
+      }
+      for (let i = 0; i < legalPanels.length; i++) {
+        legalPanels[i].classList.toggle('hidden', legalPanels[i].dataset.legalPanel !== tabName);
+      }
+    };
+
+    for (let i = 0; i < legalLinks.length; i++) {
+      legalLinks[i].addEventListener('click', (e) => {
+        e.preventDefault();
+        switchLegalTab(e.currentTarget.dataset.openLegal || 'privacy');
+        legalModal?.classList.remove('hidden');
+      });
+    }
+    for (let i = 0; i < legalTabs.length; i++) {
+      legalTabs[i].addEventListener('click', (e) => switchLegalTab(e.currentTarget.dataset.legalTab));
+    }
+    if (closeLegal) closeLegal.addEventListener('click', () => legalModal?.classList.add('hidden'));
+
+    const abuseForm = $('abuseReportForm');
+    if (abuseForm) {
+      abuseForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const reason = ($('reportReason') && $('reportReason').value) || 'Report';
+        const details = ($('reportDetails') && $('reportDetails').value) || '';
+        window.location.href = `mailto:support@unseal-cards.vercel.app?subject=${encodeURIComponent(reason)}&body=${encodeURIComponent(details)}`;
+      });
+    }
+
+    const brandReset = $('brandResetLink');
+    if (brandReset) {
+      brandReset.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.history && typeof window.history.replaceState === 'function') {
+          window.history.replaceState(null, '', window.location.pathname || './');
+        }
+        showView('write');
+      });
+    }
+  }
+
+  // ==================== SERVICE WORKER + BOOTSTRAP ====================
+  function registerServiceWorker() {
+    try {
+      if (navigator && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+    } catch (_) { /* ignore */ }
+  }
+
+  function bootstrap() {
+    initAnalyticsAndAds();
+
+    // Load saved override or automatic Indian & Worldwide festival calendar theme
+    const savedFest = lsGet('unseal_v8_festival_override');
+    const festId = savedFest && FESTIVAL_THEMES.some((t) => t.id === savedFest)
+      ? savedFest
+      : detectFestivalByDate();
+    applyFestivalTheme(festId, false);
+
+    refreshInstallBannerVisibility();
+    initLiveCounter();
+    bindEvents();
+    registerServiceWorker();
+
+    const incoming = parseIncomingLink();
+    if (incoming) {
+      state.activePayload = incoming;
+      showView('receiver');
+    } else {
+      showView('write');
+    }
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', bootstrap);
   } else {
-    init();
+    bootstrap();
   }
 })();

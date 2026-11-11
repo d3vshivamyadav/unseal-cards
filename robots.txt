@@ -2,5 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /code.html
 
-Sitemap: https://unseal.cards/sitemap.xml
-
+Sitemap: https://unseal-cards.vercel.app/sitemap.xml

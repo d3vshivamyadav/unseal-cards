@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unseal-shell-v7';
+const CACHE_NAME = 'unseal-shell-v8';
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -18,7 +18,7 @@ const SHELL_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS)).catch(() => {})
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS)).catch(() => { })
   );
   self.skipWaiting();
 });
@@ -45,7 +45,7 @@ self.addEventListener('fetch', (event) => {
         .then((res) => {
           if (res && res.status === 200 && res.type === 'basic') {
             const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put('./index.html', copy)).catch(() => {});
+            caches.open(CACHE_NAME).then((c) => c.put('./index.html', copy)).catch(() => { });
           }
           return res;
         })
@@ -60,7 +60,7 @@ self.addEventListener('fetch', (event) => {
         .then((res) => {
           if (res && res.status === 200 && res.type === 'basic') {
             const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {});
+            caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => { });
           }
           return res;
         })
@@ -69,4 +69,3 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-
