@@ -1,12 +1,80 @@
 (() => {
   'use strict';
 
+  const cfg = window.UNSEAL_CONFIG || {};
   const KEY_STREAM_TAG = [85, 78, 83, 69, 65, 76, 51, 48];
   const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
   const REVEAL_THRESHOLD = 0.45;
   const MAX_SECRET_CHARS = 280;
+  const TARGET_SHARES = 5;
 
+  const U4_SINGLE_CHARS = "abcdefghijklmnopqrstuvwxyz .,!?'-:\n/0123456789"; // 0..45
+  const U4_PHRASES = [
+    'you', 'the ', 'and ', 'love', 'miss', 'crush', 'secret',
+    'sorry', 'night', 'smile', 'always', 'hai', 'dil', '❤️'
+  ]; // 47..60
+  const U4_EMOJIS = ['✨', '💌', '👀', '🥹', '😂', '🔥', '💕', '🌙']; // 61 + 3-bit index
   const U2_MOODS = ['💌 Crush Confession', '🌙 Midnight Thought', '🤫 Inside Joke', '🎲 Wild Dare'];
+
+  const MYSTERY_EDITIONS = {
+    gold: {
+      tier: 'tier-gold',
+      badge: '★ ROYAL GOLD RESERVE',
+      crest: '👑',
+      rarity: 'Top 4% Collector Pass',
+      accent: '#C9A96E',
+      light: '#F6E5BE',
+      bgStops: ['#403126', '#1F1A17', '#110E0D'],
+      fortunes: [
+        'Someone replays your last text longer than they admit ✨',
+        'A quiet admirer checks when you are online every night 👀',
+        'Your name brings an instant smile to someone’s screen 💌'
+      ]
+    },
+    diamond: {
+      tier: 'tier-diamond',
+      badge: '💎 CELESTIAL DIAMOND AURA',
+      crest: '💎',
+      rarity: 'Top 2% Rare Edition',
+      accent: '#93C5FD',
+      light: '#DBEAFE',
+      bgStops: ['#1E3A54', '#13202E', '#0B1119'],
+      fortunes: [
+        'Unexpected late-night confession energy is heading your way 🌙',
+        'Someone remembers a tiny detail about you from months ago ✨',
+        'Your vibe makes close friends trust you with their deepest secrets 💎'
+      ]
+    },
+    midnight: {
+      tier: 'tier-midnight',
+      badge: '🌙 MIDNIGHT CROWN EDITION',
+      crest: '🌙',
+      rarity: 'Top 5% Mystic Pass',
+      accent: '#D8B4FE',
+      light: '#F3E8FF',
+      bgStops: ['#382352', '#1C142B', '#0F0A17'],
+      fortunes: [
+        'Three words left unsaid around you are waiting for the right moment 🌙',
+        '2 AM honesty brings a plot twist into your week ✨',
+        'Someone secretly compares their favorite songs to your vibe 🎧'
+      ]
+    },
+    crimson: {
+      tier: 'tier-crimson',
+      badge: '🔥 CRIMSON VELVET CHARM',
+      crest: '♥',
+      rarity: 'Top 3% Signature Seal',
+      accent: '#FDA4AF',
+      light: '#FFE4E6',
+      bgStops: ['#522026', '#261114', '#14080A'],
+      fortunes: [
+        'Magnetic main-character energy — your next reply changes everything 🔥',
+        'Somebody secretly hopes you notice their hints this week 💌',
+        'Your presence turns ordinary chats into core memories ❤️'
+      ]
+    }
+  };
+
   const utf8Encoder = new TextEncoder();
   const utf8Decoder = new TextDecoder();
 
@@ -29,7 +97,13 @@
     lastPos: null,
     lastProgressCheck: 0,
     popupTimer: null,
-    toastTimer: null
+    toastTimer: null,
+    deferredInstallPrompt: null,
+    installAnimTimer: null,
+    liveCountBase: 0,
+    liveCountTimer: null,
+    questSharePending: false,
+    questShareTimer: null
   };
 
   let scratchCanvas = null;
@@ -39,7 +113,43 @@
   const $ = (id) => document.getElementById(id);
 
   // =========================================================================
-  // 1. 8-Char Alphabet Unique ID & Short Zero-Backend U3 Codec
+  // 0. Guarded GA4 Analytics & Safe Service Worker Boot
+  // =========================================================================
+
+  function initAnalyticsIfConfigured() {
+    const gaId = String(cfg.ga4Id || '').trim();
+    if (!gaId || gaId === 'G-XXXXXXXXXX' || !/^G-[A-Z0-9]+$/i.test(gaId)) return;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () {
+      window.dataLayer.push(arguments);
+    };
+    window.gtag('js', new Date());
+    window.gtag('config', gaId, { anonymize_ip: true, page_title: document.title });
+
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
+    document.head.appendChild(s);
+  }
+
+  function trackEvent(eventName, params = {}) {
+    if (typeof window.gtag === 'function') {
+      try {
+        window.gtag('event', eventName, params);
+      } catch (_) { }
+    }
+  }
+
+  function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    if (window.location.protocol !== 'https:' && window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {
+      return;
+    }
+    navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => { });
+  }
+
+  // =========================================================================
+  // 1. 8-Char Alpha ID & Ultra-Short U4 Codec (+ Full U3/U2/U1 Backcompat)
   // =========================================================================
 
   function generateAlphaId(len = 8) {
@@ -63,6 +173,16 @@
       .replace(/[^A-Za-z0-9]+/g, '')
       .slice(0, 14);
     return clean || 'Note';
+  }
+
+  function extractQueryMeta(searchStr) {
+    const cleaned = String(searchStr || '').replace(/^\?/, '').split('&')[0] || '';
+    const match = /^([A-Za-z0-9]+)-([A-Za-z]{8})$/.exec(cleaned);
+    if (match) {
+      return { slug: match[1], id: match[2] };
+    }
+    const idOnly = /-([A-Za-z]{8})$/.exec(cleaned);
+    return { slug: '', id: idOnly ? idOnly[1] : '' };
   }
 
   function bytesToBase64Url(bytes) {
@@ -92,6 +212,150 @@
     return out;
   }
 
+  class BitWriter {
+    constructor() {
+      this.bytes = [];
+      this.cur = 0;
+      this.bits = 0;
+    }
+    write(val, width) {
+      for (let i = width - 1; i >= 0; i--) {
+        this.cur = (this.cur << 1) | ((val >>> i) & 1);
+        this.bits++;
+        if (this.bits === 8) {
+          this.bytes.push(this.cur);
+          this.cur = 0;
+          this.bits = 0;
+        }
+      }
+    }
+    finish() {
+      if (this.bits > 0) {
+        this.bytes.push(this.cur << (8 - this.bits));
+        this.cur = 0;
+        this.bits = 0;
+      }
+      return Uint8Array.from(this.bytes);
+    }
+  }
+
+  class BitReader {
+    constructor(bytes) {
+      this.bytes = bytes;
+      this.bytePos = 0;
+      this.bitPos = 0;
+    }
+    read(width) {
+      let val = 0;
+      for (let i = 0; i < width; i++) {
+        if (this.bytePos >= this.bytes.length) throw new Error('BitReader EOF');
+        const bit = (this.bytes[this.bytePos] >>> (7 - this.bitPos)) & 1;
+        val = (val << 1) | bit;
+        this.bitPos++;
+        if (this.bitPos === 8) {
+          this.bitPos = 0;
+          this.bytePos++;
+        }
+      }
+      return val;
+    }
+  }
+
+  function writeU4String(bw, rawStr) {
+    const s = String(rawStr || '').replace(/\0/g, '');
+    let i = 0;
+    while (i < s.length) {
+      let matchedPhrase = -1;
+      for (let p = 0; p < U4_PHRASES.length; p++) {
+        const phrase = U4_PHRASES[p];
+        if (s.startsWith(phrase, i)) {
+          matchedPhrase = p;
+          i += phrase.length;
+          break;
+        }
+      }
+      if (matchedPhrase !== -1) {
+        bw.write(47 + matchedPhrase, 6);
+        continue;
+      }
+
+      let matchedEmoji = -1;
+      for (let e = 0; e < U4_EMOJIS.length; e++) {
+        const emo = U4_EMOJIS[e];
+        if (s.startsWith(emo, i)) {
+          matchedEmoji = e;
+          i += emo.length;
+          break;
+        }
+      }
+      if (matchedEmoji !== -1) {
+        bw.write(61, 6);
+        bw.write(matchedEmoji, 3);
+        continue;
+      }
+
+      const cp = s.codePointAt(i);
+      const ch = String.fromCodePoint(cp);
+      i += ch.length;
+
+      const singleIdx = U4_SINGLE_CHARS.indexOf(ch);
+      if (singleIdx !== -1) {
+        bw.write(singleIdx, 6);
+      } else if (cp >= 65 && cp <= 90) {
+        bw.write(46, 6);
+        bw.write(cp - 65, 5);
+      } else if (cp >= 0x0900 && cp <= 0x097f) {
+        bw.write(62, 6);
+        bw.write(cp - 0x0900, 7);
+      } else {
+        const u8 = utf8Encoder.encode(ch);
+        for (let k = 0; k < u8.length; k++) {
+          if (k === 0) {
+            bw.write(63, 6);
+            bw.write(u8[0], 8);
+          } else {
+            bw.write(u8[k], 8);
+          }
+        }
+      }
+    }
+    bw.write(63, 6);
+    bw.write(0, 8);
+  }
+
+  function readU4String(br) {
+    let out = '';
+    while (true) {
+      const sym = br.read(6);
+      if (sym < 46) {
+        out += U4_SINGLE_CHARS[sym];
+      } else if (sym === 46) {
+        out += String.fromCharCode(65 + br.read(5));
+      } else if (sym <= 60) {
+        out += U4_PHRASES[sym - 47];
+      } else if (sym === 61) {
+        out += U4_EMOJIS[br.read(3)];
+      } else if (sym === 62) {
+        out += String.fromCodePoint(0x0900 + br.read(7));
+      } else {
+        const b0 = br.read(8);
+        if (b0 === 0) break;
+        if (b0 < 0x80) {
+          out += String.fromCharCode(b0);
+        } else {
+          let seqLen = 2;
+          if ((b0 & 0xf0) === 0xe0) seqLen = 3;
+          else if ((b0 & 0xf8) === 0xf0) seqLen = 4;
+          const seq = new Uint8Array(seqLen);
+          seq[0] = b0;
+          for (let k = 1; k < seqLen; k++) seq[k] = br.read(8);
+          out += utf8Decoder.decode(seq);
+        }
+      }
+    }
+    return out;
+  }
+
   function writeVarint(arr, num) {
     let v = Math.max(0, num | 0);
     while (v >= 0x80) {
@@ -111,29 +375,6 @@
       shift += 7;
     }
     throw new Error('Malformed varint');
-  }
-
-  // Pack ASCII + Devanagari (U+0900..U+097F) in 1 byte/char; escape other Unicode with 0x7F
-  function writeCompactStr(arr, str) {
-    const encoded = [];
-    for (const ch of String(str || '')) {
-      const cp = ch.codePointAt(0);
-      if (cp < 0x7f) {
-        encoded.push(cp);
-      } else if (cp >= 0x0900 && cp <= 0x097f) {
-        encoded.push(0x80 | (cp - 0x0900));
-      } else {
-        encoded.push(0x7f);
-        if (cp === 0x7f) {
-          encoded.push(0x7f);
-        } else {
-          const u8 = utf8Encoder.encode(ch);
-          for (let j = 0; j < u8.length; j++) encoded.push(u8[j]);
-        }
-      }
-    }
-    writeVarint(arr, encoded.length);
-    for (let i = 0; i < encoded.length; i++) arr.push(encoded[i]);
   }
 
   function readCompactStr(bytes, cursor) {
@@ -228,20 +469,22 @@
     return Uint8Array.from(out);
   }
 
-  // Ultra-compact U3 codec: [0x55, 0x33, meta(salt6<<2 | lz<<1 | hasClue)] + body
-  function encodeU3Token(r, s, c) {
-    const arr = [];
-    const recipient = (r || '').trim();
-    const secret = (s || '').trim();
+  // Ultra-short U4 Encoder: [0x55, 0x34, meta(salt5<<3 | useLz<<2 | hasClue<<1 | recMatchesSlug)]
+  function encodeU4Token(r, s, c) {
+    const rec = (r || '').trim() || 'You';
+    const slug = makeNameSlug(rec);
+    const recMatchesSlug = rec === slug || (rec === 'You' && slug === 'You');
+    const sec = (s || '').trim();
     const clue = (c || '').trim();
     const hasClue = Boolean(clue);
 
-    writeCompactStr(arr, recipient || 'You');
-    writeCompactStr(arr, secret);
-    if (hasClue) writeCompactStr(arr, clue);
+    const bw = new BitWriter();
+    if (!recMatchesSlug) writeU4String(bw, rec);
+    writeU4String(bw, sec);
+    if (hasClue) writeU4String(bw, clue);
 
-    const rawBin = Uint8Array.from(arr);
-    const lzBin = rawBin.length >= 10 ? lz77Compress(rawBin) : rawBin;
+    const rawBin = bw.finish();
+    const lzBin = rawBin.length >= 14 ? lz77Compress(rawBin) : rawBin;
     const useLz = lzBin.length < rawBin.length;
     const body = useLz ? lzBin : rawBin;
 
@@ -251,16 +494,33 @@
     } else {
       saltBuf[0] = Math.floor(Math.random() * 256);
     }
-    const salt6 = saltBuf[0] & 0x3f;
-    const salt1 = (salt6 * 41 + 23) & 0xff;
-    const cipher = xorTransform(body, salt6, salt1, KEY_STREAM_TAG);
+    const salt5 = saltBuf[0] & 0x1f;
+    const salt1 = (salt5 * 41 + 23) & 0xff;
+    const cipher = xorTransform(body, salt5, salt1, KEY_STREAM_TAG);
 
     const packet = new Uint8Array(3 + cipher.length);
     packet[0] = 0x55; // 'U'
-    packet[1] = 0x33; // '3'
-    packet[2] = (salt6 << 2) | (useLz ? 2 : 0) | (hasClue ? 1 : 0);
+    packet[1] = 0x34; // '4'
+    packet[2] = (salt5 << 3) | (useLz ? 4 : 0) | (hasClue ? 2 : 0) | (recMatchesSlug ? 1 : 0);
     packet.set(cipher, 3);
-    return bytesToBase64Url(packet);
+    return { slug, token: bytesToBase64Url(packet) };
+  }
+
+  function decodeU4Packet(raw, recHint) {
+    const meta = raw[2];
+    const salt5 = (meta >> 3) & 0x1f;
+    const useLz = (meta & 4) !== 0;
+    const hasClue = (meta & 2) !== 0;
+    const recMatchesSlug = (meta & 1) !== 0;
+    const salt1 = (salt5 * 41 + 23) & 0xff;
+    let plain = xorTransform(raw.subarray(3), salt5, salt1, KEY_STREAM_TAG);
+    if (useLz) plain = lz77Decompress(plain);
+
+    const br = new BitReader(plain);
+    const r = recMatchesSlug ? (recHint || 'You') : readU4String(br);
+    const s = readU4String(br);
+    const c = hasClue ? readU4String(br) : '';
+    return { r, s, c };
   }
 
   function decodeU3Packet(raw) {
@@ -279,9 +539,23 @@
     return { r, s, c };
   }
 
-  // Full compatibility decoder for U3 + legacy U2/U1/JSON ?seal= and ?s= links
-  function decodeToken(token, fallbackId) {
+  // Full compatibility decoder for U4 + U3 + U2/U1/JSON ?seal= and ?s= links
+  function decodeToken(token, queryMeta = { slug: '', id: '' }) {
     const raw = base64UrlToBytes(token);
+    const fallbackId = queryMeta.id;
+    const recHint = queryMeta.slug && queryMeta.slug !== 'Note' ? queryMeta.slug : 'You';
+
+    if (raw.length > 3 && raw[0] === 0x55 && raw[1] === 0x34) {
+      const u4 = decodeU4Packet(raw, recHint);
+      if (!u4.s || !u4.s.trim()) throw new Error('Missing note text');
+      return {
+        r: (u4.r || 'You').trim().slice(0, 40),
+        s: u4.s.trim().slice(0, 320),
+        c: (u4.c || '').trim().slice(0, 120) || 'A quiet admirer',
+        id: fallbackId || generateAlphaId(8)
+      };
+    }
+
     if (raw.length > 3 && raw[0] === 0x55 && raw[1] === 0x33) {
       const u3 = decodeU3Packet(raw);
       if (!u3.s || !u3.s.trim()) throw new Error('Missing note text');
@@ -345,27 +619,20 @@
     };
   }
 
-  function extractIdFromSearch(searchStr) {
-    const cleaned = String(searchStr || '').replace(/^\?/, '').split('&')[0] || '';
-    const match = /-([A-Za-z]{8})$/.exec(cleaned);
-    return match ? match[1] : '';
-  }
-
   function getBasePageUrl() {
     if (window.location.protocol === 'file:') {
-      return 'https://unseal.cards/';
+      return cfg.siteOrigin ? `${cfg.siteOrigin}/` : 'https://unseal.cards/';
     }
     return `${window.location.origin}${window.location.pathname}`;
   }
 
   function buildShortCardUrl(recipient, secret, clue, id) {
-    const slug = makeNameSlug(recipient);
-    const token = encodeU3Token(recipient, secret, clue);
+    const { slug, token } = encodeU4Token(recipient, secret, clue);
     return `${getBasePageUrl()}?${slug}-${id}#${token}`;
   }
 
   // =========================================================================
-  // 2. Web Audio Synthesizer (Scratch Friction + Auto Situation Reveal Chime)
+  // 2. Web Audio Synthesizer (Scratch Friction + Adaptive Music & Vault Fanfare)
   // =========================================================================
 
   function ensureAudioContext() {
@@ -379,7 +646,7 @@
       }
     }
     if (state.audioCtx.state === 'suspended') {
-      state.audioCtx.resume().catch(() => {});
+      state.audioCtx.resume().catch(() => { });
     }
     if (!state.noiseBuffer && state.audioCtx) {
       const sr = state.audioCtx.sampleRate;
@@ -449,9 +716,7 @@
       filter.connect(gain);
       gain.connect(ctx.destination);
       src.start(t, Math.random() * 0.14, 0.08);
-    } catch (_) {
-      // Ignore restricted Web Audio states
-    }
+    } catch (_) { }
   }
 
   function playTone(ctx, freq, start, dur, type = 'sine', peak = 0.05) {
@@ -497,13 +762,274 @@
       notes.forEach((f, idx) => {
         playTone(ctx, f, t0 + idx * 0.085, 1.05, idx % 2 === 0 ? 'sine' : 'triangle', 0.052);
       });
-    } catch (_) {
-      // Ignore audio errors
-    }
+    } catch (_) { }
+  }
+
+  function playVaultUnlockFanfare() {
+    if (!state.soundEnabled) return;
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+    try {
+      const t0 = ctx.currentTime;
+      [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => {
+        playTone(ctx, f, t0 + i * 0.075, 0.9, 'triangle', 0.055);
+      });
+    } catch (_) { }
   }
 
   // =========================================================================
-  // 3. Minimal Writer Flow, Sender Gift Card & View Switching
+  // 3. Mystery Collector Vault Engine (Sender + Receiver 5-Share Unlock)
+  // =========================================================================
+
+  function hashString(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function getMysteryEditionFor(role) {
+    const seed = hashString(`${state.cardId || 'Unseal'}:${role}`);
+    const keys = Object.keys(MYSTERY_EDITIONS);
+    const key = keys[seed % keys.length];
+    const ed = MYSTERY_EDITIONS[key];
+    const auraScore = 91 + (seed % 9); // 91% - 99%
+    const fortune = ed.fortunes[(seed >>> 3) % ed.fortunes.length];
+    return { key, ...ed, auraScore, fortune };
+  }
+
+  function getQuestStorageKey(role) {
+    return `unseal_v7_vault_${role}_${state.cardId}`;
+  }
+
+  function getShareCount(role) {
+    try {
+      const v = parseInt(localStorage.getItem(getQuestStorageKey(role)) || '0', 10);
+      return Number.isFinite(v) ? Math.min(TARGET_SHARES, Math.max(0, v)) : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function setShareCount(role, count) {
+    const clamped = Math.min(TARGET_SHARES, Math.max(0, count | 0));
+    try {
+      localStorage.setItem(getQuestStorageKey(role), String(clamped));
+    } catch (_) { }
+    return clamped;
+  }
+
+  function syncWaxSlots(containerEl, count) {
+    if (!containerEl) return;
+    containerEl.querySelectorAll('.wax-slot').forEach((slot) => {
+      const idx = parseInt(slot.getAttribute('data-slot') || '0', 10);
+      const cracked = idx <= count;
+      slot.classList.toggle('is-cracked', cracked);
+      slot.textContent = cracked ? '♥' : String(idx);
+    });
+  }
+
+  function renderVaultUi(role, justUnlocked = false) {
+    const count = getShareCount(role);
+    const unlocked = count >= TARGET_SHARES;
+    const pct = Math.round((count / TARGET_SHARES) * 100);
+    const ed = getMysteryEditionFor(role);
+
+    const rec = (state.recipient || '').trim();
+    const snd = (state.senderName || '').trim();
+    const recValid = rec && rec !== 'You' ? rec : '';
+
+    if (role === 'sender') {
+      const pill = $('senderQuestPill');
+      const fill = $('senderProgressFill');
+      const card = $('senderGiftMiniCard');
+      const tierEl = $('senderGiftTierLabel');
+      const passEl = $('senderGiftPassId');
+      const crestEl = $('senderGiftCrest');
+      const mainEl = $('senderGiftMainText');
+      const subEl = $('senderGiftSubText');
+      const rarityEl = $('senderGiftRarityChip');
+      const veilTitle = $('senderVaultVeilTitle');
+      const questBtn = $('senderQuestWhatsAppBtn');
+      const questBtnText = $('senderQuestBtnText');
+      const unlockedBtns = $('senderGiftUnlockedBtns');
+
+      syncWaxSlots($('senderWaxTrack'), count);
+      if (fill) fill.style.width = `${pct}%`;
+      if (passEl) passEl.textContent = `#${state.cardId}`;
+
+      if (pill) {
+        pill.textContent = unlocked ? 'Unlocked ✨ (5/5)' : `${count} / 5 Shared`;
+        pill.classList.toggle('unlocked', unlocked);
+      }
+
+      if (card) {
+        card.className = `gift-mini-card ${ed.tier}${unlocked ? '' : ' is-locked-vault'}${justUnlocked ? ' is-just-unlocked' : ''}`;
+      }
+
+      if (unlocked) {
+        if (tierEl) tierEl.textContent = ed.badge;
+        if (crestEl) crestEl.textContent = ed.crest;
+        if (mainEl) {
+          if (snd && recValid) mainEl.textContent = `${snd} × ${recValid} • ${ed.auraScore}% Aura ✨`;
+          else if (snd) mainEl.textContent = `${snd}’s 2026 Mystery Pass • ${ed.auraScore}%`;
+          else if (recValid) mainEl.textContent = `Secret Pass for ${recValid} • ${ed.auraScore}%`;
+          else mainEl.textContent = `2026 Secret Keeper Pass • ${ed.auraScore}%`;
+        }
+        if (subEl) subEl.textContent = ed.fortune;
+        if (rarityEl) rarityEl.textContent = ed.rarity;
+        questBtn?.classList.add('hidden');
+        unlockedBtns?.classList.remove('hidden');
+      } else {
+        const left = TARGET_SHARES - count;
+        if (tierEl) tierEl.textContent = 'UNSEAL • MYSTERY VAULT';
+        if (crestEl) crestEl.textContent = '🎁';
+        if (mainEl) mainEl.textContent = '2026 Collector Gift Card Inside';
+        if (subEl) subEl.textContent = 'Aura Score, Rare Edition & Fortune Prophecy';
+        if (rarityEl) rarityEl.textContent = `${left} WhatsApp share${left === 1 ? '' : 's'} left`;
+        if (veilTitle) veilTitle.textContent = `${left} WhatsApp Share${left === 1 ? '' : 's'} Left to Unlock`;
+        if (questBtnText) {
+          questBtnText.textContent =
+            count === 0
+              ? '💚 Share on WhatsApp to Crack Seal 1/5 →'
+              : `💚 Share with Next Friend on WhatsApp (${count}/5) →`;
+        }
+        questBtn?.classList.remove('hidden');
+        unlockedBtns?.classList.add('hidden');
+      }
+      return;
+    }
+
+    // Receiver inline vault + popup modal
+    const rPill = $('receiverQuestPill');
+    const rFill = $('receiverProgressFill');
+    const rCard = $('receiverGiftMiniCard');
+    const rTier = $('receiverGiftTierLabel');
+    const rPass = $('receiverGiftPassId');
+    const rCrest = $('receiverGiftCrest');
+    const rMain = $('receiverGiftMainText');
+    const rSub = $('receiverGiftSubText');
+    const rRarity = $('receiverGiftRarityChip');
+    const rVeilTitle = $('receiverVaultVeilTitle');
+    const rQuestBtn = $('receiverQuestWhatsAppBtn');
+    const rQuestBtnText = $('receiverQuestBtnText');
+    const rUnlockedBtns = $('receiverGiftUnlockedBtns');
+
+    syncWaxSlots($('receiverWaxTrack'), count);
+    syncWaxSlots($('modalWaxTrack'), count);
+    if (rFill) rFill.style.width = `${pct}%`;
+    if (rPass) rPass.textContent = `#${state.cardId}`;
+
+    if (rPill) {
+      rPill.textContent = unlocked ? 'Unlocked ✨ (5/5)' : `${count} / 5 Shared`;
+      rPill.classList.toggle('unlocked', unlocked);
+    }
+
+    if (rCard) {
+      rCard.className = `gift-mini-card ${ed.tier}${unlocked ? '' : ' is-locked-vault'}${justUnlocked ? ' is-just-unlocked' : ''}`;
+    }
+
+    if (unlocked) {
+      if (rTier) rTier.textContent = ed.badge;
+      if (rCrest) rCrest.textContent = ed.crest;
+      if (rMain) {
+        rMain.textContent = recValid
+          ? `${recValid}’s ${ed.auraScore}% Mystery Pass ✨`
+          : `Unsealed ${ed.auraScore}% Mystery Pass ✨`;
+      }
+      if (rSub) rSub.textContent = ed.fortune;
+      if (rRarity) rRarity.textContent = ed.rarity;
+      rQuestBtn?.classList.add('hidden');
+      rUnlockedBtns?.classList.remove('hidden');
+    } else {
+      const left = TARGET_SHARES - count;
+      if (rTier) rTier.textContent = 'UNSEAL • MYSTERY VAULT';
+      if (rCrest) rCrest.textContent = '🎁';
+      if (rMain) rMain.textContent = recValid ? `${recValid}’s Mystery Gift Box` : 'Your 2026 Mystery Gift Box';
+      if (rSub) rSub.textContent = 'Surprise Aura Score & Fortune locked inside';
+      if (rRarity) rRarity.textContent = `${left} WhatsApp share${left === 1 ? '' : 's'} left`;
+      if (rVeilTitle) rVeilTitle.textContent = `${left} WhatsApp Share${left === 1 ? '' : 's'} Left to Crack Open`;
+      if (rQuestBtnText) {
+        rQuestBtnText.textContent = `💚 Share on WhatsApp to Unlock (${count}/5) →`;
+      }
+      rQuestBtn?.classList.remove('hidden');
+      rUnlockedBtns?.classList.add('hidden');
+    }
+
+    // Sync Celebration Modal elements
+    const mName = $('popupGiftNameLine');
+    const mProg = $('popupQuestProgressCopy');
+    const mWaText = $('modalWhatsAppBtnText');
+    const mClaimText = $('modalClaimBtnText');
+    const mIcon = $('popupGiftIcon');
+
+    if (unlocked) {
+      if (mIcon) mIcon.textContent = ed.crest;
+      if (mName) mName.textContent = `${ed.badge} Unlocked (${ed.auraScore}% Aura)!`;
+      if (mProg) mProg.textContent = ed.fortune;
+      if (mWaText) mWaText.textContent = '💚 Invite More Friends on WhatsApp';
+      if (mClaimText) mClaimText.textContent = '🎁 Download 9:16 Gift Card';
+    } else {
+      const left = TARGET_SHARES - count;
+      if (mIcon) mIcon.textContent = '🎁';
+      if (mName) {
+        mName.textContent = recValid
+          ? `${recValid}’s 2026 Mystery Gift Box (${count}/5)`
+          : `Mystery Collector Gift Card (${count}/5)`;
+      }
+      if (mProg) {
+        mProg.textContent = `Share with ${left} more friend${left === 1 ? '' : 's'} on WhatsApp to reveal your surprise card!`;
+      }
+      if (mWaText) mWaText.textContent = `💚 Share on WhatsApp (${count}/5 Done)`;
+      if (mClaimText) mClaimText.textContent = `🔒 Locked (${count}/5 Shares)`;
+    }
+  }
+
+  function advanceQuestShare(role, sourceAction = 'whatsapp') {
+    const prev = getShareCount(role);
+    if (prev >= TARGET_SHARES) {
+      renderVaultUi(role, false);
+      return;
+    }
+
+    const next = setShareCount(role, prev + 1);
+    const unlockedNow = prev < TARGET_SHARES && next >= TARGET_SHARES;
+    renderVaultUi(role, unlockedNow);
+
+    trackEvent('gift_vault_progress', { role, step: next, source: sourceAction });
+
+    if (unlockedNow) {
+      trackEvent('gift_card_unlocked', { role, card_id: state.cardId });
+      playVaultUnlockFanfare();
+      burstPaperConfetti();
+      if (navigator.vibrate) {
+        try {
+          navigator.vibrate([70, 40, 120]);
+        } catch (_) { }
+      }
+      showToast('🎉 5/5 Wax Seals Cracked! Your 2026 Mystery Gift Card is UNLOCKED!');
+    } else {
+      showToast(`✅ Wax Seal ${next}/5 cracked! Invite ${TARGET_SHARES - next} more friend(s) on WhatsApp.`);
+    }
+  }
+
+  function scheduleQuestShareConfirm(role, delayMs = 850) {
+    if (getShareCount(role) >= TARGET_SHARES) return;
+    clearTimeout(state.questShareTimer);
+    state.questSharePending = role;
+    showToast('⏳ Confirming WhatsApp share to crack next seal...');
+    state.questShareTimer = setTimeout(() => {
+      if (state.questSharePending === role) {
+        state.questSharePending = false;
+        advanceQuestShare(role, 'whatsapp_quest');
+      }
+    }, delayMs);
+  }
+
+  // =========================================================================
+  // 4. Writer Flow, Live WhatsApp Preview Card & View Switching
   // =========================================================================
 
   function updateCharCounter() {
@@ -512,30 +1038,16 @@
     if (el) el.textContent = `${len} / ${MAX_SECRET_CHARS}`;
   }
 
-  function syncGiftCardPreview() {
-    const rec = (state.recipient || '').trim();
-    const snd = (state.senderName || '').trim();
-    const idEl = $('giftMiniPassId');
-    const mainEl = $('giftMiniMainText');
-    const subEl = $('giftMiniSubText');
-
-    if (idEl) idEl.textContent = `#${state.cardId}`;
-    if (mainEl) {
-      if (snd && rec) mainEl.textContent = `${snd} sealed a secret for ${rec} ✨`;
-      else if (snd) mainEl.textContent = `${snd} sealed a secret note 💌`;
-      else if (rec) mainEl.textContent = `Secret sealed for ${rec} ✨`;
-      else mainEl.textContent = `A secret scratch card was sealed ✨`;
+  function syncWhatsAppPreviewBubble() {
+    const rec = state.recipient && state.recipient !== 'You' ? state.recipient : 'You';
+    const waTitle = $('waPreviewTitle');
+    const waSendText = $('whatsappSendBtnText');
+    if (waTitle) {
+      waTitle.textContent = `💌 For ${rec} — Tap & Scratch to Unseal Your Secret Note`;
     }
-    if (subEl) {
-      subEl.textContent = 'Think this card is for you? Check your chats 👀';
-    }
-  }
-
-  function unlockGiftBadgeOnShare() {
-    const tag = $('giftUnlockedState');
-    if (tag) {
-      tag.textContent = 'Gift Unlocked ✨';
-      tag.classList.add('unlocked');
+    if (waSendText) {
+      waSendText.textContent =
+        rec !== 'You' ? `💚 Send Secret to ${rec} on WhatsApp` : '💚 Send Secret on WhatsApp';
     }
   }
 
@@ -563,17 +1075,14 @@
     if ($('readyCardIdBadge')) $('readyCardIdBadge').textContent = `#${state.cardId}`;
     if ($('previewUrlText')) $('previewUrlText').textContent = state.shareUrl;
 
-    const giftTag = $('giftUnlockedState');
-    if (giftTag) {
-      giftTag.textContent = 'Ready to Post';
-      giftTag.classList.remove('unlocked');
-    }
+    syncWhatsAppPreviewBubble();
+    renderVaultUi('sender', false);
 
-    syncGiftCardPreview();
     $('composerCard')?.classList.add('hidden');
     $('senderReadyCard')?.classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast('✨ Sealed! Your short link & Gift Card are ready.');
+    trackEvent('seal_created', { len: state.secret.length });
+    showToast('✨ Sealed! Short trusted link & Mystery Vault ready.');
   }
 
   function showComposerEdit() {
@@ -597,7 +1106,7 @@
       window.history.replaceState({}, '', window.location.pathname);
     }
 
-    document.title = 'Unseal — Secret Scratch-Off Note & Confession Card Maker';
+    document.title = 'Unseal — Secret Scratch Note Maker & Mystery Status Gift Card App';
     if ($('recipientInput')) $('recipientInput').value = '';
     if ($('senderNameInput')) $('senderNameInput').value = '';
     if ($('secretTextarea')) $('secretTextarea').value = '';
@@ -641,7 +1150,7 @@
   }
 
   // =========================================================================
-  // 4. Responsive HTML5 Metallic Foil Scratch Stage + Confetti + Popup
+  // 5. HTML5 Metallic Champagne Gold Scratch Foil + Confetti + Reveal
   // =========================================================================
 
   function paintChampagneFoil(ctx, width, height) {
@@ -654,7 +1163,6 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
 
-    // Subtle brushed foil grain lines
     ctx.save();
     for (let i = 0; i < 42; i++) {
       ctx.strokeStyle = i % 2 === 0 ? 'rgba(255, 255, 255, 0.22)' : 'rgba(120, 92, 48, 0.08)';
@@ -667,15 +1175,14 @@
     }
     ctx.restore();
 
-    // Engraved prompt inside metallic foil
     ctx.save();
-    ctx.fillStyle = 'rgba(56, 42, 24, 0.62)';
+    ctx.fillStyle = 'rgba(56, 42, 24, 0.65)';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = '600 13px "DM Sans", sans-serif';
     ctx.fillText('✨ SCRATCH TO UNSEAL ✨', width / 2, height / 2 - 11);
     ctx.font = '500 11px "DM Sans", sans-serif';
-    ctx.fillStyle = 'rgba(56, 42, 24, 0.45)';
+    ctx.fillStyle = 'rgba(56, 42, 24, 0.48)';
     ctx.fillText('Rub gently with your finger or mouse', width / 2, height / 2 + 12);
     ctx.restore();
   }
@@ -686,8 +1193,8 @@
     if (!scratchCanvas || !box) return;
 
     scratchCanvas.classList.remove('foil-faded');
-    const logicalW = Math.max(260, Math.round(box.clientWidth || 340));
-    const logicalH = Math.max(200, Math.round(box.clientHeight || 220));
+    const logicalW = Math.max(250, Math.round(box.clientWidth || 340));
+    const logicalH = Math.max(195, Math.round(box.clientHeight || 220));
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     scratchCanvas.width = Math.round(logicalW * dpr);
@@ -707,7 +1214,6 @@
       resizeObserver = new ResizeObserver(() => {
         if (state.hasRevealed || !scratchCanvas || !box) return;
         const newW = Math.round(box.clientWidth || 0);
-        const newH = Math.round(box.clientHeight || 0);
         const curW = parseInt(scratchCanvas.dataset.logicalW || '0', 10);
         if (newW > 200 && Math.abs(newW - curW) > 12) {
           initScratchCanvas();
@@ -747,7 +1253,7 @@
   function burstPaperConfetti() {
     const colors = ['#D9383A', '#C9A96E', '#F59E0B', '#1C1917', '#FDE68A'];
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:75;overflow:hidden;';
+    wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:85;overflow:hidden;';
     document.body.appendChild(wrap);
 
     for (let i = 0; i < 36; i++) {
@@ -799,25 +1305,21 @@
     $('quickRevealBtn')?.classList.add('hidden');
     $('postRevealActions')?.classList.remove('hidden');
 
+    renderVaultUi('receiver', false);
+
     if (navigator.vibrate) {
       try {
         navigator.vibrate([80, 40, 120]);
-      } catch (_) {}
+      } catch (_) { }
     }
 
     playRevealChime();
     burstPaperConfetti();
+    trackEvent('card_unsealed', { card_id: state.cardId });
 
-    // Update popup gift card teaser line with receiver's name cleanly
-    const giftLine = $('popupGiftNameLine');
-    if (giftLine) {
-      const displayRec = state.recipient && state.recipient !== 'You' ? `${state.recipient}'s` : 'Your';
-      giftLine.textContent = `${displayRec} Personalized Gift Card Unlocked`;
-    }
-
-    // Open Celebration Share Popup smoothly after receiver reads the message
     clearTimeout(state.popupTimer);
     state.popupTimer = setTimeout(() => {
+      renderVaultUi('receiver', false);
       $('revealShareModal')?.classList.remove('hidden');
     }, 1350);
   }
@@ -867,7 +1369,7 @@
         if (navigator.vibrate) {
           try {
             navigator.vibrate(8);
-          } catch (_) {}
+          } catch (_) { }
         }
       }
 
@@ -941,7 +1443,7 @@
   }
 
   // =========================================================================
-  // 5. Native 9:16 PNG Generator (Personalized Name Gift Card + Revealed Note)
+  // 6. Native 1080x1920 9:16 PNG Generator (Collector Mystery Gift + Note)
   // =========================================================================
 
   function wrapLines(ctx, text, maxWidth, maxLines = 12) {
@@ -976,7 +1478,7 @@
     ctx.closePath();
   }
 
-  async function renderCardPngBlob(mode = 'gift') {
+  async function renderCardPngBlob(mode = 'gift', role = 'sender') {
     if (document.fonts && document.fonts.ready) {
       await document.fonts.ready;
     }
@@ -987,108 +1489,126 @@
     const ctx = canvas.getContext('2d');
 
     if (mode === 'gift') {
-      // Dark Espresso Luxury Gift Card for Instagram Story & WhatsApp Status
+      const ed = getMysteryEditionFor(role);
       const bg = ctx.createRadialGradient(840, 260, 80, 540, 960, 1280);
-      bg.addColorStop(0, '#3D2E27');
-      bg.addColorStop(0.55, '#1E1A18');
-      bg.addColorStop(1, '#12100E');
+      bg.addColorStop(0, ed.bgStops[0]);
+      bg.addColorStop(0.55, ed.bgStops[1]);
+      bg.addColorStop(1, ed.bgStops[2]);
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, 1080, 1920);
 
-      // Subtle gold dust stars
-      ctx.fillStyle = 'rgba(246, 229, 190, 0.16)';
-      for (let i = 0; i < 40; i++) {
+      // Subtle star dust
+      ctx.fillStyle = 'rgba(246, 229, 190, 0.2)';
+      for (let i = 0; i < 45; i++) {
         ctx.beginPath();
         ctx.arc(((i * 211) % 980) + 50, ((i * 389) % 1800) + 60, (i % 3) + 1.5, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Main luxury pass card
-      drawRoundedRect(ctx, 84, 240, 912, 1340, 48);
-      ctx.fillStyle = 'rgba(34, 28, 25, 0.94)';
+      // Main Collector Gift Frame
+      drawRoundedRect(ctx, 84, 210, 912, 1410, 48);
+      ctx.fillStyle = 'rgba(20, 17, 16, 0.88)';
       ctx.fill();
       ctx.lineWidth = 5;
-      ctx.strokeStyle = '#C9A96E';
+      ctx.strokeStyle = ed.accent;
       ctx.stroke();
 
-      drawRoundedRect(ctx, 112, 268, 856, 1284, 36);
+      drawRoundedRect(ctx, 112, 238, 856, 1354, 36);
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = 'rgba(201, 169, 110, 0.45)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
       ctx.stroke();
 
-      // Header row
-      ctx.fillStyle = '#D8BE88';
+      ctx.fillStyle = ed.light;
       ctx.font = '700 26px "DM Sans", sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('UNSEAL • SECRET GIFT PASS', 160, 355);
+      ctx.fillText(ed.badge, 156, 325);
       ctx.textAlign = 'right';
-      ctx.fillText(`#${state.cardId}`, 920, 355);
+      ctx.fillText(`#${state.cardId}`, 924, 325);
 
-      // Center Crimson Wax Seal Crest
+      // Crest Circle
       ctx.beginPath();
-      ctx.arc(540, 560, 82, 0, Math.PI * 2);
+      ctx.arc(540, 515, 84, 0, Math.PI * 2);
       ctx.fillStyle = '#D9383A';
       ctx.fill();
       ctx.lineWidth = 6;
-      ctx.strokeStyle = '#F6E5BE';
+      ctx.strokeStyle = ed.light;
       ctx.stroke();
 
-      ctx.fillStyle = '#FFF8F2';
+      ctx.fillStyle = '#FFFDF9';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font = '700 66px Georgia, serif';
-      ctx.fillText('♥', 540, 566);
+      ctx.fillText(ed.crest, 540, 520);
 
-      // Personalized Main Name Line
       const rec = state.recipient && state.recipient !== 'You' ? state.recipient : '';
       const snd = state.senderName || '';
-      let mainTitle = 'A secret scratch card was sealed ✨';
-      if (state.isReceiverMode) {
-        mainTitle = rec ? `${rec} unsealed a secret card 💌` : 'I just unsealed a secret card 💌';
+      let mainTitle = '2026 Secret Collector Pass';
+      if (role === 'receiver') {
+        mainTitle = rec ? `${rec}’s 2026 Mystery Pass` : 'My 2026 Mystery Pass';
       } else if (snd && rec) {
-        mainTitle = `${snd} sent a secret to ${rec} 💌`;
+        mainTitle = `${snd} × ${rec} Secret Pass`;
       } else if (snd) {
-        mainTitle = `${snd} sealed a secret note 💌`;
+        mainTitle = `${snd}’s VIP Secret Pass`;
       } else if (rec) {
-        mainTitle = `Secret note sealed for ${rec} ✨`;
+        mainTitle = `Secret Pass for ${rec}`;
       }
 
       ctx.fillStyle = '#FFFDF9';
-      ctx.font = 'italic 700 68px "Playfair Display", Georgia, serif';
-      const titleLines = wrapLines(ctx, mainTitle, 760, 4);
-      let curY = 780;
+      ctx.font = 'italic 700 66px "Playfair Display", Georgia, serif';
+      const titleLines = wrapLines(ctx, mainTitle, 760, 3);
+      let curY = 710;
       titleLines.forEach((ln) => {
         ctx.fillText(ln, 540, curY);
-        curY += 86;
+        curY += 84;
       });
 
-      // Signature gold pill badge
-      drawRoundedRect(ctx, 220, curY + 55, 640, 74, 37);
-      ctx.fillStyle = 'rgba(201, 169, 110, 0.14)';
+      // Aura Match Score Pill
+      drawRoundedRect(ctx, 210, curY + 26, 660, 78, 39);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
       ctx.fill();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#C9A96E';
+      ctx.strokeStyle = ed.accent;
+      ctx.stroke();
+      ctx.fillStyle = ed.light;
+      ctx.font = '700 28px "DM Sans", sans-serif';
+      ctx.fillText(`SECRET VIBE AURA: ${ed.auraScore}% • ${ed.rarity.toUpperCase()}`, 540, curY + 66);
+
+      // Fortune Box
+      const fy = curY + 148;
+      drawRoundedRect(ctx, 148, fy, 784, 240, 28);
+      ctx.fillStyle = 'rgba(255, 253, 249, 0.06)';
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
       ctx.stroke();
 
-      ctx.fillStyle = '#F6E5BE';
-      ctx.font = '700 24px "DM Sans", sans-serif';
-      ctx.fillText('PRIVATE SCRATCH FOIL • ZERO SPOILERS', 540, curY + 93);
+      ctx.fillStyle = '#D6CFC5';
+      ctx.font = '700 20px "DM Sans", sans-serif';
+      ctx.fillText('2026 MYSTERY FORTUNE', 540, fy + 48);
 
-      // Callout
-      ctx.fillStyle = '#E5DDD0';
-      ctx.font = '600 44px "Caveat", "Kalam", "Noto Sans Devanagari", cursive';
-      const subCallout = state.isReceiverMode
-        ? 'Your turn — send me a secret note too 👀'
-        : 'Think this note is for you? Check your inbox 👀';
-      ctx.fillText(subCallout, 540, 1290);
+      ctx.fillStyle = '#FFFDF9';
+      ctx.font = '600 42px "Caveat", "Kalam", "Noto Sans Devanagari", cursive';
+      const fLines = wrapLines(ctx, `“${ed.fortune}”`, 700, 3);
+      let fLineY = fy + 112;
+      fLines.forEach((l) => {
+        ctx.fillText(l, 540, fLineY);
+        fLineY += 54;
+      });
 
-      // Footer
-      ctx.fillStyle = '#D8BE88';
+      ctx.fillStyle = ed.light;
+      ctx.font = '600 38px "Caveat", cursive';
+      const callout =
+        role === 'receiver'
+          ? 'Your turn — drop a secret note in my chat 👀💌'
+          : 'Someone just received a secret scratch note 👀💌';
+      ctx.fillText(callout, 540, 1395);
+
+      ctx.fillStyle = ed.accent;
       ctx.font = 'italic 700 58px "Playfair Display", Georgia, serif';
-      ctx.fillText('Unseal', 540, 1435);
-      ctx.fillStyle = '#BFB5A8';
-      ctx.font = '500 28px "DM Sans", sans-serif';
-      ctx.fillText('Send & scratch yours free at unseal.cards', 540, 1495);
+      ctx.fillText('Unseal', 540, 1485);
+      ctx.fillStyle = '#C7BFB5';
+      ctx.font = '500 27px "DM Sans", sans-serif';
+      ctx.fillText('Scratch & unlock yours free at unseal.cards', 540, 1545);
     } else {
       // Revealed Note 9:16 Warm Linen Postcard
       ctx.fillStyle = '#FAF6F0';
@@ -1165,9 +1685,13 @@
     return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   }
 
-  async function downloadPngCard(mode = 'gift') {
-    showToast('🎨 Creating high-res Status card...');
-    const blob = await renderCardPngBlob(mode);
+  async function downloadPngCard(mode = 'gift', role = 'sender') {
+    if (mode === 'gift' && getShareCount(role) < TARGET_SHARES) {
+      showToast(`🔒 Share with ${TARGET_SHARES - getShareCount(role)} more friend(s) on WhatsApp to unlock!`);
+      return;
+    }
+    showToast('🎨 Rendering 9:16 Status card...');
+    const blob = await renderCardPngBlob(mode, role);
     if (!blob) {
       showToast('⚠️ Could not generate image on this browser.');
       return;
@@ -1175,42 +1699,44 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = mode === 'gift' ? `unseal-gift-${state.cardId}.png` : `unseal-note-${state.cardId}.png`;
+    a.download = mode === 'gift' ? `unseal-gift-${role}-${state.cardId}.png` : `unseal-note-${state.cardId}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
-    unlockGiftBadgeOnShare();
-    showToast('🎁 9:16 Card PNG saved! Ready for WhatsApp Status or IG Story.');
+    trackEvent('gift_card_downloaded', { mode, role });
+    showToast('🎁 9:16 Story PNG saved! Post on WhatsApp Status or IG Story.');
   }
 
-  async function shareGiftImage() {
-    showToast('🎨 Preparing Gift Card for Status/Story...');
-    const blob = await renderCardPngBlob('gift');
+  async function shareGiftImage(role = 'sender') {
+    if (getShareCount(role) < TARGET_SHARES) {
+      shareQuestInviteWhatsApp(role);
+      return;
+    }
+    showToast('🎨 Preparing your Collector Gift Card...');
+    const blob = await renderCardPngBlob('gift', role);
     if (!blob) return;
 
-    const file = new File([blob], `unseal-gift-${state.cardId}.png`, { type: 'image/png' });
+    const file = new File([blob], `unseal-gift-${role}-${state.cardId}.png`, { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
           files: [file],
-          title: 'Unseal Gift Pass 💌',
-          text: `Try scratching a secret note at ${getBasePageUrl()}`
+          title: 'My 2026 Unseal Mystery Gift Card 🎁',
+          text: `Just cracked my 2026 Mystery Pass! Scratch & unlock yours free: ${getBasePageUrl()}`
         });
-        unlockGiftBadgeOnShare();
-        showToast('🎁 Shared your Status Gift Card!');
+        showToast('🎁 Shared your Mystery Gift Card!');
         return;
       } catch (err) {
         if (err && err.name === 'AbortError') return;
       }
     }
 
-    // Fallback to clean PNG download
-    await downloadPngCard('gift');
+    await downloadPngCard('gift', role);
   }
 
   // =========================================================================
-  // 6. Viral Sharing & Toast Utilities
+  // 7. WhatsApp & Social Sharing (Secret Delivery + 5-Friend Vault Invites)
   // =========================================================================
 
   function showToast(msg) {
@@ -1226,7 +1752,7 @@
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(state.toastTimer);
-    state.toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+    state.toastTimer = setTimeout(() => el.classList.remove('show'), 3300);
   }
 
   async function copyText(str) {
@@ -1234,7 +1760,7 @@
       try {
         await navigator.clipboard.writeText(str);
         return true;
-      } catch (_) {}
+      } catch (_) { }
     }
     const ta = document.createElement('textarea');
     ta.value = str;
@@ -1244,75 +1770,240 @@
     ta.select();
     try {
       document.execCommand('copy');
-    } catch (_) {}
+    } catch (_) { }
     ta.remove();
     return true;
   }
 
   function shareSealedWhatsApp() {
     if (!state.shareUrl) return;
-    unlockGiftBadgeOnShare();
     const who = state.recipient && state.recipient !== 'You' ? state.recipient : 'friend';
-    const text = `Hey ${who}! 💌 Someone sealed a secret scratch card for you. Rub the gold foil on your phone to unseal it: ${state.shareUrl}`;
+    const text = `Hey ${who}! 💌 Someone sealed a secret scratch note for you. Rub the gold foil & check your 2026 Mystery Gift Card:\n${state.shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+    trackEvent('whatsapp_share', { kind: 'sealed_note' });
+    scheduleQuestShareConfirm('sender', 800);
+  }
+
+  function shareQuestInviteWhatsApp(role) {
+    const homeUrl = getBasePageUrl();
+    const who = state.recipient && state.recipient !== 'You' ? state.recipient : 'yaar';
+    const msg =
+      role === 'sender'
+        ? `Yaar ek crazy gold-foil secret note & 2026 Mystery Gift Card challenge try kar 😳💌 Apna card unseal kar: ${homeUrl}`
+        : `Hey ${who}! Someone just sent me a secret scratch-off note on Unseal ✨ Try rubbing the foil & claim your 2026 Mystery Gift Card: ${homeUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    trackEvent('whatsapp_share', { kind: 'quest_invite', role });
+    scheduleQuestShareConfirm(role, 850);
   }
 
   function shareSealedTelegram() {
     if (!state.shareUrl) return;
-    unlockGiftBadgeOnShare();
     const who = state.recipient && state.recipient !== 'You' ? state.recipient : 'you';
-    const msg = `💌 Someone sealed a secret scratch card for ${who}. Open & rub the foil!`;
+    const msg = `💌 Someone sealed a secret scratch note for ${who}. Rub the gold foil to unseal!`;
     window.open(
       `https://t.me/share/url?url=${encodeURIComponent(state.shareUrl)}&text=${encodeURIComponent(msg)}`,
       '_blank',
       'noopener,noreferrer'
     );
+    scheduleQuestShareConfirm('sender', 900);
   }
 
   async function shareSealedNative() {
     if (!state.shareUrl) return;
-    unlockGiftBadgeOnShare();
     const who = state.recipient && state.recipient !== 'You' ? state.recipient : 'you';
     if (navigator.share) {
       try {
         await navigator.share({
           title: `Secret Note for ${who} — Unseal`,
-          text: `Hey ${who}! 💌 Rub the metallic foil to unseal your secret note:`,
+          text: `Hey ${who}! 💌 Rub the gold foil to unseal your secret note:`,
           url: state.shareUrl
         });
+        advanceQuestShare('sender', 'native_share');
         return;
       } catch (err) {
         if (err && err.name === 'AbortError') return;
       }
     }
     await copyText(state.shareUrl);
-    showToast('📋 Short link copied to share anywhere!');
+    showToast('📋 Short link copied! Paste anywhere on WhatsApp or IG.');
   }
 
-  function inviteFriendWhatsApp() {
+  async function inviteFriendNative(role) {
     const homeUrl = getBasePageUrl();
-    const text = `Someone just sent me a secret scratch-off note on Unseal 💌✨ Rub the foil & send me one back: ${homeUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
-  }
-
-  async function inviteFriendNative() {
-    const homeUrl = getBasePageUrl();
-    const text = `Send an anonymous gold-foil scratch note & get your Status Gift Card on Unseal 💌`;
+    const text = 'Send an anonymous gold-foil secret note & crack open your 2026 Mystery Gift Card 💌🎁';
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Unseal — Secret Scratch Notes', text, url: homeUrl });
+        advanceQuestShare(role, 'native_invite');
         return;
       } catch (err) {
         if (err && err.name === 'AbortError') return;
       }
     }
     await copyText(`${text} ${homeUrl}`);
-    showToast('📋 Invite link copied! Paste in any group or Instagram Story.');
+    showToast('📋 Invite copied! Share with friends on WhatsApp to advance.');
   }
 
   // =========================================================================
-  // 7. Legal Compliance Modal & Boot Initialization
+  // 8. Unique PWA Install Animation, Service Worker & Fullscreen Control
   // =========================================================================
+
+  function setInstallOverlayProgress(pct, badge, title, status, showIosSteps = false) {
+    const bar = $('pwaInstallProgressBar');
+    if (bar) bar.style.width = `${pct}%`;
+    if ($('pwaInstallBadge') && badge) $('pwaInstallBadge').textContent = badge;
+    if ($('pwaInstallTitle') && title) $('pwaInstallTitle').textContent = title;
+    if ($('pwaInstallStatusText') && status) $('pwaInstallStatusText').textContent = status;
+    $('iosInstallStepsBox')?.classList.toggle('hidden', !showIosSteps);
+  }
+
+  async function triggerPwaInstallWithAnimation() {
+    const overlay = $('pwaInstallOverlay');
+    if (!overlay) return;
+    clearTimeout(state.installAnimTimer);
+
+    trackEvent('pwa_install_clicked', { has_native_prompt: Boolean(state.deferredInstallPrompt) });
+    overlay.classList.remove('hidden');
+    setInstallOverlayProgress(
+      24,
+      '📲 INSTALLING UNSEAL PWA',
+      'Sealing Unseal onto your Home Screen…',
+      'Preparing offline scratch foil, Hindi calligraphy fonts & 9:16 Mystery Gift studio.',
+      false
+    );
+
+    if (state.soundEnabled) playRevealChime();
+
+    state.installAnimTimer = setTimeout(async () => {
+      setInstallOverlayProgress(
+        68,
+        '✨ CONFIGURING APP ICON',
+        'Locking Offline Secret Vault…',
+        'Adding full-screen adaptive launch & 1-tap access from your phone screen.',
+        false
+      );
+
+      if (state.deferredInstallPrompt) {
+        try {
+          const promptEvt = state.deferredInstallPrompt;
+          state.deferredInstallPrompt = null;
+          await promptEvt.prompt();
+          const choice = await promptEvt.userChoice;
+          if (choice && choice.outcome === 'accepted') {
+            setInstallOverlayProgress(
+              100,
+              '🎉 INSTALLED!',
+              'Unseal App Sealed on Home Screen!',
+              'Launch Unseal anytime directly like a native phone app.',
+              false
+            );
+            burstPaperConfetti();
+            trackEvent('pwa_installed', { method: 'prompt_accepted' });
+            setTimeout(() => overlay.classList.add('hidden'), 1800);
+          } else {
+            overlay.classList.add('hidden');
+            showToast('📲 You can install Unseal anytime from the header!');
+          }
+          return;
+        } catch (_) { }
+      }
+
+      // iOS Safari or browser without native beforeinstallprompt
+      setInstallOverlayProgress(
+        100,
+        '📲 ALMOST THERE — 2 QUICK TAPS',
+        'Pin Unseal App to Home Screen',
+        'Your browser blocks automatic 1-click install dialogs—follow these 2 taps below:',
+        true
+      );
+    }, 850);
+  }
+
+  function bindPwaAndFullscreen() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      state.deferredInstallPrompt = e;
+      $('installAppBtn')?.classList.remove('hidden');
+    });
+
+    window.addEventListener('appinstalled', () => {
+      state.deferredInstallPrompt = null;
+      document.documentElement.classList.add('is-pwa');
+      $('pwaInstallOverlay')?.classList.add('hidden');
+      burstPaperConfetti();
+      trackEvent('pwa_installed', { method: 'browser_event' });
+      showToast('🎉 Unseal installed! Open it anytime from your Home Screen.');
+    });
+
+    $('installAppBtn')?.addEventListener('click', triggerPwaInstallWithAnimation);
+    $('footerInstallAppBtn')?.addEventListener('click', triggerPwaInstallWithAnimation);
+    $('closeInstallOverlayBtn')?.addEventListener('click', () => {
+      clearTimeout(state.installAnimTimer);
+      $('pwaInstallOverlay')?.classList.add('hidden');
+    });
+    $('pwaInstallOverlay')?.addEventListener('click', (e) => {
+      if (e.target === $('pwaInstallOverlay')) {
+        clearTimeout(state.installAnimTimer);
+        $('pwaInstallOverlay').classList.add('hidden');
+      }
+    });
+
+    const fsBtn = $('fullscreenToggleBtn');
+    if (fsBtn) {
+      const canFs = Boolean(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+      if (!canFs) {
+        fsBtn.classList.add('hidden');
+      } else {
+        fsBtn.addEventListener('click', async () => {
+          try {
+            if (!document.fullscreenElement) {
+              await document.documentElement.requestFullscreen();
+              fsBtn.setAttribute('aria-pressed', 'true');
+            } else if (document.exitFullscreen) {
+              await document.exitFullscreen();
+              fsBtn.setAttribute('aria-pressed', 'false');
+            }
+          } catch (_) { }
+        });
+      }
+    }
+  }
+
+  // =========================================================================
+  // 9. Live Activity Counter, Idea Chips, Legal Modals & Boot
+  // =========================================================================
+
+  function initLiveCounter() {
+    const el = $('liveCounterCount');
+    if (!el) return;
+    const hr = new Date().getHours();
+    state.liveCountBase = 4820 + hr * 21 + Math.floor(Math.random() * 25);
+    el.textContent = state.liveCountBase.toLocaleString('en-US');
+
+    state.liveCountTimer = setInterval(() => {
+      state.liveCountBase += 1 + Math.floor(Math.random() * 3);
+      el.textContent = state.liveCountBase.toLocaleString('en-US');
+    }, 48000);
+  }
+
+  function bindIdeaChips() {
+    document.querySelectorAll('.idea-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        if (state.isReceiverMode) resetToFreshComposer();
+        const rec = chip.getAttribute('data-rec') || '';
+        const msg = chip.getAttribute('data-msg') || '';
+        const clue = chip.getAttribute('data-clue') || '';
+        if ($('recipientInput')) $('recipientInput').value = rec;
+        if ($('secretTextarea')) $('secretTextarea').value = msg;
+        if ($('clueInput')) $('clueInput').value = clue;
+        updateCharCounter();
+        $('senderReadyCard')?.classList.add('hidden');
+        $('composerCard')?.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast('✨ Template loaded! Personalize & hit Seal Note.');
+      });
+    });
+  }
 
   function bindLegalModals() {
     const modal = $('legalModal');
@@ -1374,17 +2065,16 @@
     $('copyUrlBtn')?.addEventListener('click', async () => {
       if (!state.shareUrl) return;
       await copyText(state.shareUrl);
-      unlockGiftBadgeOnShare();
-      showToast('📋 Short link copied! Now claim or share your Gift Card below.');
+      showToast('🔒 Short link copied! Send it & unlock your Mystery Gift Vault.');
     });
 
     $('whatsappShareBtn')?.addEventListener('click', shareSealedWhatsApp);
+    $('senderQuestWhatsAppBtn')?.addEventListener('click', () => shareQuestInviteWhatsApp('sender'));
     $('shareTelegramBtn')?.addEventListener('click', shareSealedTelegram);
     $('nativeShareBtn')?.addEventListener('click', shareSealedNative);
     $('copyIgBtn')?.addEventListener('click', async () => {
       if (!state.shareUrl) return;
       await copyText(state.shareUrl);
-      unlockGiftBadgeOnShare();
       const label = $('copyIgBtnText');
       if (label) {
         const orig = label.textContent;
@@ -1394,8 +2084,8 @@
       showToast('📸 Link copied! Paste into Instagram Story sticker or DM.');
     });
 
-    $('downloadGiftCardBtn')?.addEventListener('click', () => downloadPngCard('gift'));
-    $('shareGiftImageBtn')?.addEventListener('click', shareGiftImage);
+    $('downloadGiftCardBtn')?.addEventListener('click', () => downloadPngCard('gift', 'sender'));
+    $('shareGiftImageBtn')?.addEventListener('click', () => shareGiftImage('sender'));
 
     $('testScratchBtn')?.addEventListener('click', () => {
       openScratchView({ fromSenderPreview: true });
@@ -1414,42 +2104,67 @@
       completeReveal(true);
     });
 
+    // Receiver Gift Vault + Actions
+    $('receiverQuestWhatsAppBtn')?.addEventListener('click', () => shareQuestInviteWhatsApp('receiver'));
+    $('receiverGiftBtn')?.addEventListener('click', () => downloadPngCard('gift', 'receiver'));
+    $('receiverShareGiftImageBtn')?.addEventListener('click', () => shareGiftImage('receiver'));
+    $('downloadRevealedCardBtn')?.addEventListener('click', () => downloadPngCard('revealed', 'receiver'));
+    $('sealBackBtn')?.addEventListener('click', resetToFreshComposer);
     $('openShareModalBtn')?.addEventListener('click', () => {
+      renderVaultUi('receiver', false);
       $('revealShareModal')?.classList.remove('hidden');
     });
-    $('receiverGiftBtn')?.addEventListener('click', () => downloadPngCard('gift'));
-    $('downloadRevealedCardBtn')?.addEventListener('click', () => downloadPngCard('revealed'));
-    $('sealBackBtn')?.addEventListener('click', resetToFreshComposer);
 
-    // Post-reveal celebration popup
+    // Celebration Popup Modal
     const revealModal = $('revealShareModal');
     $('closeRevealModalBtn')?.addEventListener('click', () => revealModal?.classList.add('hidden'));
     revealModal?.addEventListener('click', (e) => {
       if (e.target === revealModal) revealModal.classList.add('hidden');
     });
-    $('modalShareWhatsAppBtn')?.addEventListener('click', inviteFriendWhatsApp);
-    $('modalShareNativeBtn')?.addEventListener('click', inviteFriendNative);
-    $('modalClaimGiftBtn')?.addEventListener('click', () => shareGiftImage());
+    $('modalShareWhatsAppBtn')?.addEventListener('click', () => shareQuestInviteWhatsApp('receiver'));
+    $('modalShareNativeBtn')?.addEventListener('click', () => inviteFriendNative('receiver'));
+    $('modalClaimGiftBtn')?.addEventListener('click', () => {
+      if (getShareCount('receiver') >= TARGET_SHARES) {
+        downloadPngCard('gift', 'receiver');
+      } else {
+        shareQuestInviteWhatsApp('receiver');
+      }
+    });
     $('modalReplyBtn')?.addEventListener('click', resetToFreshComposer);
 
+    // Faster confirmation when user switches back from WhatsApp on phone
+    window.addEventListener('focus', () => {
+      if (state.questSharePending) {
+        const pendingRole = state.questSharePending;
+        clearTimeout(state.questShareTimer);
+        state.questSharePending = false;
+        advanceQuestShare(pendingRole, 'whatsapp_focus_return');
+      }
+    });
+
     bindScratchPointerHandlers();
+    bindPwaAndFullscreen();
+    bindIdeaChips();
     bindLegalModals();
   }
 
   function init() {
+    initAnalyticsIfConfigured();
+    registerServiceWorker();
     updateSoundUi();
     updateCharCounter();
+    initLiveCounter();
     bindAllEvents();
 
     const params = new URLSearchParams(window.location.search);
     const legacySeal = params.get('seal') || params.get('s');
     const hashToken = (window.location.hash || '').replace(/^#/, '');
-    const idFromQuery = extractIdFromSearch(window.location.search);
-    const activeToken = legacySeal || (hashToken.length > 8 ? hashToken : '');
+    const qMeta = extractQueryMeta(window.location.search);
+    const activeToken = legacySeal || (hashToken.length > 6 ? hashToken : '');
 
     if (activeToken) {
       try {
-        const decoded = decodeToken(activeToken, idFromQuery);
+        const decoded = decodeToken(activeToken, qMeta);
         state.isReceiverMode = true;
         state.recipient = decoded.r;
         state.secret = decoded.s;

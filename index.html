@@ -5,46 +5,68 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-  <!-- Instant Receiver Mode Boot Guard (prevents composer flash on sealed card links) -->
+  <!-- Instant Receiver & Standalone PWA Boot Guard (zero composer flash) -->
   <script>
-    if (
-      location.search.indexOf('seal=') !== -1 ||
-      location.search.indexOf('s=') !== -1 ||
-      location.hash.length > 8
-    ) {
-      document.documentElement.className += ' receiver-boot';
-    }
+    (function () {
+      var isRec =
+        location.search.indexOf('seal=') !== -1 ||
+        location.search.indexOf('s=') !== -1 ||
+        location.hash.length > 6;
+      if (isRec) document.documentElement.className += ' receiver-boot';
+      var isPwa =
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+        window.navigator.standalone === true;
+      if (isPwa) document.documentElement.className += ' is-pwa';
+    })();
   </script>
 
-  <title>Unseal — Secret Scratch-Off Note &amp; Confession Card Maker</title>
+  <title>Unseal — Secret Scratch Note Maker &amp; Mystery Status Gift Card App</title>
   <meta name="description"
-    content="Send an anonymous scratch-off secret note link with a personalized Status Gift Card. Zero sign-up, zero servers—works on WhatsApp, Instagram &amp; every phone.">
+    content="Send an anonymous gold-foil scratch note on WhatsApp &amp; Instagram with a short trusted link. Unlock a personalized 2026 Mystery Gift Card for your Story — free, zero login, installable app.">
+
+  <!-- Google Search Console: Comprehensive High-Intent Keywords (English & Hinglish) -->
   <meta name="keywords"
-    content="send anonymous message link, secret crush scratch card online, digital scratch off note maker, confession link generator for WhatsApp, Instagram secret note link, scratch to reveal note">
+    content="unseal, secret scratch note maker, anonymous secret message link whatsapp, secret crush confession card online, digital scratch card maker, confession link generator instagram story, mystery gift card status maker, send anonymous note without login, hinglish crush confession card, pyar ka izhaar scratch card, secret dare link for friends, anonymous compliment card pwa, scratch to reveal message free, zero backend secret note">
   <meta name="author" content="Unseal">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-  <meta name="theme-color" content="#FAF6F0">
+  <meta name="theme-color" content="#D9383A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Unseal">
+
+  <!-- Google Search Console Verification Slot: Replace content with your HTML tag code from Search Console -->
+  <meta name="google-site-verification" content="REPLACE_WITH_SEARCH_CONSOLE_CODE">
+
+  <!-- Google AdSense Verification Slot: Replace ca-pub-0000000000000000 with your real Publisher ID -->
+  <meta name="google-adsense-account" content="ca-pub-0000000000000000">
+  <!-- Uncomment & set your real Publisher ID when AdSense goes live:
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0000000000000000" crossorigin="anonymous"></script>
+  -->
+
   <link rel="canonical" href="https://unseal.cards/">
 
-  <!-- OpenGraph / WhatsApp / Instagram Preview Tags -->
+  <!-- OpenGraph / WhatsApp / Telegram / Instagram Rich Link Preview Card -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Unseal">
   <meta property="og:locale" content="en_US">
   <meta property="og:url" content="https://unseal.cards/">
-  <meta property="og:title" content="Unseal — Scratch-to-Reveal Secret Note &amp; Confession Card Maker">
+  <meta property="og:title" content="💌 Someone Sealed a Secret Note for You — Tap &amp; Scratch to Unseal">
   <meta property="og:description"
-    content="Seal a handwritten secret note under champagne gold scratch foil and send a short personalized link in 10 seconds.">
+    content="Rub the champagne gold foil to read your hidden note + crack open your personalized 2026 Mystery Gift Card for WhatsApp Status &amp; IG Story.">
   <meta property="og:image" content="https://unseal.cards/assets/og-image.png">
+  <meta property="og:image:secure_url" content="https://unseal.cards/assets/og-image.png">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt"
-    content="Unseal scratch-to-reveal secret postcard showing brushed metallic foil and handwritten note">
+    content="Unseal secret postcard sealed under champagne gold foil next to a 2026 Mystery Gift Pass">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Unseal — Scratch-to-Reveal Secret Note &amp; Confession Card Maker">
+  <meta name="twitter:title" content="💌 Someone Sealed a Secret Note for You — Unseal">
   <meta name="twitter:description"
-    content="Send a secret crush scratch card or sweet confession link on WhatsApp &amp; Instagram. Zero servers, works on every phone.">
+    content="Rub metallic gold foil to unseal a secret confession + unlock your personalized 9:16 Mystery Gift Card for Status &amp; Stories.">
   <meta name="twitter:image" content="https://unseal.cards/assets/og-image.png">
 
   <!-- Brand Icons & PWA Manifest -->
@@ -53,7 +75,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
 
-  <!-- Signature Curated Google Fonts: Playfair Display, Caveat, Kalam (Hindi script), Noto Sans Devanagari & DM Sans -->
+  <!-- Signature Curated Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -69,13 +91,14 @@
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "Unseal",
-    "alternateName": "Unseal Scratch-to-Reveal Secret Note Maker",
+    "alternateName": "Unseal Scratch-to-Reveal Secret Note & Mystery Gift Card App",
     "url": "https://unseal.cards/",
-    "description": "Free digital scratch-off secret note maker with compact client-side URL encoding, champagne gold foil canvas, and downloadable personalized 9:16 Status Gift Cards.",
+    "description": "Free installable PWA scratch-off secret note maker with ultra-short browser-side URL encoding, champagne gold foil canvas, and 2026 Mystery Collector Gift Cards for both senders and receivers.",
     "applicationCategory": "SocialNetworkingApplication",
     "operatingSystem": "All",
     "browserRequirements": "Requires JavaScript and HTML5 Canvas",
     "isAccessibleForFree": true,
+    "keywords": "secret scratch note maker, anonymous whatsapp confession link, mystery gift card status, instagram story secret card, hinglish secret message pwa",
     "image": "https://unseal.cards/assets/og-image.png",
     "offers": {
       "@type": "Offer",
@@ -83,11 +106,11 @@
       "priceCurrency": "USD"
     },
     "featureList": [
-      "Zero-server client-side compressed URL encoding",
-      "Short readable name + 8-letter unique ID links",
-      "Realistic brushed champagne gold HTML5 scratch foil",
-      "Full UTF-8 support for English, Hindi, Hinglish, and emojis",
-      "Personalized 9:16 Status and Story Name Gift Card export"
+      "Ultra-compact client-side U4 URL encoding with zero server storage",
+      "Short trusted ?Name-8LetterId links that work across all phones",
+      "Interactive brushed champagne gold HTML5 scratch foil with haptics",
+      "Mutual 2026 Mystery Collector Gift Vault for both sender and receiver",
+      "Installable Progressive Web App with offline scratch postcard support"
     ]
   }
   </script>
@@ -103,316 +126,477 @@
         "name": "How does Unseal send secret scratch-off notes without a server or account?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Unseal compresses your recipient name, message, and optional clue directly inside your browser into a short URL combining the recipient name, an 8-letter unique card ID, and a compact encrypted fragment. Zero servers or databases ever read or store your secret."
+          "text": "Unseal compresses your recipient name, message, and optional clue inside your browser into a short URL format combining the recipient name, an 8-letter card pass ID, and a compact client-side encoded fragment. Zero servers or databases ever read or store your note."
         }
       },
       {
         "@type": "Question",
-        "name": "Does Unseal support Hindi, Hinglish, and emojis inside secret notes?",
+        "name": "How do both sender and receiver get a Mystery Story Gift Card?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. Unseal pairs Caveat script for English with Kalam and Noto Sans Devanagari for Hindi, and packs Devanagari characters into a single byte per character so Hindi, Hinglish, and emoji notes stay extra short and render crisply on every phone."
+          "text": "Both the sender after sealing a note and the receiver after scratching it open receive a locked 2026 Mystery Collector Vault. Sharing Unseal with 5 friends on WhatsApp cracks open all five wax seals to reveal their randomized Luxury Rarity Pass, Vibe Score, Fortune Prophecy, and spoiler-free 9:16 PNG for Instagram Story or WhatsApp Status."
         }
       },
       {
         "@type": "Question",
-        "name": "How do the personalized Status Gift Cards work?",
+        "name": "Can I install Unseal on my phone like a native app?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "When you seal and share a secret note—or finish unsealing one—Unseal unlocks a personalized 9:16 Name Gift Card designed for Instagram Stories and WhatsApp Status without exposing private note spoilers to everyone viewing your status."
+          "text": "Yes. Unseal is a full Progressive Web App (PWA) with an offline Service Worker and manifest. Tap Install App in the top header on Android Chrome, Edge, or desktop—or use Share then Add to Home Screen in iPhone Safari—to launch it fullscreen from your home screen."
         }
       },
       {
         "@type": "Question",
-        "name": "Can the recipient automatically see my name?",
+        "name": "Why are Unseal links shorter and safe to tap on WhatsApp?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "If you enter your name in the optional Gift Card field, it stays strictly local to customize your own Status Gift Card and is never attached to the sealed link. Only the optional clue you write is shown below the scratched card."
+          "text": "Unseal v7 uses 6-bit phrase packing and 1-byte Devanagari compression so typical notes compress into ultra-compact URL fragments alongside a readable recipient name slug (?Name-8LetterId), avoiding sketchy-looking redirect shorteners."
         }
       },
       {
         "@type": "Question",
-        "name": "Does the scratch foil work properly on iPhone and Android browsers?",
+        "name": "Does Unseal support Hindi, Hinglish, and emojis cleanly?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. The HTML5 canvas uses touch-action locking and passive-false touch listeners so mobile pages never scroll while rubbing the foil. Once 45% of the foil is scratched off, the note reveals smoothly with warm confetti and gentle chime audio."
+          "text": "Yes. Unseal pairs Caveat script for English with Kalam and Noto Sans Devanagari for Hindi handwriting, keeping Hindi, Hinglish, and emojis crisp on both Android and iPhone screens."
         }
       },
       {
         "@type": "Question",
-        "name": "Are older Unseal links (?seal= and ?s=) still supported?",
+        "name": "Are older Unseal links (?seal=, ?s=, and U3) still supported?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. Unseal remains backward compatible with legacy ?seal= and ?s= links alongside the shorter ?Name-UniqueId link format."
+          "text": "Yes. Unseal automatically decodes legacy ?seal= and ?s= links as well as U3 and compact U4 URLs."
         }
       }
     ]
   }
   </script>
+
+  <!-- Central Analytics & Monetization Config Slot -->
+  <script>
+    window.UNSEAL_CONFIG = {
+      ga4Id: 'G-XXXXXXXXXX',               // Replace with your Google Analytics 4 Measurement ID (e.g. G-1234ABCD56)
+      adsenseClient: 'ca-pub-0000000000000000', // Replace with your AdSense Publisher ID
+      siteOrigin: 'https://unseal.cards'
+    };
+  </script>
 </head>
 
 <body>
 
-  <!-- MINIMAL CLEAN HEADER -->
-  <header class="site-header">
-    <a id="brandResetLink" href="./" class="brand-link" aria-label="Unseal Home">
-      <img src="assets/logo.svg" alt="Unseal wax seal logo" width="30" height="30" class="brand-logo-img">
-      <span class="brand-wordmark-wrap">
-        <span class="brand-wordmark">Unseal</span>
-        <span class="brand-wax-dot" aria-hidden="true"></span>
-      </span>
-    </a>
+  <!-- ==================== FULL-SCREEN ADAPTIVE APP STAGE ==================== -->
+  <div id="appFullscreenShell" class="app-fullscreen-shell">
 
-    <button id="audioToggleBtn" type="button" class="audio-toggle-btn" aria-label="Toggle Sound Effects"
-      aria-pressed="false" title="Toggle scratch &amp; reveal chime">
-      <span id="audioToggleIcon">🔇</span>
-      <span class="audio-toggle-label">Sound</span>
-    </button>
-  </header>
+    <!-- Subtle GPU-only Floating Ambient Sparkles -->
+    <div class="ambient-sparkles" aria-hidden="true">
+      <span class="spark-dot s1"></span>
+      <span class="spark-dot s2"></span>
+      <span class="spark-dot s3"></span>
+      <span class="spark-dot s4"></span>
+      <span class="spark-dot s5"></span>
+    </div>
 
-  <!-- FOCUSED MAIN STAGE (Clean Single-Card Experience) -->
-  <main class="main-stage">
+    <!-- TOP BAR: BRAND + INSTALL APP + FULLSCREEN + AUDIO -->
+    <header class="site-header">
+      <a id="brandResetLink" href="./" class="brand-link" aria-label="Unseal Home">
+        <img src="assets/logo.svg" alt="Unseal wax seal logo" width="32" height="32" class="brand-logo-img">
+        <span class="brand-wordmark-wrap">
+          <span class="brand-wordmark">Unseal</span>
+          <span class="brand-wax-dot" aria-hidden="true"></span>
+        </span>
+      </a>
 
-    <!-- ==================== VIEW 1: WRITE & SEAL ==================== -->
-    <section id="viewWrite" class="stage-view">
+      <div class="header-actions">
+        <button id="installAppBtn" type="button" class="install-app-btn" title="Install Unseal as a phone app">
+          <span aria-hidden="true">📲</span>
+          <span>Install App</span>
+        </button>
 
-      <!-- Clean Composer Card -->
-      <article id="composerCard" class="paper-card composer-card">
-        <div class="card-top-meta">
-          <span class="kicker-badge">PRIVATE SCRATCH NOTE</span>
-          <span class="signature-wax-chip" aria-hidden="true">♥</span>
-        </div>
+        <button id="fullscreenToggleBtn" type="button" class="icon-pill-btn" aria-label="Toggle Fullscreen"
+          aria-pressed="false" title="Full-screen mode">
+          <span id="fullscreenIcon">⛶</span>
+        </button>
 
-        <h1 class="card-headline">Write a secret they have to unseal.</h1>
-        <p class="card-lead">Simple, private, zero login. Seal your note under champagne gold foil and get a short
-          shareable link.</p>
+        <button id="audioToggleBtn" type="button" class="audio-toggle-btn" aria-label="Toggle Sound Effects"
+          aria-pressed="false" title="Toggle scratch &amp; reveal chime">
+          <span id="audioToggleIcon">🔇</span>
+          <span class="audio-toggle-label">Sound</span>
+        </button>
+      </div>
+    </header>
 
-        <div class="form-stack">
-          <div class="name-pair-grid">
-            <div class="field-group">
-              <label for="recipientInput" class="field-label">Send To (Name)</label>
-              <input id="recipientInput" type="text" maxlength="32" autocomplete="off"
-                placeholder="e.g. Maya or Secret Crush" class="text-input">
+    <!-- CENTERED MAIN CARD STAGE -->
+    <main class="main-stage">
+
+      <!-- ==================== VIEW 1: WRITE & SEAL ==================== -->
+      <section id="viewWrite" class="stage-view">
+
+        <!-- Composer Card -->
+        <article id="composerCard" class="paper-card composer-card">
+          <div class="card-top-meta">
+            <span class="kicker-badge">PRIVATE SCRATCH NOTE • FREE PWA</span>
+            <span class="signature-wax-chip" aria-hidden="true">♥</span>
+          </div>
+
+          <h1 class="card-headline">Write a secret they have to unseal.</h1>
+          <p class="card-lead">Zero login, ultra-short trusted link. Seal your note under champagne gold foil &amp;
+            unlock a
+            <strong>2026 Mystery Story Gift Card</strong> for both of you.
+          </p>
+
+          <div class="form-stack">
+            <div class="name-pair-grid">
+              <div class="field-group">
+                <label for="recipientInput" class="field-label">Send To (Name)</label>
+                <input id="recipientInput" type="text" maxlength="32" autocomplete="off"
+                  placeholder="e.g. Maya or Secret Crush" class="text-input">
+              </div>
+
+              <div class="field-group">
+                <label for="senderNameInput" class="field-label">Your Name <span class="label-muted">(for Your Gift
+                    Card)</span></label>
+                <input id="senderNameInput" type="text" maxlength="24" autocomplete="off"
+                  placeholder="Optional — hidden from note" class="text-input">
+              </div>
             </div>
 
             <div class="field-group">
-              <label for="senderNameInput" class="field-label">Your Name <span class="label-muted">(for Gift
-                  Card)</span></label>
-              <input id="senderNameInput" type="text" maxlength="24" autocomplete="off"
-                placeholder="Optional — hidden from note" class="text-input">
+              <div class="label-split">
+                <label for="secretTextarea" class="field-label">Your Secret Message</label>
+                <span class="label-hint">Hindi, Hinglish &amp; emojis welcome</span>
+              </div>
+
+              <div class="signature-letter-box">
+                <textarea id="secretTextarea" rows="4" maxlength="280" autocomplete="off"
+                  placeholder="Write what you can't say out loud... ❤️" class="letter-textarea"></textarea>
+                <div class="letter-box-footer">
+                  <button id="clearComposerBtn" type="button" class="text-action-btn">Clear</button>
+                  <span id="secretCharCount" class="char-count">0 / 280</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="clueInput" class="field-label">Optional Hint / Clue</label>
+              <input id="clueInput" type="text" maxlength="80" autocomplete="off"
+                placeholder="e.g. Someone sitting two rows behind you..." class="text-input text-input-compact">
+            </div>
+
+            <button id="sealCardBtn" type="button" class="wax-seal-btn">
+              <span>✨ Seal Note &amp; Unlock Short Link</span>
+            </button>
+          </div>
+        </article>
+
+        <!-- Sender Ready View: Short Link + Unique WhatsApp Preview Card + 5-Friend Mystery Gift Vault -->
+        <article id="senderReadyCard" class="paper-card ready-card hidden">
+          <div class="ready-top-bar">
+            <div>
+              <span class="kicker-badge">SEALED &amp; READY</span>
+              <h2 id="readyHeadline" class="ready-title">Sealed for Someone ✨</h2>
+            </div>
+            <div class="ready-top-actions">
+              <span id="readyCardIdBadge" class="mono-id-badge">#QbQCdbtD</span>
+              <button id="editSealedBtn" type="button" class="text-action-btn">← Edit</button>
             </div>
           </div>
 
-          <div class="field-group">
-            <div class="label-split">
-              <label for="secretTextarea" class="field-label">Your Secret Message</label>
-              <span class="label-hint">Hindi, Hinglish &amp; emojis welcome</span>
+          <!-- Short Trust Link Bar -->
+          <div class="url-trust-wrap">
+            <div class="url-copy-bar">
+              <div class="url-text-wrap">
+                <span class="url-icon" aria-hidden="true">🔒</span>
+                <span id="previewUrlText" class="url-preview-text">https://unseal.cards/...</span>
+              </div>
+              <button id="copyUrlBtn" type="button" class="copy-pill-btn">Copy</button>
             </div>
+            <p class="link-trust-caption">✅ Direct encrypted HTTPS link — no tracking redirects or fake popups</p>
+          </div>
 
-            <div class="signature-letter-box">
-              <textarea id="secretTextarea" rows="4" maxlength="280" autocomplete="off"
-                placeholder="Write what you can't say out loud... ❤️" class="letter-textarea"></textarea>
-              <div class="letter-box-footer">
-                <button id="clearComposerBtn" type="button" class="text-action-btn">Clear</button>
-                <span id="secretCharCount" class="char-count">0 / 280</span>
+          <!-- UNIQUE LIVE WHATSAPP PREVIEW CARD -->
+          <div class="wa-link-preview-shell" aria-label="Preview of link card on WhatsApp">
+            <span class="wa-preview-kicker">💬 HOW YOUR LINK PREVIEW CARD LOOKS WHEN SENT</span>
+            <div class="wa-preview-card">
+              <img src="assets/og-image.png" alt="Unseal Link Preview Thumbnail" class="wa-preview-thumb" width="1200"
+                height="630">
+              <div class="wa-preview-body">
+                <span class="wa-preview-domain">unseal.cards</span>
+                <strong id="waPreviewTitle" class="wa-preview-title">💌 For Maya — Scratch to Unseal Your Secret
+                  Note</strong>
+                <span class="wa-preview-desc">Rub the gold foil to reveal + crack open your 2026 Mystery Gift
+                  Card.</span>
               </div>
             </div>
           </div>
 
-          <div class="field-group">
-            <label for="clueInput" class="field-label">Optional Hint / Clue</label>
-            <input id="clueInput" type="text" maxlength="80" autocomplete="off"
-              placeholder="e.g. Someone sitting two rows behind you..." class="text-input text-input-compact">
-          </div>
-
-          <button id="sealCardBtn" type="button" class="wax-seal-btn">
-            <span>✨ Seal Note &amp; Create Short Link</span>
-          </button>
-        </div>
-      </article>
-
-      <!-- Clean Ready & Gift Card View (Revealed smoothly once sealed) -->
-      <article id="senderReadyCard" class="paper-card ready-card hidden">
-        <div class="ready-top-bar">
-          <div>
-            <span class="kicker-badge">READY TO SEND</span>
-            <h2 id="readyHeadline" class="ready-title">Sealed for Someone ✨</h2>
-          </div>
-          <div class="ready-top-actions">
-            <span id="readyCardIdBadge" class="mono-id-badge">#KmNpQrSt</span>
-            <button id="editSealedBtn" type="button" class="text-action-btn">← Edit</button>
-          </div>
-        </div>
-
-        <div class="url-copy-bar">
-          <div class="url-text-wrap">
-            <span class="url-icon" aria-hidden="true">🔗</span>
-            <span id="previewUrlText" class="url-preview-text">https://unseal.cards/...</span>
-          </div>
-          <button id="copyUrlBtn" type="button" class="copy-pill-btn">Copy</button>
-        </div>
-
-        <div class="share-actions-grid">
-          <button id="whatsappShareBtn" type="button" class="btn-whatsapp">
-            <span>💚 Share on WhatsApp</span>
-          </button>
-          <button id="copyIgBtn" type="button" class="btn-instagram">
-            <span id="copyIgBtnText">📸 Copy for IG Story / DM</span>
-          </button>
-          <button id="shareTelegramBtn" type="button" class="btn-soft">
-            <span>✈️ Telegram</span>
-          </button>
-          <button id="nativeShareBtn" type="button" class="btn-soft">
-            <span>📤 More Apps</span>
-          </button>
-        </div>
-
-        <!-- Personalized Status / Story Gift Card Reward for the Sharer -->
-        <section id="senderGiftBox" class="gift-reward-panel" aria-labelledby="giftPanelTitle">
-          <div class="gift-header-row">
-            <span id="giftPanelTitle" class="gift-badge">🎁 YOUR STATUS &amp; STORY GIFT CARD</span>
-            <span id="giftUnlockedState" class="gift-status-tag">Ready to Post</span>
-          </div>
-          <p class="gift-desc">
-            A spoiler-free luxury Name Card unlocked for sharing. Post it on WhatsApp Status or Instagram Story so
-            friends ask who sent one!
-          </p>
-
-          <!-- Live Miniature Gift Name Card -->
-          <div id="giftMiniCard" class="gift-mini-card">
-            <div class="gift-mini-top">
-              <span class="gift-mini-kicker">UNSEAL • VIP SEAL</span>
-              <span id="giftMiniPassId" class="gift-mini-id">#KmNpQrSt</span>
-            </div>
-            <div class="gift-mini-center">
-              <div class="gift-mini-crest" aria-hidden="true">♥</div>
-              <p id="giftMiniMainText" class="gift-mini-main">Secret sealed for Maya ✨</p>
-              <p id="giftMiniSubText" class="gift-mini-sub">Think this card is yours? Check your inbox 👀</p>
-            </div>
-            <div class="gift-mini-foot">
-              <span>unseal.cards</span>
-              <span>Zero Spoilers</span>
-            </div>
-          </div>
-
-          <div class="gift-btn-row">
-            <button id="downloadGiftCardBtn" type="button" class="btn-gold-gift">
-              <span>🎁 Download 9:16 Gift Card</span>
+          <!-- Primary Send Buttons -->
+          <div class="share-actions-grid">
+            <button id="whatsappShareBtn" type="button" class="btn-whatsapp">
+              <span id="whatsappSendBtnText">💚 Send Secret on WhatsApp</span>
             </button>
-            <button id="shareGiftImageBtn" type="button" class="btn-soft">
-              <span>📤 Share Card Image</span>
+            <button id="copyIgBtn" type="button" class="btn-instagram">
+              <span id="copyIgBtnText">📸 Copy for IG Story / DM</span>
+            </button>
+            <button id="shareTelegramBtn" type="button" class="btn-soft">
+              <span>✈️ Telegram</span>
+            </button>
+            <button id="nativeShareBtn" type="button" class="btn-soft">
+              <span>📤 More Apps</span>
             </button>
           </div>
-        </section>
 
-        <div class="ready-footer-links">
-          <button id="testScratchBtn" type="button" class="text-action-btn">👀 Preview Scratch Card</button>
-          <span class="dot-sep" aria-hidden="true">·</span>
-          <button id="writeNewBtn" type="button" class="text-action-btn">+ Write Another Note</button>
-        </div>
-      </article>
-
-    </section>
-
-    <!-- ==================== VIEW 2: SCRATCH POSTCARD (RECEIVER / TEST PREVIEW) ==================== -->
-    <section id="viewPreview" class="stage-view hidden">
-
-      <div id="previewTopBar" class="preview-back-row hidden">
-        <button id="backToReadyBtn" type="button" class="text-action-btn">← Back to Share &amp; Gift Card</button>
-      </div>
-
-      <article id="receiverPostcard" class="paper-card receiver-card">
-        <div class="card-top-meta">
-          <div class="receiver-meta-left">
-            <span class="kicker-badge">CONFIDENTIAL POSTCARD</span>
-            <span id="receiverCardId" class="mono-id-badge">#KmNpQrSt</span>
-          </div>
-          <div id="waxStampBadge" class="wax-stamp-badge" aria-hidden="true">♥</div>
-        </div>
-
-        <h2 id="postcardHeading" class="card-headline postcard-heading">
-          For You, someone sealed a secret note.
-        </h2>
-
-        <!-- Interactive Brushed Champagne Foil Scratch Box -->
-        <div id="scratchBox" class="scratch-box">
-          <div id="underneathSecretBox" class="underneath-secret-box">
-            <span class="note-kicker">UNSEALED SECRET NOTE</span>
-            <p id="revealedSecretText" class="revealed-secret-text">
-              Your handwritten secret note appears here once you scratch the foil.
+          <!-- SENDER MYSTERY GIFT VAULT (5 WhatsApp Shares Unlock) -->
+          <section id="senderGiftBox" class="gift-reward-panel" aria-labelledby="senderGiftTitle">
+            <div class="gift-header-row">
+              <span id="senderGiftTitle" class="gift-badge">🎁 SENDER MYSTERY GIFT VAULT</span>
+              <span id="senderQuestPill" class="gift-status-tag">0 / 5 Shared</span>
+            </div>
+            <p id="senderQuestDesc" class="gift-desc">
+              A surprise <strong>2026 Mystery Collector Gift Card</strong> is waiting inside—could reveal a
+              <strong>Gold VIP Aura Pass</strong>, <strong>Diamond Fortune</strong>, or <strong>Midnight Crown</strong>!
+              Share with <strong>5 friends on WhatsApp</strong> to crack the seals &amp; post yours on Status/Story.
             </p>
-            <div class="note-signature-row">
-              <span>💌 Sealed via Unseal</span>
-              <span class="note-brand-italic">Unsealed</span>
+
+            <!-- 5 Wax-Seal Progress Meter -->
+            <div class="quest-meter-box">
+              <div id="senderWaxTrack" class="wax-seals-row" aria-label="5 WhatsApp share progress">
+                <span class="wax-slot" data-slot="1">1</span>
+                <span class="wax-slot" data-slot="2">2</span>
+                <span class="wax-slot" data-slot="3">3</span>
+                <span class="wax-slot" data-slot="4">4</span>
+                <span class="wax-slot" data-slot="5">5</span>
+              </div>
+              <div class="quest-bar-track">
+                <div id="senderProgressFill" class="quest-bar-fill" style="width: 0%;"></div>
+              </div>
             </div>
+
+            <!-- Live Blurred -> Unblurred Collector Gift Card Preview -->
+            <div id="senderGiftMiniCard" class="gift-mini-card is-locked-vault">
+              <div class="gift-mini-top">
+                <span id="senderGiftTierLabel" class="gift-mini-kicker">UNSEAL • MYSTERY VAULT</span>
+                <span id="senderGiftPassId" class="gift-mini-id">#QbQCdbtD</span>
+              </div>
+              <div class="gift-mini-center">
+                <div id="senderGiftCrest" class="gift-mini-crest" aria-hidden="true">🎁</div>
+                <p id="senderGiftMainText" class="gift-mini-main">Mystery 2026 Gift Pass Locked</p>
+                <p id="senderGiftSubText" class="gift-mini-sub">Aura Score, Rare Title &amp; Fortune hidden inside</p>
+              </div>
+              <div class="gift-mini-foot">
+                <span>unseal.cards</span>
+                <span id="senderGiftRarityChip">? / Top Mystery Tier</span>
+              </div>
+
+              <!-- Lock Veil Overlay (Removed cleanly at 5/5) -->
+              <div id="senderVaultVeil" class="vault-lock-veil">
+                <span class="vault-lock-icon">🔐</span>
+                <strong id="senderVaultVeilTitle">5 WhatsApp Shares to Unlock</strong>
+                <span id="senderVaultVeilSub">Invite 5 friends so more people join &amp; crack your surprise card</span>
+              </div>
+            </div>
+
+            <!-- Vault CTA: Quest button while < 5/5, Download/Share buttons when 5/5 -->
+            <button id="senderQuestWhatsAppBtn" type="button" class="btn-whatsapp quest-cta-btn">
+              <span id="senderQuestBtnText">💚 Share on WhatsApp to Crack Seal 1/5 →</span>
+            </button>
+
+            <div id="senderGiftUnlockedBtns" class="gift-btn-row hidden">
+              <button id="downloadGiftCardBtn" type="button" class="btn-gold-gift">
+                <span>🎁 Download 9:16 Gift Card</span>
+              </button>
+              <button id="shareGiftImageBtn" type="button" class="btn-soft">
+                <span>📤 Share to Status / Story</span>
+              </button>
+            </div>
+          </section>
+
+          <div class="ready-footer-links">
+            <button id="testScratchBtn" type="button" class="text-action-btn">👀 Preview Scratch Card</button>
+            <span class="dot-sep" aria-hidden="true">·</span>
+            <button id="writeNewBtn" type="button" class="text-action-btn">+ Write Another Note</button>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- ==================== VIEW 2: SCRATCH POSTCARD (RECEIVER / TEST PREVIEW) ==================== -->
+      <section id="viewPreview" class="stage-view hidden">
+
+        <div id="previewTopBar" class="preview-back-row hidden">
+          <button id="backToReadyBtn" type="button" class="text-action-btn">← Back to Share &amp; Mystery Gift
+            Vault</button>
+        </div>
+
+        <article id="receiverPostcard" class="paper-card receiver-card">
+          <div class="card-top-meta">
+            <div class="receiver-meta-left">
+              <span class="kicker-badge">CONFIDENTIAL POSTCARD</span>
+              <span id="receiverCardId" class="mono-id-badge">#QbQCdbtD</span>
+            </div>
+            <div id="waxStampBadge" class="wax-stamp-badge" aria-hidden="true">♥</div>
           </div>
 
-          <canvas id="scratchCanvas" aria-label="Scratch off metallic foil to reveal secret message"></canvas>
-        </div>
+          <h2 id="postcardHeading" class="card-headline postcard-heading">
+            For You, someone sealed a secret note.
+          </h2>
 
-        <!-- Progress & Accessibility Fallback -->
-        <div class="scratch-controls-row">
-          <span id="scratchStatusPill" class="scratch-status-pill">🪙 Rub foil gently to unseal</span>
-          <button id="quickRevealBtn" type="button" class="text-action-btn">Quick Reveal</button>
-        </div>
+          <!-- Interactive Brushed Champagne Foil Scratch Box -->
+          <div id="scratchBox" class="scratch-box">
+            <div id="underneathSecretBox" class="underneath-secret-box">
+              <span class="note-kicker">UNSEALED SECRET NOTE</span>
+              <p id="revealedSecretText" class="revealed-secret-text">
+                Your handwritten secret note appears here once you scratch the foil.
+              </p>
+              <div class="note-signature-row">
+                <span>💌 Sealed via Unseal</span>
+                <span class="note-brand-italic">Unsealed</span>
+              </div>
+            </div>
 
-        <!-- Clue Box -->
-        <div class="clue-card">
-          <span class="clue-label">🕵️ CLUE FROM SENDER</span>
-          <p id="revealedClueText" class="clue-text">"A quiet admirer"</p>
-        </div>
-
-        <!-- Post-Reveal Clean Actions (Visible after unsealing) -->
-        <div id="postRevealActions" class="post-reveal-actions hidden">
-          <button id="openShareModalBtn" type="button" class="btn-whatsapp">
-            <span>💚 Share with Friends</span>
-          </button>
-          <button id="receiverGiftBtn" type="button" class="btn-gold-gift">
-            <span>🎁 Claim Status Gift Card</span>
-          </button>
-          <div class="post-reveal-secondary">
-            <button id="sealBackBtn" type="button" class="btn-soft">💌 Send a Secret Note Back</button>
-            <button id="downloadRevealedCardBtn" type="button" class="btn-soft">📸 Save Revealed Note PNG</button>
+            <canvas id="scratchCanvas" aria-label="Scratch off metallic foil to reveal secret message"></canvas>
           </div>
-        </div>
 
-      </article>
+          <!-- Progress & Quick Reveal Fallback -->
+          <div class="scratch-controls-row">
+            <span id="scratchStatusPill" class="scratch-status-pill">🪙 Rub foil gently to unseal</span>
+            <button id="quickRevealBtn" type="button" class="text-action-btn">Quick Reveal</button>
+          </div>
 
-    </section>
+          <!-- Clue Box -->
+          <div class="clue-card">
+            <span class="clue-label">🕵️ CLUE FROM SENDER</span>
+            <p id="revealedClueText" class="clue-text">"A quiet admirer"</p>
+          </div>
 
-  </main>
+          <!-- Receiver Post-Reveal Actions & Receiver 5-Share Mystery Gift Vault -->
+          <div id="postRevealActions" class="post-reveal-actions hidden">
 
-  <!-- POST-REVEAL CELEBRATION SHARE POPUP -->
+            <section id="receiverGiftBox" class="gift-reward-panel" aria-labelledby="receiverGiftTitle">
+              <div class="gift-header-row">
+                <span id="receiverGiftTitle" class="gift-badge">🎁 YOUR MYSTERY GIFT VAULT</span>
+                <span id="receiverQuestPill" class="gift-status-tag">0 / 5 Shared</span>
+              </div>
+              <p id="receiverQuestDesc" class="gift-desc">
+                You unsealed a secret note—now claim YOUR surprise <strong>2026 Mystery Collector Gift Card</strong>!
+                Send Unseal to <strong>5 friends on WhatsApp</strong> to reveal your Aura Score &amp; Fortune Card for
+                Story/Status.
+              </p>
+
+              <div class="quest-meter-box">
+                <div id="receiverWaxTrack" class="wax-seals-row" aria-label="5 WhatsApp share progress">
+                  <span class="wax-slot" data-slot="1">1</span>
+                  <span class="wax-slot" data-slot="2">2</span>
+                  <span class="wax-slot" data-slot="3">3</span>
+                  <span class="wax-slot" data-slot="4">4</span>
+                  <span class="wax-slot" data-slot="5">5</span>
+                </div>
+                <div class="quest-bar-track">
+                  <div id="receiverProgressFill" class="quest-bar-fill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div id="receiverGiftMiniCard" class="gift-mini-card is-locked-vault">
+                <div class="gift-mini-top">
+                  <span id="receiverGiftTierLabel" class="gift-mini-kicker">UNSEAL • MYSTERY VAULT</span>
+                  <span id="receiverGiftPassId" class="gift-mini-id">#QbQCdbtD</span>
+                </div>
+                <div class="gift-mini-center">
+                  <div id="receiverGiftCrest" class="gift-mini-crest" aria-hidden="true">🎁</div>
+                  <p id="receiverGiftMainText" class="gift-mini-main">Receiver Mystery Pass Locked</p>
+                  <p id="receiverGiftSubText" class="gift-mini-sub">Secret Fortune &amp; Aura Reading waiting inside</p>
+                </div>
+                <div class="gift-mini-foot">
+                  <span>unseal.cards</span>
+                  <span id="receiverGiftRarityChip">? / Collector Edition</span>
+                </div>
+
+                <div id="receiverVaultVeil" class="vault-lock-veil">
+                  <span class="vault-lock-icon">🎁</span>
+                  <strong id="receiverVaultVeilTitle">Share with 5 Friends to Crack Open</strong>
+                  <span id="receiverVaultVeilSub">Could hold a Gold Aura Pass, Lucky Prophecy, or VIP Status Card</span>
+                </div>
+              </div>
+
+              <button id="receiverQuestWhatsAppBtn" type="button" class="btn-whatsapp quest-cta-btn">
+                <span id="receiverQuestBtnText">💚 Share on WhatsApp to Unlock (0/5) →</span>
+              </button>
+
+              <div id="receiverGiftUnlockedBtns" class="gift-btn-row hidden">
+                <button id="receiverGiftBtn" type="button" class="btn-gold-gift">
+                  <span>🎁 Download 9:16 Gift Card</span>
+                </button>
+                <button id="receiverShareGiftImageBtn" type="button" class="btn-soft">
+                  <span>📤 Share to Status / Story</span>
+                </button>
+              </div>
+            </section>
+
+            <div class="post-reveal-secondary">
+              <button id="sealBackBtn" type="button" class="wax-seal-btn">💌 Send a Secret Note Back</button>
+              <button id="downloadRevealedCardBtn" type="button" class="btn-soft">📸 Save Revealed Note PNG</button>
+            </div>
+            <button id="openShareModalBtn" type="button" class="text-action-btn center-inline-link">🎁 Open Mystery Gift
+              Popup</button>
+          </div>
+
+        </article>
+
+      </section>
+
+    </main>
+
+    <!-- FULL-SCREEN BOTTOM SOCIAL PROOF & SCROLL CUE -->
+    <footer class="stage-bottom-bar">
+      <div class="live-counter-pill" title="Live community notes unsealed today">
+        <span class="live-pulse-dot" aria-hidden="true"></span>
+        <span><strong id="liveCounterCount">4,918</strong> notes unsealed today</span>
+      </div>
+      <a href="#editorialGuide" class="scroll-cue-link">✨ Note Ideas, Privacy &amp; FAQ ↓</a>
+    </footer>
+
+  </div><!-- /.app-fullscreen-shell -->
+
+  <!-- ==================== POST-REVEAL MYSTERY GIFT POPUP MODAL ==================== -->
   <div id="revealShareModal" class="modal-backdrop hidden" role="dialog" aria-modal="true"
     aria-labelledby="revealModalTitle">
     <div class="modal-card reveal-popup-card">
       <button id="closeRevealModalBtn" type="button" class="modal-close-x" aria-label="Close popup">✕</button>
 
-      <span class="popup-pill">✨ SECRET UNSEALED</span>
-      <h2 id="revealModalTitle" class="popup-title">Surprise someone special next!</h2>
+      <span class="popup-pill">🎁 SECRET UNSEALED + BONUS SURPRISE</span>
+      <h2 id="revealModalTitle" class="popup-title">Unlock Your 2026 Mystery Gift Card!</h2>
       <p class="popup-desc">
-        Loved scratching that open? Share Unseal on WhatsApp or your Story so friends can send you a secret too—plus
-        claim your own Status Gift Card below.
+        Share Unseal with <strong>5 friends on WhatsApp</strong> to crack open what’s inside your personalized Gift Box
+        (could be a <strong>Gold VIP Aura</strong>, <strong>Diamond Destiny</strong>, or <strong>Secret Fortune
+          Pass</strong> for your Status &amp; IG Story!).
       </p>
 
       <div class="popup-gift-preview">
-        <span class="popup-gift-icon">🎁</span>
+        <span id="popupGiftIcon" class="popup-gift-icon">🎁</span>
         <div class="popup-gift-copy">
-          <strong id="popupGiftNameLine">Personalized Name Gift Card Unlocked</strong>
-          <span>Ready to post on WhatsApp Status &amp; IG Story (zero spoilers)</span>
+          <strong id="popupGiftNameLine">Mystery Collector Gift Card Locked</strong>
+          <span id="popupQuestProgressCopy">Progress: 0 / 5 WhatsApp shares completed</span>
         </div>
+      </div>
+
+      <div id="modalWaxTrack" class="wax-seals-row modal-seals-row" aria-label="Popup 5-share progress">
+        <span class="wax-slot" data-slot="1">1</span>
+        <span class="wax-slot" data-slot="2">2</span>
+        <span class="wax-slot" data-slot="3">3</span>
+        <span class="wax-slot" data-slot="4">4</span>
+        <span class="wax-slot" data-slot="5">5</span>
       </div>
 
       <div class="popup-cta-stack">
         <button id="modalShareWhatsAppBtn" type="button" class="btn-whatsapp">
-          <span>💚 Share on WhatsApp</span>
+          <span id="modalWhatsAppBtnText">💚 Share on WhatsApp to Unlock (0/5)</span>
         </button>
         <div class="popup-two-col">
           <button id="modalClaimGiftBtn" type="button" class="btn-gold-gift">
-            <span>🎁 Get Gift Card PNG</span>
+            <span id="modalClaimBtnText">🔒 9:16 Gift Card (5/5)</span>
           </button>
           <button id="modalShareNativeBtn" type="button" class="btn-soft">
-            <span>📤 Share Anywhere</span>
+            <span>📤 Other Apps</span>
           </button>
         </div>
         <button id="modalReplyBtn" type="button" class="wax-seal-btn popup-reply-btn">
@@ -422,126 +606,206 @@
     </div>
   </div>
 
-  <!-- ADSENSE SLOT 1: Clean Post-Stage Responsive Banner (Safe distance below stage) -->
-  <aside class="ad-wrapper" aria-label="Advertisement">
+  <!-- ==================== UNIQUE PWA INSTALL ANIMATION OVERLAY ==================== -->
+  <div id="pwaInstallOverlay" class="modal-backdrop install-backdrop hidden" role="dialog" aria-modal="true"
+    aria-labelledby="pwaInstallTitle">
+    <div class="modal-card install-anim-card">
+      <button id="closeInstallOverlayBtn" type="button" class="modal-close-x"
+        aria-label="Close install dialog">✕</button>
+
+      <div id="pwaOrbitStage" class="pwa-orbit-stage" aria-hidden="true">
+        <div class="pwa-orbit-ring"></div>
+        <div class="pwa-orbit-spark sp-a">✦</div>
+        <div class="pwa-orbit-spark sp-b">★</div>
+        <div class="pwa-orbit-spark sp-c">✦</div>
+        <div class="pwa-icon-squircle">
+          <img src="assets/icon-192.png" alt="Unseal App Icon" width="76" height="76">
+          <span class="pwa-seal-ribbon">♥</span>
+        </div>
+      </div>
+
+      <span id="pwaInstallBadge" class="popup-pill">📲 INSTALLING UNSEAL PWA</span>
+      <h2 id="pwaInstallTitle" class="popup-title">Sealing Unseal onto your Home Screen…</h2>
+      <p id="pwaInstallStatusText" class="popup-desc">
+        Packaging offline scratch foil, custom stationery fonts &amp; 9:16 Mystery Gift generator.
+      </p>
+
+      <div class="quest-bar-track install-bar-track">
+        <div id="pwaInstallProgressBar" class="quest-bar-fill install-bar-fill" style="width: 12%;"></div>
+      </div>
+
+      <!-- iOS / Manual Fallback Instructions (Shown only when native prompt unavailable) -->
+      <div id="iosInstallStepsBox" class="ios-install-steps hidden">
+        <div class="ios-step-item"><strong>1.</strong> Tap the browser <strong>Share ⬆️</strong> or <strong>Menu
+            ⋮</strong> button.</div>
+        <div class="ios-step-item"><strong>2.</strong> Choose <strong>“Add to Home Screen” ➕</strong> or
+          <strong>“Install App”</strong>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ADSENSE SLOT 1: SAFE BELOW-STAGE LEADERBOARD ==================== -->
+  <aside id="editorialGuide" class="ad-wrapper" aria-label="Advertisement">
     <span class="ad-label">Advertisement</span>
     <div id="ad-slot-leaderboard" class="ad-slot ad-slot-banner">
-      <!-- Replace with Google AdSense Display Responsive unit -->
-      <span>Responsive Display Ad • High-Viewability Banner (728×90 / 320×100)</span>
+      <!-- Replace inner markup with your <ins class="adsbygoogle" ...></ins> tag -->
+      <span>Responsive Display Ad Slot • 728×90 / 320×100 Leaderboard</span>
     </div>
   </aside>
 
-  <!-- BELOW THE FOLD: COMPACT EDITORIAL GUIDE, COLLAPSIBLE FAQS & ADSENSE COMPLIANCE -->
-  <section class="editorial-section" aria-label="How Unseal Works and Frequently Asked Questions">
+  <!-- ==================== BELOW THE FOLD: SEO IDEA CHIPS, EDITORIAL & FAQ ==================== -->
+  <section class="editorial-section" aria-label="Secret Confession Ideas, How Unseal Works &amp; FAQs">
+
+    <!-- 1-Tap Clickable SEO & Hinglish Secret Ideas -->
+    <div class="ideas-box">
+      <div class="ideas-head">
+        <span class="kicker-badge">1-TAP CONFESSION &amp; DARE TEMPLATES</span>
+        <h2 class="editorial-heading">Popular Crush, Bestie &amp; Hinglish Note Ideas</h2>
+        <p class="ideas-sub">Tap any prompt below to load it directly into the Unseal card maker:</p>
+      </div>
+      <div id="ideasChipsGrid" class="ideas-chips-grid">
+        <button type="button" class="idea-chip" data-rec="Crush"
+          data-msg="Every time your name pops up on my screen, my whole mood shifts ❤️✨"
+          data-clue="Someone who smiles at your texts">💌 Sweet Crush Note</button>
+        <button type="button" class="idea-chip" data-rec="Yaar"
+          data-msg="Sach bolu toh tumhare bina college/group boring lagta hai 🥹🔥" data-clue="Back bench gang">🇮🇳
+          Hinglish Secret</button>
+        <button type="button" class="idea-chip" data-rec="Bestie"
+          data-msg="Midnight truth: you're my favorite person to overthink with at 2 AM 🌙✨"
+          data-clue="Your 2 AM buddy">🌙 Midnight Bestie</button>
+        <button type="button" class="idea-chip" data-rec="Buddy"
+          data-msg="Dare: reply with a voice note singing your fav song right now 👀🎤" data-clue="No backing out">🎲
+          Fun Friend Dare</button>
+        <button type="button" class="idea-chip" data-rec="Friend"
+          data-msg="Hey, I was stubborn yesterday. Sorry yar—chai treat is on me ☕💛" data-clue="Coffee &amp; Peace">🥺
+          Cute Apology</button>
+        <button type="button" class="idea-chip" data-rec="Dost"
+          data-msg="तुम्हारी मुस्कान आज भी पूरा दिन बना देती है ✨❤️" data-clue="एक चुपचाप चाहने वाला">🪔 Hindi
+          Handwritten</button>
+      </div>
+    </div>
+
     <article class="editorial-box">
-      <h2 class="editorial-heading">How Unseal Works — Private, Zero-Server Scratch Notes</h2>
+      <h2 class="editorial-heading">How Unseal Works — Private Scratch Cards &amp; Mystery Gift Vaults</h2>
       <p class="editorial-p">
-        Unseal is a lightweight digital scratch-off postcard maker built for honest confessions, inside jokes,
-        birthdays, apologies, and midnight thoughts. Unlike messaging bots or anonymous inbox platforms that save
-        conversations inside third-party cloud databases, Unseal encodes every letter directly inside your browser using
-        compact binary packing and lossless client-side URL compression.
+        <strong>Unseal</strong> is a lightweight, zero-server digital scratch-off note maker crafted for heartfelt
+        confessions, anonymous crush messages, Hinglish inside jokes, apologies, and fun dares. Unlike anonymous inbox
+        apps that upload conversations to remote cloud databases or demand account sign-ups, Unseal packs your
+        recipient’s name, message, and optional clue right inside your browser into an ultra-compact encrypted URL
+        fragment.
       </p>
       <p class="editorial-p">
-        Every sealed card receives a clean, short link showing the recipient’s name alongside a randomly generated
-        8-letter card pass ID, making it effortless to share via WhatsApp, Instagram Direct, Telegram, or SMS. Native
-        support for UTF-8 and 1-byte Devanagari packing means both English calligraphy and Hindi handwritten messages
-        stay crisp, compact, and fast across iPhone, Android, and desktop browsers with zero sign-up required.
-      </p>
-
-      <h3 class="editorial-subheading">Why Share Your Personalized 9:16 Status Gift Card?</h3>
-      <p class="editorial-p">
-        Whether you just sealed a note for someone special or finished scratching a mystery postcard open, Unseal
-        unlocks a collectible 9:16 Name Gift Card designed specifically for WhatsApp Status and Instagram Stories. The
-        Gift Card highlights your name pass without leaking private message text, giving you a clean, aesthetic badge to
-        celebrate the moment and invite friends to drop their own secret cards.
+        Because every sealed postcard uses our custom <strong>6-bit phrase encoder</strong> paired with <strong>1-byte
+          Devanagari packing</strong> and an <strong>8-letter unique pass ID</strong> (such as
+        <code>?Maya-QbQCdbtD#...</code>), links stay noticeably shorter, cleaner, and friendlier to tap inside
+        WhatsApp, Instagram DM, Telegram, and SMS—showing a rich gold-foil preview card every time you share.
       </p>
 
-      <h3 class="editorial-subheading">Tips for Writing Memorable Scratch-Off Confessions &amp; Notes</h3>
+      <h3 class="editorial-subheading">Why Both Sender &amp; Receiver Unlock a 2026 Mystery Collector Gift Card</h3>
       <p class="editorial-p">
-        The best digital scratch notes feel personal, warm, and slightly mysterious. If you are messaging a college
-        crush, mention one specific shared memory—like a rainy afternoon chai break, an inside joke from class, or their
-        playlist—paired with a playful clue so guessing becomes half the thrill. For best friends, birthdays, or overdue
-        apologies, sincere one- or two-line notes in conversational English or handwritten Hindi carry far more weight
-        than long paragraphs. Before hitting seal, always double-check the recipient’s name so your personalized Status
-        Gift Card and postcard greeting look effortlessly thoughtful across every Android and iPhone screen, then paste
-        your short link anywhere friends can tap and unseal it cleanly. Whether opened in Chrome, Safari, or an in-app
-        social browser, your card scales automatically without awkward zooming.
+        Unseal turns every secret note into a two-way celebration. After sealing your postcard—or right after scratching
+        one open—both sender and receiver receive their own locked <strong>2026 Mystery Gift Vault</strong>. Sharing
+        Unseal with five friends on WhatsApp cracks open all five wax seals to reveal a personalized collectible
+        <strong>9:16 Story Gift Card</strong> complete with a surprise rarity tier (Royal Gold Reserve, Celestial
+        Diamond Aura, Midnight Velvet Pass, or Crimson Velvet Charm), personalized Vibe Score, secret fortune prophecy,
+        and zero message spoilers—ready to download as a crisp <code>1080×1920</code> PNG for Instagram Stories and
+        WhatsApp Status.
       </p>
+
+      <h3 class="editorial-subheading">Install Unseal as a Full-Screen App on Android, iPhone &amp; Desktop</h3>
+      <p class="editorial-p">
+        Engineered as a modern <strong>Progressive Web App (PWA)</strong> with offline Service Worker caching, tactile
+        haptic friction feedback, synthesized acoustic sound effects, and adaptive edge-to-edge full-screen sizing,
+        Unseal behaves like a native mobile stationery studio on every viewport from compact 320px smartphones to
+        tablets and wide desktops. Tap <strong>Install App</strong> in the top bar anytime to place Unseal directly on
+        your home screen.
+      </p>
+
+      <!-- ADSENSE SLOT 2: Clean Mid-Editorial In-Article Rectangle -->
+      <aside class="ad-wrapper ad-inline-wrapper" aria-label="Advertisement">
+        <span class="ad-label">Advertisement</span>
+        <div id="ad-slot-rectangle" class="ad-slot ad-slot-rect">
+          <span>In-Feed Display Ad Slot • 336×280 / 300×250 Rectangle</span>
+        </div>
+      </aside>
 
       <div id="faqSection" class="faq-accordion-list">
         <details class="faq-item">
           <summary class="faq-summary">1. How does Unseal send secret scratch-off notes without a server or account?
           </summary>
           <p class="faq-body">
-            Unseal compresses your recipient name, message, and optional clue directly inside your browser into a short
-            URL combining the recipient name, an 8-letter unique card ID, and a compact encrypted fragment. Zero servers
-            or databases ever read or store your secret.
+            Unseal compresses your recipient name, message, and optional clue inside your browser into a short URL
+            format
+            combining the recipient name, an 8-letter card pass ID, and a compact client-side encoded fragment. Zero
+            servers or databases ever read or store your note.
           </p>
         </details>
 
         <details class="faq-item">
-          <summary class="faq-summary">2. Does Unseal support Hindi, Hinglish, and emojis inside secret notes?</summary>
+          <summary class="faq-summary">2. How do both sender and receiver get a Mystery Story Gift Card?</summary>
           <p class="faq-body">
-            Yes. Unseal pairs Caveat script for English with Kalam and Noto Sans Devanagari for Hindi, and packs
-            Devanagari characters into a single byte per character so Hindi, Hinglish, and emoji notes stay extra short
-            and render crisply on every phone.
+            Both the sender after sealing a note and the receiver after scratching it open receive a locked 2026 Mystery
+            Collector Vault. Sharing Unseal with 5 friends on WhatsApp cracks open all five wax seals to reveal their
+            randomized Luxury Rarity Pass, Vibe Score, Fortune Prophecy, and spoiler-free 9:16 PNG for Instagram Story
+            or
+            WhatsApp Status.
           </p>
         </details>
 
         <details class="faq-item">
-          <summary class="faq-summary">3. How do the personalized Status Gift Cards work?</summary>
+          <summary class="faq-summary">3. Can I install Unseal on my phone like a native app?</summary>
           <p class="faq-body">
-            When you seal and share a secret note—or finish unsealing one—Unseal unlocks a personalized 9:16 Name Gift
-            Card designed for Instagram Stories and WhatsApp Status without exposing private note spoilers to everyone
-            viewing your status.
+            Yes. Unseal is a full Progressive Web App (PWA) with an offline Service Worker and manifest. Tap Install App
+            in the top header on Android Chrome, Edge, or desktop—or use Share then Add to Home Screen in iPhone
+            Safari—to launch it fullscreen from your home screen.
           </p>
         </details>
 
         <details class="faq-item">
-          <summary class="faq-summary">4. Can the recipient automatically see my name?</summary>
+          <summary class="faq-summary">4. Why are Unseal links shorter and safe to tap on WhatsApp?</summary>
           <p class="faq-body">
-            If you enter your name in the optional Gift Card field, it stays strictly local to customize your own Status
-            Gift Card and is never attached to the sealed link. Only the optional clue you write is shown below the
-            scratched card.
+            Unseal v7 uses 6-bit phrase packing and 1-byte Devanagari compression so typical notes compress into
+            ultra-compact URL fragments alongside a readable recipient name slug (<code>?Name-8LetterId</code>),
+            avoiding sketchy-looking redirect shorteners.
           </p>
         </details>
 
         <details class="faq-item">
-          <summary class="faq-summary">5. Does the scratch foil work properly on iPhone and Android browsers?</summary>
+          <summary class="faq-summary">5. Does Unseal support Hindi, Hinglish, and emojis cleanly?</summary>
           <p class="faq-body">
-            Yes. The HTML5 canvas uses touch-action locking and passive-false touch listeners so mobile pages never
-            scroll while rubbing the foil. Once 45% of the foil is scratched off, the note reveals smoothly with warm
-            confetti and gentle chime audio.
+            Yes. Unseal pairs Caveat script for English with Kalam and Noto Sans Devanagari for Hindi handwriting,
+            keeping Hindi, Hinglish, and emojis crisp on both Android and iPhone screens.
           </p>
         </details>
 
         <details class="faq-item">
-          <summary class="faq-summary">6. Are older Unseal links (?seal= and ?s=) still supported?</summary>
+          <summary class="faq-summary">6. Are older Unseal links (?seal=, ?s=, and U3) still supported?</summary>
           <p class="faq-body">
-            Yes. Unseal remains backward compatible with legacy <code>?seal=</code> and <code>?s=</code> links alongside
-            the shorter <code>?Name-UniqueId</code> link format.
+            Yes. Unseal automatically decodes legacy <code>?seal=</code> and <code>?s=</code> links as well as U3 and
+            compact U4 URLs.
           </p>
         </details>
       </div>
     </article>
 
-    <!-- ADSENSE SLOT 2: Mid-Content Responsive Ad -->
+    <!-- ADSENSE SLOT 3: Matched Content / Footer Multiplex Ad Container -->
     <aside class="ad-wrapper" style="margin-top:1.75rem;" aria-label="Advertisement">
       <span class="ad-label">Advertisement</span>
-      <div id="ad-slot-rectangle" class="ad-slot ad-slot-rect">
-        <span>In-Feed Display Ad • Responsive Rectangle (336×280 / 300×250)</span>
+      <div id="ad-slot-multiplex" class="ad-slot ad-slot-multiplex">
+        <span>Native Multiplex / Responsive Ad Slot</span>
       </div>
     </aside>
   </section>
 
   <!-- FOOTER & ADSENSE COMPLIANCE TRUST PAGES -->
   <footer class="site-footer">
-    <p class="footer-tagline">Crafted for honest notes • 100% browser-encoded privacy</p>
+    <p class="footer-tagline">Crafted for honest notes • 100% browser-encoded privacy • Installable PWA</p>
     <nav class="footer-legal-nav" aria-label="Legal and Compliance Pages">
       <a href="#privacy" class="footer-legal-link" data-open-legal="privacy">Privacy Policy</a>
       <a href="#terms" class="footer-legal-link" data-open-legal="terms">Terms of Use</a>
       <a href="#disclaimer" class="footer-legal-link" data-open-legal="disclaimer">Disclaimer</a>
       <a href="#contact" class="footer-legal-link" data-open-legal="contact">Contact / Report Abuse</a>
+      <button id="footerInstallAppBtn" type="button" class="footer-legal-btn">Install App</button>
     </nav>
     <p class="footer-copy">© 2026 Unseal (unseal.cards). All rights reserved.</p>
   </footer>
@@ -566,55 +830,57 @@
           <h3>Privacy Policy</h3>
           <p><strong>Effective Date:</strong> November 2026</p>
           <p>
-            <strong>Unseal</strong> (<code>unseal.cards</code>) uses pure <strong>client-side URL encoding</strong>.
-            Your recipient name, secret message, and optional clue remain inside your browser and generated link
-            fragment—never sent to or saved on any server or database. Optional Gift Card names stay locally on your
-            device solely to render your PNG image.
+            <strong>Unseal</strong> (<code>unseal.cards</code>) operates using <strong>zero-server client-side URL
+              encoding</strong>. Secret messages, recipient names, and clues remain inside your browser and URL
+            fragment—never transmitted to or stored on Unseal servers. Share progress and Gift Card customization stay
+            locally inside browser storage on your device.
           </p>
-          <h4>Google AdSense &amp; Cookies (DART Cookie Notice)</h4>
+          <h4>Google AdSense, GA4 Analytics &amp; Cookies (DART Cookie Notice)</h4>
           <ul>
-            <li>Third-party vendors, including Google, use cookies to serve ads based on a user’s prior visits to this
-              site or other websites.</li>
-            <li>Google’s use of advertising cookies (including the <strong>Google DART cookie</strong>) enables
-              personalized ads across Unseal and partner sites.</li>
-            <li>Visitors can opt out anytime via <a href="https://adssettings.google.com" target="_blank"
-                rel="noopener noreferrer">Google Ads Settings</a> or <a href="https://www.aboutads.info/choices/"
-                target="_blank" rel="noopener noreferrer">aboutads.info</a>.</li>
+            <li>Google and third-party vendors use cookies (including the <strong>Google DART cookie</strong>) to serve
+              relevant ads based on prior visits to Unseal or other websites.</li>
+            <li>When enabled, Google Analytics 4 collects aggregated usage metrics without ever capturing your private
+              secret note text or URL hash fragments.</li>
+            <li>Visitors may opt out of personalized advertising via <a href="https://adssettings.google.com"
+                target="_blank" rel="noopener noreferrer">Google Ads Settings</a> or <a
+                href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer">aboutads.info</a>.
+            </li>
           </ul>
         </section>
 
         <section class="legal-panel hidden" data-legal-panel="terms">
           <h3>Terms of Use</h3>
           <ul>
-            <li>You must be at least 13 years old (or local minimum digital consent age) to use Unseal.</li>
-            <li>You agree not to compose or distribute harassment, threats, hate speech, doxxing, explicit abuse, or
-              phishing links.</li>
-            <li>You are solely responsible for notes created and shared through external messaging apps.</li>
+            <li>You must be at least 13 years old (or meet local digital consent requirements) to use Unseal.</li>
+            <li>You agree never to compose or send harassment, threats, hate speech, impersonation, doxxing, explicit
+              abuse, or malicious links.</li>
+            <li>You are solely responsible for notes composed and distributed via external messaging services.</li>
           </ul>
         </section>
 
         <section class="legal-panel hidden" data-legal-panel="disclaimer">
           <h3>Disclaimer</h3>
           <p>
-            Unseal is provided "as-is" for friendly confessions and creative communication. Because zero notes live on
-            servers, Unseal cannot edit or recover lost links once shared. Messaging platforms display sender accounts
-            when sharing links directly in private chats.
+            Unseal is provided “as-is” for friendly confessions and playful creative communication. Collector Gift Cards
+            (Aura Scores &amp; Fortunes) are entertainment keepsakes with no monetary value. Because no user messages
+            are
+            stored on our servers, deleted or lost links cannot be recovered.
           </p>
         </section>
 
         <section class="legal-panel hidden" data-legal-panel="contact">
           <h3>Contact &amp; Report Abuse</h3>
           <p>
-            Questions or abuse reports: email <a href="mailto:support@unseal.cards">support@unseal.cards</a>. Because
-            Unseal stores no notes, block unwanted senders directly in WhatsApp or Instagram to stop further messages
-            immediately.
+            Questions or abuse reports: email <a href="mailto:support@unseal.cards">support@unseal.cards</a>. Because no
+            notes live on servers, blocking unwanted contacts directly inside WhatsApp or Instagram stops future
+            messages immediately.
           </p>
           <form id="abuseReportForm" class="form-stack" style="margin-top:0.75rem;">
             <div class="field-group">
               <label for="reportReason" class="field-label">Topic</label>
               <select id="reportReason" class="text-input text-input-compact">
                 <option value="Report Harassment or Abuse">Report Harassment or Abuse</option>
-                <option value="Technical Bug / Mobile Issue">Technical Bug / Mobile Issue</option>
+                <option value="Technical Bug / PWA Issue">Technical Bug / PWA Issue</option>
                 <option value="Privacy or AdSense Inquiry">Privacy or AdSense Inquiry</option>
               </select>
             </div>
