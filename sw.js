@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unseal-shell-v9';
+const CACHE_NAME = 'unseal-shell-v10';
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -13,7 +13,8 @@ const SHELL_ASSETS = [
   './assets/icon-maskable-192.png',
   './assets/icon-maskable-512.png',
   './assets/apple-touch-icon.png',
-  './assets/og-image.png'
+  './assets/og-image.png',
+  './assets/mobile-preview.png'
 ];
 
 self.addEventListener('install', (event) => {

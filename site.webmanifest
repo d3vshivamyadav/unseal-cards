@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Unseal — Secret Scratch Notes & Mystery Gift Cards",
+  "name": "Unseal — Secret Scratch Notes & Story Gift App",
   "short_name": "Unseal",
-  "description": "Create and share tactile metallic scratch-off secret notes, crush confessions, and collectible 9:16 Mystery Gift Cards for WhatsApp & Instagram.",
+  "description": "Create tactile metallic scratch-off secret notes in silver, rose gold, champagne or holographic foil with bespoke 9:16 Story Gift Cards.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,9 +10,10 @@
     "standalone",
     "minimal-ui"
   ],
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "prefer_related_applications": false,
   "background_color": "#FAF6F0",
-  "theme_color": "#D9383A",
+  "theme_color": "#C8282B",
   "categories": [
     "social",
     "entertainment",
@@ -56,14 +57,21 @@
       "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Unseal Scratch-to-Reveal Secret Note & Mystery Gift Card"
+      "label": "Unseal Secret Scratch Card & Bespoke Story Gift"
+    },
+    {
+      "src": "/assets/mobile-preview.png",
+      "sizes": "540x960",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Unseal Mobile Scratch-to-Reveal Experience"
     }
   ],
   "shortcuts": [
     {
       "name": "Write a Secret Note",
       "short_name": "New Note",
-      "description": "Seal a new gold-foil secret note and Mystery Gift Card",
+      "description": "Seal a new scratch-off note and Story Gift Card",
       "url": "/",
       "icons": [
         {
