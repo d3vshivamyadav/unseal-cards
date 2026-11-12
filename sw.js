@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unseal-shell-v10';
+const CACHE_NAME = 'unseal-v5';
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -10,11 +10,8 @@ const SHELL_ASSETS = [
   './assets/logo.svg',
   './assets/icon-192.png',
   './assets/icon-512.png',
-  './assets/icon-maskable-192.png',
-  './assets/icon-maskable-512.png',
   './assets/apple-touch-icon.png',
-  './assets/og-image.png',
-  './assets/mobile-preview.png'
+  './assets/og-image.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -26,11 +23,10 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -40,21 +36,34 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  if (req.mode === 'navigate') {
+  const isCoreShell =
+    req.mode === 'navigate' ||
+    url.pathname === '/' ||
+    /\.(html|css|js|webmanifest)$/i.test(url.pathname);
+
+  /* Network-First for HTML, CSS, JS, and document navigations */
+  if (isCoreShell) {
     event.respondWith(
       fetch(req)
         .then((res) => {
           if (res && res.status === 200 && res.type === 'basic') {
             const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put('./index.html', copy)).catch(() => { });
+            const cacheKey = req.mode === 'navigate' ? './index.html' : req;
+            caches.open(CACHE_NAME).then((c) => c.put(cacheKey, copy)).catch(() => { });
           }
           return res;
         })
-        .catch(() => caches.match('./index.html').then((r) => r || caches.match('./')))
+        .catch(() => {
+          if (req.mode === 'navigate') {
+            return caches.match('./index.html').then((r) => r || caches.match('./'));
+          }
+          return caches.match(req);
+        })
     );
     return;
   }
 
+  /* Cache-then-network refresh for static media assets */
   event.respondWith(
     caches.match(req).then((cached) => {
       const netFetch = fetch(req)

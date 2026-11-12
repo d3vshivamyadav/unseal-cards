@@ -17,11 +17,16 @@
   <!-- Instant Receiver Boot Guard (zero composer flash) -->
   <script>
     (function () {
-      var isRec =
-        location.search.indexOf('seal=') !== -1 ||
-        location.search.indexOf('s=') !== -1 ||
-        location.hash.length > 6;
-      if (isRec) document.documentElement.className += ' receiver-boot';
+      var search = location.search || '';
+      var hash = location.hash || '';
+      var isSectionHash = /^#(privacy|terms|disclaimer|contact|editorialGuide|faqSection|ideaVault)$/i.test(hash);
+      var isRec = !isSectionHash && (
+        search.indexOf('seal=') !== -1 ||
+        search.indexOf('s=') !== -1 ||
+        /^#(s=|seal=|u3|u4|4|5)/i.test(hash) ||
+        (hash.length > 18 && hash.indexOf(' ') === -1)
+      );
+      if (isRec) document.documentElement.classList.add('receiver-boot');
     })();
   </script>
 
@@ -225,7 +230,7 @@
 
           <div class="form-stack">
             <div class="field-group">
-              <label for="recipientInput" class="field-label">Send To</label>
+              <label for="recipientInput" class="field-label">Send To (Their First Name)</label>
               <input id="recipientInput" type="text" maxlength="32" autocomplete="off"
                 placeholder="Maya or Secret Crush" class="text-input">
             </div>
@@ -365,7 +370,7 @@
           <div id="postRevealActions" class="post-reveal-actions hidden">
 
             <div class="reaction-section">
-              <span class="reaction-heading">Send Anonymous Reaction Back</span>
+              <span class="reaction-heading">Send Reaction Back</span>
               <div id="receiverReactionsRow" class="reaction-bar" aria-label="1-tap WhatsApp reactions">
                 <button type="button" class="react-pill" data-react="❤️ Blushing rn">❤️ Blushing rn</button>
                 <button type="button" class="react-pill" data-react="😳 Wait, who is this?!">😳 Wait, who is

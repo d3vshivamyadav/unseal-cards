@@ -61,7 +61,12 @@
     burnTimerId: null,
     burnSecondsLeft: 0,
     sparkles: [],
-    sparkleRafId: 0
+    sparkleRafId: 0,
+    paintedCanvasW: 0,
+    paintedCanvasH: 0,
+    paintedDpr: 0,
+    scratchPaintSeq: 0,
+    scratchResizeObserver: null
   };
 
   /* ==================== SAFE DOM HELPERS ==================== */
@@ -517,16 +522,33 @@
   }
 
   /* ==================== CHAMPAGNE GOLD SCRATCH CANVAS & HAPTICS ==================== */
-  function initScratchCanvas() {
+  function paintScratchCanvas(allowFallback = true) {
     const canvas = $('scratchCanvas');
     const overlay = $('sparkleOverlayCanvas');
     const box = $('scratchBox');
-    if (!canvas || !box) return;
+    if (!canvas || !box || state.mode !== 'preview' || state.revealed) return;
+
+    const rect = typeof canvas.getBoundingClientRect === 'function' ? canvas.getBoundingClientRect() : null;
+    const measuredW = Math.round(canvas.clientWidth || box.clientWidth || (rect && rect.width) || 0);
+    const measuredH = Math.round(canvas.clientHeight || box.clientHeight || (rect && rect.height) || 0);
+
+    if ((measuredW <= 0 || measuredH <= 0) && !allowFallback) return;
+
+    const dpr = Math.min(2, (typeof window !== 'undefined' && window.devicePixelRatio) || 1);
+    const w = Math.max(260, measuredW || 440);
+    const h = Math.max(190, measuredH || Math.round(w * (190 / 300)));
+    if (
+      measuredW > 0 &&
+      measuredH > 0 &&
+      w === state.paintedCanvasW &&
+      h === state.paintedCanvasH &&
+      dpr === state.paintedDpr &&
+      canvas.width > 0
+    ) {
+      return;
+    }
 
     canvas.classList.remove('is-faded');
-    const w = Math.max(260, Math.round(box.clientWidth || 440));
-    const h = Math.max(190, Math.round(box.clientHeight || Math.round(w * (190 / 300))));
-    const dpr = Math.min(2, (typeof window !== 'undefined' && window.devicePixelRatio) || 1);
 
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
@@ -534,6 +556,10 @@
       overlay.width = canvas.width;
       overlay.height = canvas.height;
     }
+
+    state.paintedCanvasW = measuredW > 0 ? w : 0;
+    state.paintedCanvasH = measuredH > 0 ? h : 0;
+    state.paintedDpr = measuredW > 0 ? dpr : 0;
 
     const ctx = canvas.getContext && canvas.getContext('2d');
     if (!ctx) return;
@@ -573,6 +599,44 @@
     ctx.fillText('Champagne Gold Foil', w / 2, h / 2 + 22);
 
     ctx.globalCompositeOperation = 'destination-out';
+  }
+
+  function ensureScratchResizeObserver() {
+    const box = $('scratchBox');
+    if (!box || state.scratchResizeObserver || typeof ResizeObserver !== 'function') return;
+    state.scratchResizeObserver = new ResizeObserver((entries) => {
+      if (state.mode !== 'preview' || state.revealed) return;
+      const entry = entries && entries[0];
+      const nextW = Math.round((entry && entry.contentRect && entry.contentRect.width) || box.clientWidth || 0);
+      const nextH = Math.round((entry && entry.contentRect && entry.contentRect.height) || box.clientHeight || 0);
+      if (nextW > 0 && nextH > 0 && (Math.abs(nextW - state.paintedCanvasW) > 2 || Math.abs(nextH - state.paintedCanvasH) > 2)) {
+        paintScratchCanvas(false);
+      }
+    });
+    state.scratchResizeObserver.observe(box);
+  }
+
+  function initScratchCanvas() {
+    const canvas = $('scratchCanvas');
+    const box = $('scratchBox');
+    if (!canvas || !box) return;
+
+    canvas.classList.remove('is-faded');
+    state.paintedCanvasW = 0;
+    state.paintedCanvasH = 0;
+    state.paintedDpr = 0;
+    ensureScratchResizeObserver();
+
+    const seq = ++state.scratchPaintSeq;
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (seq === state.scratchPaintSeq) paintScratchCanvas(true);
+        });
+      });
+    } else {
+      paintScratchCanvas(true);
+    }
   }
 
   function startBurnCountdownIfEnabled() {
@@ -679,15 +743,16 @@
       const rect = canvas.getBoundingClientRect();
       const x = clientX - rect.left;
       const y = clientY - rect.top;
-      const scale = dpr();
+      const scaleX = rect.width ? canvas.width / rect.width : dpr();
+      const scaleY = rect.height ? canvas.height / rect.height : dpr();
 
-      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
       ctx.arc(x, y, 26, 0, Math.PI * 2);
       ctx.fill();
 
-      spawnFoilSparkles(x * scale, y * scale, canvas.width, canvas.height);
+      spawnFoilSparkles(x * scaleX, y * scaleY, canvas.width, canvas.height);
 
       const now = performance.now ? performance.now() : Date.now();
       if (now - state.lastHapticAt >= 48) {
@@ -777,7 +842,7 @@
   }
 
   /* ==================== NAVIGATION & VIEW SWITCHING ==================== */
-  function showWriteComposer(keepFields = false, focusRecipient = false) {
+  function showWriteComposer(keepFields = false, focusRecipient = false, preserveUrl = false) {
     state.mode = 'write';
     state.revealed = false;
     state.vanished = false;
@@ -813,7 +878,7 @@
     if ($('senderReadyCard')) $('senderReadyCard').classList.add('hidden');
     if ($('viewPreview')) $('viewPreview').classList.add('hidden');
 
-    if (typeof history !== 'undefined' && typeof history.replaceState === 'function') {
+    if (!preserveUrl && typeof history !== 'undefined' && typeof history.replaceState === 'function') {
       try { history.replaceState(null, '', getBaseUrl()); } catch (_) { }
     }
 
@@ -873,14 +938,14 @@
       $('revealedClueText').textContent = state.clue ? `"${state.clue}"` : '"A quiet admirer"';
     }
     if ($('receiverMoodKicker')) {
-      $('receiverMoodKicker').textContent = state.burn ? 'EPHEMERAL SECRET POSTCARD' : 'SECRET POSTCARD';
+      $('receiverMoodKicker').textContent = state.burn ? 'EPHEMERAL POSTCARD' : 'SECRET POSTCARD';
     }
 
     const under = $('underneathSecretBox');
     if (under && under.classList) under.classList.remove('is-evaporated');
     if ($('burnCountdownBadge')) {
       $('burnCountdownBadge').classList.toggle('hidden', !state.burn);
-      if (state.burn) $('burnCountdownBadge').textContent = '⏳ Self-destructs 60s after unseal';
+      if (state.burn) $('burnCountdownBadge').textContent = '⏳ Burns 60s after unseal';
     }
 
     if ($('scratchStatusPill')) $('scratchStatusPill').textContent = '🪙 Rub gold foil gently to unseal';
@@ -1011,7 +1076,7 @@
       $('whatsappShareBtn').addEventListener('click', () => {
         const recName = state.recipient || 'You';
         const url = getShareableLink();
-        const msg = `💌 Someone sealed a secret note for *${recName}* under gold foil! Rub the screen with your finger to unseal it before it disappears: ${url}`;
+        const msg = `💌 Someone sealed a secret note for *${recName}* under gold foil! Rub the screen with your finger to unseal it: ${url}`;
         openExternalUrl(`https://wa.me/?text=${encodeURIComponent(msg)}`);
         trackEvent('share_whatsapp');
       });
@@ -1111,28 +1176,44 @@
   }
 
   /* ==================== BOOT SEQUENCE ==================== */
+  function clearStaleCaches() {
+    if (typeof caches === 'undefined' || !caches || typeof caches.keys !== 'function') return;
+    caches.keys().then((keys) => {
+      keys.forEach((key) => {
+        if (key !== 'unseal-v5') caches.delete(key).catch(() => { });
+      });
+    }).catch(() => { });
+  }
+
   function boot() {
     bindEvents();
+    clearStaleCaches();
 
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && typeof location !== 'undefined') {
       if (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-        navigator.serviceWorker.register('./sw.js').catch(() => { });
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          if (reg && typeof reg.update === 'function') reg.update().catch(() => { });
+        }).catch(() => { });
       }
     }
 
     if (typeof window.addEventListener === 'function') {
       window.addEventListener('resize', () => {
-        if (state.mode === 'preview' && !state.revealed) initScratchCanvas();
+        if (state.mode === 'preview' && !state.revealed) paintScratchCanvas(false);
       });
     }
 
     const search = typeof location !== 'undefined' ? location.search : '';
     const hash = typeof location !== 'undefined' ? location.hash : '';
-    const incoming = decodeIncomingUrl(search, hash);
+    const isSectionHash = /^#(privacy|terms|disclaimer|contact|editorialGuide|faqSection|ideaVault)$/i.test(hash);
+    const incoming = isSectionHash ? null : decodeIncomingUrl(search, hash);
     if (incoming && incoming.secret) {
       openReceiverView(incoming, false);
     } else {
-      showWriteComposer(false, false);
+      if (document.documentElement && document.documentElement.classList) {
+        document.documentElement.classList.remove('receiver-boot');
+      }
+      showWriteComposer(false, false, isSectionHash);
     }
   }
 
